@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getGraphStats } from '@/lib/db-helpers'
 
+// 使用 Node.js Runtime（开发环境）
+export const runtime = 'nodejs'
+
 export async function GET() {
   try {
     const stats = await getGraphStats()

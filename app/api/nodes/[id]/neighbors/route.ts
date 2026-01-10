@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getNodeNeighbors } from '@/lib/db-helpers'
 
+// 使用 Node.js Runtime（开发环境）
+export const runtime = 'nodejs'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

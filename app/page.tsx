@@ -1,13 +1,13 @@
 import KnowledgeGraph from '@/components/KnowledgeGraph'
-import ControlPanel from '@/components/ControlPanel'
-import DatabasePanel from '@/components/DatabasePanel'
+import TopNavbar from '@/components/TopNavbar'
+import NodeDetailPanel from '@/components/NodeDetailPanel'
 
 export default function Home() {
   return (
     <main>
+      <TopNavbar />
       <KnowledgeGraph />
-      <ControlPanel />
-      <DatabasePanel />
+      <NodeDetailPanel />
     </main>
   )
 }
