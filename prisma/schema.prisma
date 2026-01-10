@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Node {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  description String?
+  x           Float    @default(0)
+  y           Float    @default(0)
+  z           Float    @default(0)
+  color       String   @default("#3b82f6")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  outgoingEdges Edge[] @relation("FromNode")
+  incomingEdges Edge[] @relation("ToNode")
+
+  @@index([type])
+}
+
+model Edge {
+  id          String   @id @default(cuid())
+  fromNodeId  String
+  toNodeId    String
+  label       String
+  weight      Float    @default(1.0)
+  createdAt   DateTime @default(now())
+
+  fromNode Node @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNode   Node @relation("ToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
+
+  @@index([fromNodeId])
+  @@index([toNodeId])
+}
