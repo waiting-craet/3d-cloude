@@ -1,6 +1,6 @@
 # 3D 知识图谱
 
-基于 Next.js 14 + Neon PostgreSQL + Prisma 构建的交互式 3D 知识图谱可视化平台，完全兼容 Cloudflare Pages 部署。
+基于 Next.js 14 + Neon PostgreSQL + Prisma 构建的交互式 3D 知识图谱可视化平台，完全兼容 Cloudflare Pages 直接部署。
 
 ## 技术栈
 
