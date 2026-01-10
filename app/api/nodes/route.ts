@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-export const runtime = 'edge'
-
 export async function GET() {
   try {
     const nodes = await prisma.node.findMany({
@@ -13,7 +11,7 @@ export async function GET() {
   } catch (error) {
     console.error('获取节点失败:', error)
     return NextResponse.json(
-      { error: '获取节点失败' },
+      { error: '获取节点失败', details: String(error) },
       { status: 500 }
     )
   }
@@ -47,7 +45,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('创建节点失败:', error)
     return NextResponse.json(
-      { error: '创建节点失败' },
+      { error: '创建节点失败', details: String(error) },
       { status: 500 }
     )
   }

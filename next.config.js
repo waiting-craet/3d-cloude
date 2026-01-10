@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 使用 Edge Runtime，兼容 Cloudflare Pages
-  experimental: {
-    runtime: 'edge',
-  },
+  // 本地开发使用 Node.js runtime，部署到 Cloudflare Pages 时改为 edge
+  // experimental: {
+  //   runtime: 'edge',
+  // },
 }
 
 module.exports = nextConfig

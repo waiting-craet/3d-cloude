@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-export const runtime = 'edge'
-
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -24,7 +22,7 @@ export async function PATCH(
   } catch (error) {
     console.error('更新节点失败:', error)
     return NextResponse.json(
-      { error: '更新节点失败' },
+      { error: '更新节点失败', details: String(error) },
       { status: 500 }
     )
   }
@@ -43,7 +41,7 @@ export async function DELETE(
   } catch (error) {
     console.error('删除节点失败:', error)
     return NextResponse.json(
-      { error: '删除节点失败' },
+      { error: '删除节点失败', details: String(error) },
       { status: 500 }
     )
   }

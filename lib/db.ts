@@ -1,6 +1,4 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaNeon } from '@prisma/adapter-neon'
-import { Pool } from '@neondatabase/serverless'
 
 // Edge Runtime 兼容的数据库连接
 function createPrismaClient() {
@@ -10,10 +8,7 @@ function createPrismaClient() {
     throw new Error('DATABASE_URL 环境变量未设置')
   }
 
-  const pool = new Pool({ connectionString })
-  const adapter = new PrismaNeon(pool)
-  
-  return new PrismaClient({ adapter })
+  return new PrismaClient()
 }
 
 // 全局单例模式

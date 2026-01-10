@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-export const runtime = 'edge'
-
 export async function GET() {
   try {
     const edges = await prisma.edge.findMany({
@@ -13,7 +11,7 @@ export async function GET() {
   } catch (error) {
     console.error('获取关系失败:', error)
     return NextResponse.json(
-      { error: '获取关系失败' },
+      { error: '获取关系失败', details: String(error) },
       { status: 500 }
     )
   }
@@ -44,7 +42,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('创建关系失败:', error)
     return NextResponse.json(
-      { error: '创建关系失败' },
+      { error: '创建关系失败', details: String(error) },
       { status: 500 }
     )
   }

@@ -6,8 +6,6 @@ export const metadata: Metadata = {
   description: '交互式 3D 知识图谱可视化平台',
 }
 
-export const runtime = 'edge'
-
 export default function RootLayout({
   children,
 }: {
