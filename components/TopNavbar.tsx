@@ -1,18 +1,33 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/lib/store'
 import LoginModal from './LoginModal'
+import CreateProjectModal from './CreateProjectModal'
 
 export default function TopNavbar() {
-  const { nodes, addNode } = useGraphStore()
+  const { 
+    nodes, 
+    projects, 
+    currentProject, 
+    currentGraph,
+    setProjects,
+    createProject,
+    addGraphToProject,
+    switchGraph,
+  } = useGraphStore()
   
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminUsername, setAdminUsername] = useState('')
+  const [showProjectMenu, setShowProjectMenu] = useState(false)
+  const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null)
+  
+  const projectMenuRef = useRef<HTMLDivElement>(null)
 
   // 实时搜索节点
   useEffect(() => {
@@ -28,11 +43,51 @@ export default function TopNavbar() {
     }
   }, [searchQuery, nodes])
 
+  // 页面加载时恢复状态
+  useEffect(() => {
+    const savedIsAdmin = localStorage.getItem('isAdmin')
+    const savedUsername = localStorage.getItem('adminUsername')
+    if (savedIsAdmin === 'true' && savedUsername) {
+      setIsAdmin(true)
+      setAdminUsername(savedUsername)
+    }
+
+    // 加载项目数据
+    const savedProjects = localStorage.getItem('projects')
+    if (savedProjects) {
+      const parsedProjects = JSON.parse(savedProjects)
+      setProjects(parsedProjects)
+      
+      // 恢复当前项目和图谱
+      const currentProjectId = localStorage.getItem('currentProjectId')
+      const currentGraphId = localStorage.getItem('currentGraphId')
+      if (currentProjectId && currentGraphId) {
+        switchGraph(currentProjectId, currentGraphId)
+      }
+    }
+  }, [setProjects, switchGraph])
+
+  // 点击外部关闭项目菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (projectMenuRef.current && !projectMenuRef.current.contains(event.target as Node)) {
+        setShowProjectMenu(false)
+        setHoveredProjectId(null)
+      }
+    }
+
+    if (showProjectMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showProjectMenu])
+
   const handleLogin = (username: string, password: string) => {
-    // 设置管理员状态
     setIsAdmin(true)
     setAdminUsername(username)
-    // 可以在这里保存到 localStorage
     localStorage.setItem('isAdmin', 'true')
     localStorage.setItem('adminUsername', username)
   }
@@ -44,28 +99,23 @@ export default function TopNavbar() {
     localStorage.removeItem('adminUsername')
   }
 
-  const handleCreateNew = async () => {
-    // 创建新节点
-    await addNode({
-      name: `新节点 ${Date.now()}`,
-      type: 'entity',
-      x: Math.random() * 20 - 10,
-      y: Math.random() * 15,
-      z: Math.random() * 20 - 10,
-      color: '#4A9EFF',
-      size: 1.5,
-    })
+  const handleCreateProject = (projectName: string, graphName: string, isNewProject: boolean) => {
+    if (isNewProject) {
+      createProject(projectName, graphName)
+    } else {
+      // 添加到现有项目
+      const project = projects.find(p => p.name === projectName)
+      if (project) {
+        addGraphToProject(project.id, graphName)
+      }
+    }
   }
 
-  // 页面加载时检查登录状态
-  useEffect(() => {
-    const savedIsAdmin = localStorage.getItem('isAdmin')
-    const savedUsername = localStorage.getItem('adminUsername')
-    if (savedIsAdmin === 'true' && savedUsername) {
-      setIsAdmin(true)
-      setAdminUsername(savedUsername)
-    }
-  }, [])
+  const handleSwitchGraph = (projectId: string, graphId: string) => {
+    switchGraph(projectId, graphId)
+    setShowProjectMenu(false)
+    setHoveredProjectId(null)
+  }
 
   return (
     <>
@@ -85,14 +135,191 @@ export default function TopNavbar() {
         zIndex: 1000,
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
       }}>
-        {/* 左侧：现有图谱标签 */}
-        <div style={{
-          fontSize: '16px',
-          fontWeight: '600',
-          color: '#ffffff',
-          whiteSpace: 'nowrap',
-        }}>
-          现有图谱
+        {/* 左侧：现有图谱下拉菜单 */}
+        <div ref={projectMenuRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowProjectMenu(!showProjectMenu)}
+            style={{
+              padding: '8px 16px',
+              background: showProjectMenu ? 'rgba(74, 158, 255, 0.15)' : 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '8px',
+              color: '#ffffff',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseOver={(e) => {
+              if (!showProjectMenu) {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!showProjectMenu) {
+                e.currentTarget.style.background = 'transparent'
+              }
+            }}
+          >
+            <span>现有图谱</span>
+            {currentGraph && (
+              <span style={{ 
+                color: 'rgba(255, 255, 255, 0.6)', 
+                fontSize: '12px',
+                maxWidth: '150px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {currentProject?.name} / {currentGraph.name}
+              </span>
+            )}
+            <span style={{ 
+              fontSize: '12px',
+              transform: showProjectMenu ? 'rotate(180deg)' : 'rotate(0)',
+              transition: 'transform 0.2s',
+            }}>
+              ▼
+            </span>
+          </button>
+
+          {/* 项目下拉菜单 */}
+          {showProjectMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              marginTop: '8px',
+              minWidth: '280px',
+              background: 'rgba(30, 30, 30, 0.98)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              zIndex: 1001,
+              maxHeight: '400px',
+              overflowY: 'auto',
+            }}>
+              {projects.length > 0 ? (
+                projects.map((project) => (
+                  <div key={project.id} style={{ position: 'relative' }}>
+                    <div
+                      onMouseEnter={() => setHoveredProjectId(project.id)}
+                      onMouseLeave={() => setHoveredProjectId(null)}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        cursor: 'pointer',
+                        background: hoveredProjectId === project.id 
+                          ? 'rgba(74, 158, 255, 0.1)' 
+                          : 'transparent',
+                        transition: 'background 0.2s',
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}>
+                        <div>
+                          <div style={{ 
+                            color: 'white', 
+                            fontSize: '14px', 
+                            fontWeight: '600',
+                            marginBottom: '4px',
+                          }}>
+                            📁 {project.name}
+                          </div>
+                          <div style={{ 
+                            color: 'rgba(255, 255, 255, 0.5)', 
+                            fontSize: '12px',
+                          }}>
+                            {project.graphs.length} 个图谱
+                          </div>
+                        </div>
+                        <span style={{ 
+                          fontSize: '12px', 
+                          color: 'rgba(255, 255, 255, 0.4)',
+                        }}>
+                          ▶
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 图谱子菜单 */}
+                    {hoveredProjectId === project.id && (
+                      <div style={{
+                        position: 'absolute',
+                        left: '100%',
+                        top: 0,
+                        marginLeft: '8px',
+                        minWidth: '220px',
+                        background: 'rgba(40, 40, 40, 0.98)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                        maxHeight: '300px',
+                        overflowY: 'auto',
+                      }}>
+                        {project.graphs.map((graph) => (
+                          <div
+                            key={graph.id}
+                            onClick={() => handleSwitchGraph(project.id, graph.id)}
+                            style={{
+                              padding: '12px 16px',
+                              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                              cursor: 'pointer',
+                              background: currentGraph?.id === graph.id 
+                                ? 'rgba(74, 158, 255, 0.2)' 
+                                : 'transparent',
+                              transition: 'background 0.2s',
+                            }}
+                            onMouseOver={(e) => {
+                              if (currentGraph?.id !== graph.id) {
+                                e.currentTarget.style.background = 'rgba(74, 158, 255, 0.1)'
+                              }
+                            }}
+                            onMouseOut={(e) => {
+                              if (currentGraph?.id !== graph.id) {
+                                e.currentTarget.style.background = 'transparent'
+                              }
+                            }}
+                          >
+                            <div style={{ 
+                              color: 'white', 
+                              fontSize: '14px', 
+                              fontWeight: '500',
+                              marginBottom: '4px',
+                            }}>
+                              {currentGraph?.id === graph.id && '✓ '}
+                              {graph.name}
+                            </div>
+                            <div style={{ 
+                              color: 'rgba(255, 255, 255, 0.5)', 
+                              fontSize: '12px',
+                            }}>
+                              {graph.nodeCount} 节点 · {graph.edgeCount} 关系
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div style={{
+                  padding: '20px',
+                  textAlign: 'center',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '14px',
+                }}>
+                  暂无项目，请先创建
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 搜索框 */}
@@ -170,7 +397,7 @@ export default function TopNavbar() {
           {/* 管理员专属：新建按钮 */}
           {isAdmin && (
             <button
-              onClick={handleCreateNew}
+              onClick={() => setIsCreateModalOpen(true)}
               style={{
                 padding: '10px 20px',
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -279,6 +506,14 @@ export default function TopNavbar() {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLogin={handleLogin}
+      />
+
+      {/* 新建项目弹窗 */}
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateProject}
+        existingProjects={projects}
       />
     </>
   )
