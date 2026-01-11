@@ -117,6 +117,10 @@ export default function TopNavbar() {
     setHoveredProjectId(null)
   }
 
+  const toggleProject = (projectId: string) => {
+    setHoveredProjectId(hoveredProjectId === projectId ? null : projectId)
+  }
+
   return (
     <>
       <nav style={{
@@ -186,49 +190,67 @@ export default function TopNavbar() {
             </span>
           </button>
 
-          {/* 项目下拉菜单 */}
+          {/* 项目和图谱下拉菜单 - 改为单层展开式 */}
           {showProjectMenu && (
             <div style={{
               position: 'absolute',
               top: '100%',
               left: 0,
               marginTop: '8px',
-              minWidth: '280px',
+              minWidth: '320px',
+              maxWidth: '450px',
               background: 'rgba(30, 30, 30, 0.98)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '12px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-              zIndex: 1001,
-              maxHeight: '400px',
+              maxHeight: '500px',
               overflowY: 'auto',
+              zIndex: 1001,
             }}>
               {projects.length > 0 ? (
                 projects.map((project) => (
-                  <div key={project.id} style={{ position: 'relative' }}>
+                  <div key={project.id}>
+                    {/* 项目标题 - 可点击展开/收起 */}
                     <div
-                      onMouseEnter={() => setHoveredProjectId(project.id)}
-                      onMouseLeave={() => setHoveredProjectId(null)}
+                      onClick={() => toggleProject(project.id)}
                       style={{
-                        padding: '12px 16px',
+                        padding: '14px 16px',
                         borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                         cursor: 'pointer',
                         background: hoveredProjectId === project.id 
                           ? 'rgba(74, 158, 255, 0.1)' 
                           : 'transparent',
                         transition: 'background 0.2s',
-                      }}
-                    >
-                      <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                      }}>
+                      }}
+                      onMouseOver={(e) => {
+                        if (hoveredProjectId !== project.id) {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (hoveredProjectId !== project.id) {
+                          e.currentTarget.style.background = 'transparent'
+                        }
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ 
+                          fontSize: '12px', 
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          transform: hoveredProjectId === project.id ? 'rotate(90deg)' : 'rotate(0)',
+                          transition: 'transform 0.2s',
+                        }}>
+                          ▶
+                        </span>
                         <div>
                           <div style={{ 
                             color: 'white', 
-                            fontSize: '14px', 
+                            fontSize: '15px', 
                             fontWeight: '600',
-                            marginBottom: '4px',
+                            marginBottom: '2px',
                           }}>
                             📁 {project.name}
                           </div>
@@ -239,42 +261,32 @@ export default function TopNavbar() {
                             {project.graphs.length} 个图谱
                           </div>
                         </div>
-                        <span style={{ 
-                          fontSize: '12px', 
-                          color: 'rgba(255, 255, 255, 0.4)',
-                        }}>
-                          ▶
-                        </span>
                       </div>
                     </div>
 
-                    {/* 图谱子菜单 */}
+                    {/* 图谱列表 - 展开显示 */}
                     {hoveredProjectId === project.id && (
                       <div style={{
-                        position: 'absolute',
-                        left: '100%',
-                        top: 0,
-                        marginLeft: '8px',
-                        minWidth: '220px',
-                        background: 'rgba(40, 40, 40, 0.98)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        borderRadius: '12px',
-                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-                        maxHeight: '300px',
-                        overflowY: 'auto',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                       }}>
                         {project.graphs.map((graph) => (
                           <div
                             key={graph.id}
-                            onClick={() => handleSwitchGraph(project.id, graph.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSwitchGraph(project.id, graph.id)
+                            }}
                             style={{
-                              padding: '12px 16px',
-                              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                              padding: '12px 16px 12px 48px',
                               cursor: 'pointer',
                               background: currentGraph?.id === graph.id 
                                 ? 'rgba(74, 158, 255, 0.2)' 
                                 : 'transparent',
                               transition: 'background 0.2s',
+                              borderLeft: currentGraph?.id === graph.id 
+                                ? '3px solid #4A9EFF' 
+                                : '3px solid transparent',
                             }}
                             onMouseOver={(e) => {
                               if (currentGraph?.id !== graph.id) {
@@ -292,13 +304,19 @@ export default function TopNavbar() {
                               fontSize: '14px', 
                               fontWeight: '500',
                               marginBottom: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
                             }}>
-                              {currentGraph?.id === graph.id && '✓ '}
-                              {graph.name}
+                              {currentGraph?.id === graph.id && (
+                                <span style={{ color: '#4A9EFF', fontSize: '16px' }}>✓</span>
+                              )}
+                              <span>{graph.name}</span>
                             </div>
                             <div style={{ 
                               color: 'rgba(255, 255, 255, 0.5)', 
                               fontSize: '12px',
+                              paddingLeft: currentGraph?.id === graph.id ? '24px' : '0',
                             }}>
                               {graph.nodeCount} 节点 · {graph.edgeCount} 关系
                             </div>
@@ -310,12 +328,16 @@ export default function TopNavbar() {
                 ))
               ) : (
                 <div style={{
-                  padding: '20px',
+                  padding: '30px 20px',
                   textAlign: 'center',
                   color: 'rgba(255, 255, 255, 0.5)',
                   fontSize: '14px',
                 }}>
-                  暂无项目，请先创建
+                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>📂</div>
+                  <div>暂无项目</div>
+                  <div style={{ fontSize: '12px', marginTop: '8px' }}>
+                    请先创建项目和知识图谱
+                  </div>
                 </div>
               )}
             </div>
