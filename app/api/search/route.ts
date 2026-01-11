@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { searchNodes } from '@/lib/db-helpers'
 import { prisma } from '@/lib/db'
 
+// 使用 Node.js Runtime（开发环境）
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

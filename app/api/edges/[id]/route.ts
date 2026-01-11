@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-export const runtime = 'edge'
+// 使用 Node.js Runtime（开发环境）
+export const runtime = 'nodejs'
 
 export async function DELETE(
   request: NextRequest,
@@ -16,7 +17,7 @@ export async function DELETE(
   } catch (error) {
     console.error('删除关系失败:', error)
     return NextResponse.json(
-      { error: '删除关系失败' },
+      { error: '删除关系失败', details: String(error) },
       { status: 500 }
     )
   }

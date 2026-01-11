@@ -10,6 +10,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx scripts/seed.ts",
+    "db:test": "tsx scripts/test-connection.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
