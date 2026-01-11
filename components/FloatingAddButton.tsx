@@ -1,12 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AddNodeModal from './AddNodeModal'
 import { useGraphStore } from '@/lib/store'
 
 export default function FloatingAddButton() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const { addNode } = useGraphStore()
+
+  // 检查管理员状态
+  useEffect(() => {
+    const savedIsAdmin = localStorage.getItem('isAdmin')
+    setIsAdmin(savedIsAdmin === 'true')
+
+    // 监听 storage 事件以实时更新状态
+    const handleStorageChange = () => {
+      const currentIsAdmin = localStorage.getItem('isAdmin')
+      setIsAdmin(currentIsAdmin === 'true')
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    
+    // 使用自定义事件监听同一页面内的 localStorage 变化
+    const handleLoginStateChange = () => {
+      const currentIsAdmin = localStorage.getItem('isAdmin')
+      setIsAdmin(currentIsAdmin === 'true')
+    }
+    
+    window.addEventListener('loginStateChange', handleLoginStateChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('loginStateChange', handleLoginStateChange)
+    }
+  }, [])
 
   const handleAddNode = async (name: string, description: string) => {
     await addNode({
@@ -21,9 +49,12 @@ export default function FloatingAddButton() {
     })
   }
 
+  // 只在管理员登录时显示按钮
+  if (!isAdmin) return null
+
   return (
     <>
-      {/* 浮动按钮 */}
+      {/* 浮动按钮 - 仅管理员可见 */}
       <button
         onClick={() => setIsModalOpen(true)}
         style={{

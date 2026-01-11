@@ -90,6 +90,8 @@ export default function TopNavbar() {
     setAdminUsername(username)
     localStorage.setItem('isAdmin', 'true')
     localStorage.setItem('adminUsername', username)
+    // 触发自定义事件通知其他组件
+    window.dispatchEvent(new Event('loginStateChange'))
   }
 
   const handleLogout = () => {
@@ -97,6 +99,8 @@ export default function TopNavbar() {
     setAdminUsername('')
     localStorage.removeItem('isAdmin')
     localStorage.removeItem('adminUsername')
+    // 触发自定义事件通知其他组件
+    window.dispatchEvent(new Event('loginStateChange'))
   }
 
   const handleCreateProject = (projectName: string, graphName: string, isNewProject: boolean) => {
@@ -416,18 +420,18 @@ export default function TopNavbar() {
 
         {/* 右侧按钮区域 */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* 管理员专属：新建按钮 */}
+          {/* 管理员专属：新建项目/图谱按钮 */}
           {isAdmin && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               style={{
-                padding: '10px 20px',
+                padding: '10px 18px',
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 border: 'none',
                 borderRadius: '8px',
                 color: 'white',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: '600',
                 transition: 'all 0.2s',
                 boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
@@ -445,7 +449,7 @@ export default function TopNavbar() {
               }}
             >
               <span style={{ fontSize: '16px' }}>+</span>
-              新建
+              新建项目/图谱
             </button>
           )}
 
