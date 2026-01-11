@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useFrame, ThreeEvent, useThree } from '@react-three/fiber'
 import { Text } from '@react-three/drei'
 import { useGraphStore } from '@/lib/store'
@@ -20,8 +20,9 @@ function Node({ node, onClick, onDrag }: NodeProps) {
   const pressTimer = useRef<NodeJS.Timeout | null>(null)
   const dragStartPos = useRef<THREE.Vector3 | null>(null)
   const hasMoved = useRef(false)
+  const isDraggingRef = useRef(false)
   const { selectedNode, setIsDragging } = useGraphStore()
-  const { camera } = useThree()
+  const { camera, gl } = useThree()
   const isSelected = selectedNode?.id === node.id
 
   useFrame(() => {
@@ -31,6 +32,64 @@ function Node({ node, onClick, onDrag }: NodeProps) {
     }
   })
 
+  // 全局鼠标移动和松开事件处理
+  useEffect(() => {
+    const handleGlobalPointerMove = (e: PointerEvent) => {
+      if (!isDraggingRef.current) return
+
+      // 创建一个垂直于相机视线的平面
+      const cameraDirection = new THREE.Vector3()
+      camera.getWorldDirection(cameraDirection)
+      const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+        cameraDirection,
+        new THREE.Vector3(node.x, node.y, node.z)
+      )
+      
+      // 从鼠标位置创建射线
+      const raycaster = new THREE.Raycaster()
+      const mouse = new THREE.Vector2(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        -(e.clientY / window.innerHeight) * 2 + 1
+      )
+      raycaster.setFromCamera(mouse, camera)
+      
+      // 计算射线与平面的交点
+      const intersection = new THREE.Vector3()
+      raycaster.ray.intersectPlane(plane, intersection)
+      
+      if (intersection) {
+        onDrag(node, intersection)
+        hasMoved.current = true
+      }
+    }
+
+    const handleGlobalPointerUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false
+        setIsDragging(false)
+        document.body.style.cursor = 'auto'
+        console.log('拖拽结束')
+      }
+      
+      if (pressTimer.current) {
+        clearTimeout(pressTimer.current)
+        pressTimer.current = null
+      }
+      
+      setIsPressed(false)
+    }
+
+    if (isPressed || isDraggingRef.current) {
+      window.addEventListener('pointermove', handleGlobalPointerMove)
+      window.addEventListener('pointerup', handleGlobalPointerUp)
+    }
+
+    return () => {
+      window.removeEventListener('pointermove', handleGlobalPointerMove)
+      window.removeEventListener('pointerup', handleGlobalPointerUp)
+    }
+  }, [isPressed, camera, node, onDrag, setIsDragging])
+
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     setIsPressed(true)
@@ -39,52 +98,11 @@ function Node({ node, onClick, onDrag }: NodeProps) {
     
     // 设置长按定时器（100ms 后开始拖拽）
     pressTimer.current = setTimeout(() => {
+      isDraggingRef.current = true
       setIsDragging(true)
       document.body.style.cursor = 'grabbing'
-      console.log('拖拽模式已启动')  // 调试日志
+      console.log('拖拽模式已启动')
     }, 100)
-  }
-
-  const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
-    if (!isPressed) return
-    
-    // 如果移动了鼠标，标记为已移动
-    if (!hasMoved.current && dragStartPos.current) {
-      const currentPos = new THREE.Vector3(node.x, node.y, node.z)
-      if (dragStartPos.current.distanceTo(currentPos) > 0.01) {
-        hasMoved.current = true
-      }
-    }
-    
-    // 只有在拖拽模式下才移动节点
-    const { isDragging } = useGraphStore.getState()
-    if (!isDragging || !groupRef.current) return
-    
-    e.stopPropagation()
-
-    // 创建一个垂直于相机视线的平面
-    const cameraDirection = new THREE.Vector3()
-    camera.getWorldDirection(cameraDirection)
-    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
-      cameraDirection,
-      new THREE.Vector3(node.x, node.y, node.z)
-    )
-    
-    // 从鼠标位置创建射线
-    const raycaster = new THREE.Raycaster()
-    const mouse = new THREE.Vector2(
-      (e.clientX / window.innerWidth) * 2 - 1,
-      -(e.clientY / window.innerHeight) * 2 + 1
-    )
-    raycaster.setFromCamera(mouse, camera)
-    
-    // 计算射线与平面的交点
-    const intersection = new THREE.Vector3()
-    raycaster.ray.intersectPlane(plane, intersection)
-    
-    if (intersection) {
-      onDrag(node, intersection)
-    }
   }
 
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
@@ -96,14 +114,13 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       pressTimer.current = null
     }
     
-    const { isDragging } = useGraphStore.getState()
+    // 如果是拖拽模式，在全局事件中处理
+    if (isDraggingRef.current) {
+      return
+    }
     
-    // 如果是拖拽模式，结束拖拽
-    if (isDragging) {
-      setIsDragging(false)
-      document.body.style.cursor = hovered ? 'grab' : 'auto'
-    } else if (!hasMoved.current) {
-      // 如果没有移动且不是拖拽模式，触发点击
+    // 如果没有移动且不是拖拽模式，触发点击
+    if (!hasMoved.current) {
       onClick(node, e as any)
     }
     
@@ -111,28 +128,11 @@ function Node({ node, onClick, onDrag }: NodeProps) {
     hasMoved.current = false
   }
 
-  const handlePointerLeave = () => {
-    // 如果鼠标离开节点，取消长按
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current)
-      pressTimer.current = null
-    }
-    
-    setHovered(false)
-    setIsPressed(false)
-    
-    const { isDragging } = useGraphStore.getState()
-    if (!isDragging) {
-      document.body.style.cursor = 'auto'
-    }
-  }
-
   return (
     <group ref={groupRef} position={[node.x, node.y, node.z]}>
       <mesh
         ref={meshRef}
         onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerOver={(e) => {
           e.stopPropagation()
@@ -140,7 +140,13 @@ function Node({ node, onClick, onDrag }: NodeProps) {
           const { isDragging } = useGraphStore.getState()
           document.body.style.cursor = isDragging ? 'grabbing' : 'grab'
         }}
-        onPointerOut={handlePointerLeave}
+        onPointerOut={() => {
+          setHovered(false)
+          const { isDragging } = useGraphStore.getState()
+          if (!isDragging) {
+            document.body.style.cursor = 'auto'
+          }
+        }}
       >
         <sphereGeometry args={[node.size || 1.5, 32, 32]} />
         <meshStandardMaterial 
@@ -156,15 +162,17 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       
       {/* 始终显示节点名称，未命名时显示"未命名" */}
       <Text
-        position={[0, 0, 0]}
-        fontSize={0.4}
+        position={[0, 0, 1.8]}
+        fontSize={0.6}
         color="white"
         anchorX="center"
         anchorY="middle"
-        outlineWidth={0.03}
+        outlineWidth={0.05}
         outlineColor="#000000"
-        maxWidth={3}
+        outlineOpacity={1}
+        maxWidth={4}
         textAlign="center"
+        depthOffset={-1}
       >
         {node.name || '未命名'}
       </Text>
