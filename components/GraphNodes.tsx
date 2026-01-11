@@ -130,6 +130,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
 
   return (
     <group ref={groupRef} position={[node.x, node.y, node.z]}>
+      {/* 主球体 */}
       <mesh
         ref={meshRef}
         onPointerDown={handlePointerDown}
@@ -152,30 +153,53 @@ function Node({ node, onClick, onDrag }: NodeProps) {
         <meshStandardMaterial 
           color={node.color || '#6BB6FF'} 
           transparent
-          opacity={0.7}
+          opacity={0.9}
           emissive={isSelected ? node.color || '#6BB6FF' : '#000000'}
-          emissiveIntensity={isSelected ? 0.3 : 0}
+          emissiveIntensity={isSelected ? 0.4 : 0}
           roughness={0.3}
-          metalness={0.4}
+          metalness={0.5}
         />
       </mesh>
       
-      {/* 始终显示节点名称，未命名时显示"未命名" */}
+      {/* 外层光晕效果 */}
+      <mesh>
+        <sphereGeometry args={[(node.size || 1.5) * 1.15, 32, 32]} />
+        <meshBasicMaterial 
+          color={node.color || '#6BB6FF'}
+          transparent
+          opacity={0.15}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* 节点名称 - 在球体上方 - 移除字体URL以避免加载错误 */}
       <Text
-        position={[0, 0, 1.8]}
-        fontSize={0.6}
-        color="white"
+        position={[0, (node.size || 1.5) + 0.8, 0]}
+        fontSize={0.5}
+        color="#FFFFFF"
         anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.05}
+        anchorY="bottom"
+        outlineWidth={0.08}
         outlineColor="#000000"
-        outlineOpacity={1}
-        maxWidth={4}
+        outlineOpacity={0.8}
+        maxWidth={5}
         textAlign="center"
-        depthOffset={-1}
       >
         {node.name || '未命名'}
       </Text>
+      
+      {/* 选中时的高亮圆环 */}
+      {isSelected && (
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[(node.size || 1.5) * 1.3, (node.size || 1.5) * 1.4, 32]} />
+          <meshBasicMaterial 
+            color={node.color || '#6BB6FF'}
+            transparent
+            opacity={0.6}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
     </group>
   )
 }
@@ -183,6 +207,23 @@ function Node({ node, onClick, onDrag }: NodeProps) {
 export default function GraphNodes() {
   const { nodes, setSelectedNode, connectingFromNode, setConnectingFromNode, addEdge, updateNodePosition } = useGraphStore()
   const { camera } = useThree()
+
+  // 调试：打印节点数据
+  useEffect(() => {
+    console.log('🎨 GraphNodes rendering with nodes:', nodes.length)
+    if (nodes.length > 0) {
+      console.log('First node:', nodes[0])
+      console.log('All nodes:', nodes)
+    }
+  }, [nodes])
+
+  // 如果没有节点，显示提示
+  if (nodes.length === 0) {
+    console.log('⚠️ No nodes to render')
+    return null
+  }
+
+  console.log('✅ Rendering', nodes.length, 'nodes')
 
   const handleNodeClick = (node: any, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation()

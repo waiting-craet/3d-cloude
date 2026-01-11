@@ -5,7 +5,6 @@ import { useGraphStore } from '@/lib/store'
 
 export default function NodeDetailPanel() {
   const { selectedNode, setSelectedNode, updateNode } = useGraphStore()
-  const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
@@ -21,7 +20,6 @@ export default function NodeDetailPanel() {
       } catch {
         setTags('')
       }
-      setIsEditing(false)
     }
   }, [selectedNode])
 
@@ -30,20 +28,48 @@ export default function NodeDetailPanel() {
 
     try {
       await updateNode(selectedNode.id, {
-        name: name.trim() || '未命名',
+        name: name.trim() || '文本',
         description: description.trim(),
         tags: JSON.stringify(tags.split(',').map(t => t.trim()).filter(t => t)),
       })
-      setIsEditing(false)
+      alert('保存成功！')
     } catch (error) {
       console.error('保存失败:', error)
       alert('保存失败，请重试')
     }
   }
 
+  const handleDelete = async () => {
+    if (!selectedNode) return
+    
+    if (!confirm('确定要删除这个节点吗？此操作无法撤销。')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/nodes/${selectedNode.id}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        alert('删除成功！')
+        setSelectedNode(null)
+        // 刷新图谱数据
+        const { fetchGraph } = useGraphStore.getState()
+        fetchGraph()
+      } else {
+        const error = await response.json()
+        console.error('删除失败:', error)
+        alert('删除失败，请重试')
+      }
+    } catch (error) {
+      console.error('删除失败:', error)
+      alert('删除失败，请重试')
+    }
+  }
+
   const handleClose = () => {
     setSelectedNode(null)
-    setIsEditing(false)
   }
 
   if (!selectedNode) return null
@@ -116,33 +142,22 @@ export default function NodeDetailPanel() {
           }}>
             名称
           </label>
-          {isEditing ? (
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#6BB6FF'}
-              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-            />
-          ) : (
-            <div style={{
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="输入节点名称"
+            style={{
+              width: '100%',
               padding: '10px',
-              background: '#f9fafb',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '14px',
-              color: '#1f2937',
-            }}>
-              {name || '未命名'}
-            </div>
-          )}
+              outline: 'none',
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#6BB6FF'}
+            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+          />
         </div>
 
         {/* 描述 */}
@@ -154,38 +169,26 @@ export default function NodeDetailPanel() {
             color: '#374151',
             marginBottom: '8px',
           }}>
-            描述
+            简介
           </label>
-          {isEditing ? (
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none',
-                resize: 'vertical',
-                fontFamily: 'inherit',
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#6BB6FF'}
-              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-            />
-          ) : (
-            <div style={{
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="输入节点简介"
+            rows={4}
+            style={{
+              width: '100%',
               padding: '10px',
-              background: '#f9fafb',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '14px',
-              color: '#1f2937',
-              minHeight: '80px',
-            }}>
-              {description || '暂无描述'}
-            </div>
-          )}
+              outline: 'none',
+              resize: 'vertical',
+              fontFamily: 'inherit',
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#6BB6FF'}
+            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+          />
         </div>
 
         {/* 标签 */}
@@ -199,49 +202,22 @@ export default function NodeDetailPanel() {
           }}>
             标签
           </label>
-          {isEditing ? (
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="用逗号分隔，例如：AI, RAG, NLP"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#6BB6FF'}
-              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-            />
-          ) : (
-            <div style={{
+          <input
+            type="text"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="用逗号分隔，例如：AI, RAG, NLP"
+            style={{
+              width: '100%',
               padding: '10px',
-              background: '#f9fafb',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '14px',
-              color: '#1f2937',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '6px',
-            }}>
-              {tags ? tags.split(',').map((tag, i) => (
-                <span key={i} style={{
-                  padding: '4px 10px',
-                  background: '#e0f2fe',
-                  color: '#0369a1',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                }}>
-                  {tag.trim()}
-                </span>
-              )) : (
-                <span style={{ color: '#9ca3af' }}>暂无标签</span>
-              )}
-            </div>
-          )}
+              outline: 'none',
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#6BB6FF'}
+            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+          />
         </div>
 
         {/* 元信息 */}
@@ -271,63 +247,42 @@ export default function NodeDetailPanel() {
         display: 'flex',
         gap: '10px',
       }}>
-        {isEditing ? (
-          <>
-            <button
-              onClick={handleSave}
-              style={{
-                flex: 1,
-                padding: '10px',
-                background: '#6BB6FF',
-                border: 'none',
-                borderRadius: '6px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-              }}
-            >
-              保存
-            </button>
-            <button
-              onClick={() => {
-                setIsEditing(false)
-                setName(selectedNode.name || '')
-                setDescription(selectedNode.description || '')
-              }}
-              style={{
-                flex: 1,
-                padding: '10px',
-                background: '#f3f4f6',
-                border: 'none',
-                borderRadius: '6px',
-                color: '#374151',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-              }}
-            >
-              取消
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setIsEditing(true)}
-            style={{
-              flex: 1,
-              padding: '10px',
-              background: '#6BB6FF',
-              border: 'none',
-              borderRadius: '6px',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-            }}
-          >
-            编辑
-          </button>
-        )}
+        <button
+          onClick={handleSave}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: '#6BB6FF',
+            border: 'none',
+            borderRadius: '6px',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = '#5AA5EF'}
+          onMouseOut={(e) => e.currentTarget.style.background = '#6BB6FF'}
+        >
+          保存
+        </button>
+        <button
+          onClick={handleDelete}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: '#ef4444',
+            border: 'none',
+            borderRadius: '6px',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = '#dc2626'}
+          onMouseOut={(e) => e.currentTarget.style.background = '#ef4444'}
+        >
+          删除
+        </button>
       </div>
     </div>
   )
