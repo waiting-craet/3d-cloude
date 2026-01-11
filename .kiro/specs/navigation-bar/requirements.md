@@ -26,29 +26,28 @@ This document specifies the requirements for a navigation bar component for the 
 3. WHEN a user clicks the logo or title, THE Navigation_Bar SHALL navigate to the home page
 4. THE Logo_Area SHALL be visible at all screen sizes
 
-### Requirement 2: Provide Navigation Links
+### Requirement 2: Display Current Graph and Search Functionality
 
-**User Story:** As a user, I want to access different sections of the application through navigation links, so that I can quickly move between features.
-
-#### Acceptance Criteria
-
-1. THE Navigation_Bar SHALL display navigation links in the center section
-2. THE Navigation_Bar SHALL include a "图谱" (Graph) link that navigates to the main 3D visualization
-3. THE Navigation_Bar SHALL include a "文档" (Documents) link for document management
-4. THE Navigation_Bar SHALL include a "关于" (About) link for application information
-5. WHEN a user clicks a navigation link, THE Navigation_Bar SHALL navigate to the corresponding page
-6. WHEN a navigation link corresponds to the current page, THE Navigation_Bar SHALL highlight that link visually
-
-### Requirement 3: Display Action Buttons
-
-**User Story:** As a user, I want quick access to settings and user profile options, so that I can configure the application and manage my account.
+**User Story:** As a user, I want to see the current graph name and search for nodes, so that I can quickly identify my workspace and find specific content.
 
 #### Acceptance Criteria
 
-1. THE Navigation_Bar SHALL display action buttons on the right side
-2. THE Navigation_Bar SHALL include a settings button with a gear icon
-3. WHEN a user clicks the settings button, THE Navigation_Bar SHALL open a settings panel or navigate to settings page
-4. THE Action_Buttons SHALL maintain consistent spacing and alignment
+1. THE Navigation_Bar SHALL display "现有图谱" (Current Graph) label on the left side
+2. THE Navigation_Bar SHALL display a search input field next to the graph label
+3. WHEN a user types in the search field, THE Navigation_Bar SHALL filter and display matching nodes
+4. THE Navigation_Bar SHALL support real-time search as the user types
+5. WHEN search results are available, THE Navigation_Bar SHALL display them in a dropdown below the search field
+
+### Requirement 3: Display Login Button
+
+**User Story:** As a user, I want to see a login button in the navigation bar, so that I can access authentication features.
+
+#### Acceptance Criteria
+
+1. THE Navigation_Bar SHALL display a "登录" (Login) button on the right side
+2. WHEN a user clicks the login button, THE Navigation_Bar SHALL trigger the login flow
+3. THE Navigation_Bar SHALL style the login button to be visually prominent
+4. THE Navigation_Bar SHALL maintain the login button position at all screen sizes
 
 ### Requirement 4: Responsive Design for Mobile Devices
 
