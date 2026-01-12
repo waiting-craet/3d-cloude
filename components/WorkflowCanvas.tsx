@@ -17,6 +17,7 @@ interface Connection {
   id: string
   from: string
   to: string
+  label?: string
 }
 
 export default function WorkflowCanvas() {
@@ -35,6 +36,9 @@ export default function WorkflowCanvas() {
   const [hoveredButtons, setHoveredButtons] = useState<string | null>(null)
   const [isDraggingConnection, setIsDraggingConnection] = useState(false)
   const [dragLineEnd, setDragLineEnd] = useState({ x: 0, y: 0 })
+  const [editingConnection, setEditingConnection] = useState<string | null>(null)
+  const [connectionLabel, setConnectionLabel] = useState('')
+  const [hoveredConnection, setHoveredConnection] = useState<string | null>(null)
 
   // 处理画布拖动
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -164,9 +168,6 @@ export default function WorkflowCanvas() {
     // 如果正在拖拽连线，不处理节点拖动
     if (isDraggingConnection) return
     
-    const node = nodes.find(n => n.id === nodeId)
-    if (node?.isEditing) return
-    
     e.stopPropagation()
     setDraggedNode(nodeId)
     setNodeDragStart({ x: e.clientX, y: e.clientY })
@@ -259,6 +260,65 @@ export default function WorkflowCanvas() {
     console.log('  - isDraggingConnection set to true')
   }
 
+  // 处理连线双击
+  const handleConnectionDoubleClick = (e: React.MouseEvent, connectionId: string) => {
+    console.log('🔴 Connection double clicked!', connectionId)
+    e.stopPropagation()
+    e.preventDefault()
+    
+    const connection = connections.find(c => c.id === connectionId)
+    console.log('  - Found connection:', connection)
+    
+    if (connection) {
+      console.log('  - Opening edit modal for connection:', connectionId)
+      console.log('  - Current label:', connection.label)
+      setEditingConnection(connectionId)
+      setConnectionLabel(connection.label || '')
+    } else {
+      console.log('  - ❌ Connection not found!')
+    }
+  }
+
+  // 更新连线标签
+  const updateConnectionLabel = () => {
+    console.log('💾 Updating connection label')
+    console.log('  - editingConnection:', editingConnection)
+    console.log('  - connectionLabel:', connectionLabel)
+    
+    if (editingConnection) {
+      setConnections(prev => {
+        const updated = prev.map(conn => 
+          conn.id === editingConnection 
+            ? { ...conn, label: connectionLabel.trim() }
+            : conn
+        )
+        console.log('  - Updated connections:', updated)
+        return updated
+      })
+      setEditingConnection(null)
+      setConnectionLabel('')
+      console.log('  - ✅ Label updated successfully')
+    }
+  }
+
+  // 取消编辑
+  const cancelEditConnection = () => {
+    console.log('❌ Canceling connection edit')
+    setEditingConnection(null)
+    setConnectionLabel('')
+  }
+
+  // 删除连线
+  const deleteConnection = () => {
+    console.log('🗑️ Deleting connection:', editingConnection)
+    if (editingConnection) {
+      setConnections(prev => prev.filter(conn => conn.id !== editingConnection))
+      setEditingConnection(null)
+      setConnectionLabel('')
+      console.log('  - ✅ Connection deleted successfully')
+    }
+  }
+
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)
@@ -296,21 +356,92 @@ export default function WorkflowCanvas() {
       const y2 = toNode.y + toNode.height / 2
 
       const midX = (x1 + x2) / 2
+      const midY = (y1 + y2) / 2
 
       console.log('  ✅ Drawing connection line:', { x1, y1, x2, y2, midX })
 
       lines.push(
         <g key={conn.id}>
+          {/* 不可见的宽线条用于捕获鼠标事件 */}
           <path
             d={`M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`}
-            stroke="#3b82f6"
-            strokeWidth="2"
+            stroke="transparent"
+            strokeWidth="30"
             fill="none"
+            style={{ 
+              cursor: 'pointer',
+              pointerEvents: 'stroke',
+            }}
+            onMouseEnter={() => {
+              console.log('🖱️ Mouse entered connection:', conn.id)
+              setHoveredConnection(conn.id)
+            }}
+            onMouseLeave={() => {
+              console.log('🖱️ Mouse left connection:', conn.id)
+              setHoveredConnection(null)
+            }}
+            onClick={(e) => {
+              console.log('🖱️ Connection clicked:', conn.id)
+              e.stopPropagation()
+            }}
+            onDoubleClick={(e) => {
+              console.log('🖱️ Connection double clicked:', conn.id)
+              e.stopPropagation()
+              handleConnectionDoubleClick(e as any, conn.id)
+            }}
           />
+          {/* 可见的连接线 - 悬停时加粗 */}
+          <path
+            d={`M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`}
+            stroke={hoveredConnection === conn.id ? '#2563eb' : '#3b82f6'}
+            strokeWidth={hoveredConnection === conn.id ? '4' : '2'}
+            fill="none"
+            style={{ 
+              pointerEvents: 'none',
+            }}
+          />
+          {/* 箭头 */}
           <polygon
             points={`${x2},${y2} ${x2-8},${y2-4} ${x2-8},${y2+4}`}
-            fill="#3b82f6"
+            fill={hoveredConnection === conn.id ? '#2563eb' : '#3b82f6'}
+            style={{ 
+              pointerEvents: 'none',
+            }}
           />
+          {/* 连线标签 */}
+          {conn.label && (
+            <g>
+              {/* 标签背景 */}
+              <rect
+                x={midX - conn.label.length * 4 - 8}
+                y={midY - 20}
+                width={conn.label.length * 8 + 16}
+                height={24}
+                fill="white"
+                stroke={hoveredConnection === conn.id ? '#2563eb' : '#3b82f6'}
+                strokeWidth={hoveredConnection === conn.id ? '2' : '1'}
+                rx="4"
+                style={{ 
+                  pointerEvents: 'none',
+                }}
+              />
+              {/* 标签文字 */}
+              <text
+                x={midX}
+                y={midY - 4}
+                textAnchor="middle"
+                fill={hoveredConnection === conn.id ? '#2563eb' : '#3b82f6'}
+                fontSize="12"
+                fontWeight="600"
+                style={{ 
+                  pointerEvents: 'none', 
+                  userSelect: 'none',
+                }}
+              >
+                {conn.label}
+              </text>
+            </g>
+          )}
         </g>
       )
     })
@@ -452,7 +583,12 @@ export default function WorkflowCanvas() {
           <div
             key={node.id}
             className="workflow-node"
-            onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+            onMouseDown={(e) => {
+              // 非编辑模式：整个卡片可拖动
+              if (!node.isEditing) {
+                handleNodeMouseDown(e, node.id)
+              }
+            }}
             onMouseEnter={() => {
               if (!isDraggingConnection) {
                 setHoveredNode(node.id)
@@ -491,10 +627,42 @@ export default function WorkflowCanvas() {
               display: 'flex',
               flexDirection: 'column',
               overflow: 'visible',
-              transition: draggedNode === node.id ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: draggedNode === node.id ? 'none' : 'all 0.3s cubic-bezier(0, 0, 0.2, 1)',
               transform: selectedNode === node.id ? 'translateY(-2px)' : 'translateY(0)',
             }}
           >
+            {/* 顶部装饰条（非编辑）或拖动手柄（编辑） */}
+            {!node.isEditing ? (
+              <div style={{
+                height: '4px',
+                background: selectedNode === node.id 
+                  ? 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)'
+                  : 'linear-gradient(90deg, #6b7280 0%, #9ca3af 100%)',
+                borderRadius: '16px 16px 0 0',
+                transition: 'all 0.3s ease',
+              }} />
+            ) : (
+              <div 
+                onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                style={{
+                  height: '32px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+                  borderRadius: '16px 16px 0 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'move',
+                  color: 'white',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  gap: '6px',
+                }}
+              >
+                <span style={{ fontSize: '14px' }}>⋮⋮</span>
+                拖动移动
+              </div>
+            )}
+
             {/* 悬停时显示的操作按钮 */}
             {(hoveredButtons === node.id || hoveredNode === node.id) && !node.isEditing && !isDraggingConnection && (
               <div 
@@ -932,6 +1100,206 @@ export default function WorkflowCanvas() {
         }}>
           拖动到另一个节点的连接点完成连接
         </div>
+      )}
+
+      {/* 连线标签编辑弹窗 */}
+      {editingConnection && (
+        <>
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+          onClick={(e) => {
+            console.log('🖱️ Modal background clicked')
+            cancelEditConnection()
+          }}
+          >
+            <div 
+              style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '32px',
+                width: '90%',
+                maxWidth: '500px',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              }}
+              onClick={(e) => {
+                console.log('🖱️ Modal content clicked (stopping propagation)')
+                e.stopPropagation()
+              }}
+            >
+              <h2 style={{
+                margin: '0 0 24px 0',
+                fontSize: '24px',
+                fontWeight: '700',
+                color: '#1f2937',
+              }}>
+                编辑连线标签
+              </h2>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#4b5563',
+                }}>
+                  连线名称
+                </label>
+                <input
+                  type="text"
+                  value={connectionLabel}
+                  onChange={(e) => {
+                    console.log('📝 Label input changed:', e.target.value)
+                    setConnectionLabel(e.target.value)
+                  }}
+                  onKeyDown={(e) => {
+                    console.log('⌨️ Key pressed:', e.key)
+                    if (e.key === 'Enter') {
+                      updateConnectionLabel()
+                    } else if (e.key === 'Escape') {
+                      cancelEditConnection()
+                    }
+                  }}
+                  placeholder="输入连线名称（可选）"
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '10px',
+                    fontSize: '16px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                />
+              </div>
+
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'space-between',
+              }}>
+                <button
+                  onClick={() => {
+                    console.log('🖱️ Delete button clicked')
+                    deleteConnection()
+                  }}
+                  style={{
+                    padding: '10px 24px',
+                    background: 'transparent',
+                    border: '2px solid #ef4444',
+                    borderRadius: '8px',
+                    color: '#ef4444',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = '#ef4444'
+                    e.currentTarget.style.color = 'white'
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = '#ef4444'
+                  }}
+                >
+                  <span style={{ fontSize: '16px' }}>🗑️</span>
+                  删除连线
+                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => {
+                      console.log('🖱️ Cancel button clicked')
+                      cancelEditConnection()
+                    }}
+                    style={{
+                      padding: '10px 24px',
+                      background: 'transparent',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      color: '#6b7280',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = '#f3f4f6'
+                      e.currentTarget.style.borderColor = '#d1d5db'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                      e.currentTarget.style.borderColor = '#e5e7eb'
+                    }}
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('🖱️ Confirm button clicked')
+                      updateConnectionLabel()
+                    }}
+                    style={{
+                      padding: '10px 24px',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: 'white',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1px)'
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)'
+                    }}
+                  >
+                    确定
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#10b981',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '500',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+            zIndex: 10001,
+          }}>
+            ✅ 编辑模式已激活 - editingConnection: {editingConnection}
+          </div>
+        </>
       )}
     </div>
   )
