@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera, Environment } from '@react-three/drei'
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import { Suspense, useEffect, useRef } from 'react'
 import GraphNodes from './GraphNodes'
 import GraphEdges from './GraphEdges'
@@ -68,15 +68,15 @@ export default function KnowledgeGraph() {
         />
         
         {/* 优化的光照系统 */}
-        <ambientLight intensity={0.5} />
+        <ambientLight intensity={0.6} />
         <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow />
         <directionalLight position={[-10, 10, -10]} intensity={0.6} />
         <pointLight position={[0, 15, 0]} intensity={1.2} color="#6BB6FF" distance={50} />
         <pointLight position={[15, 5, 15]} intensity={0.8} color="#8EC5FF" distance={40} />
         <pointLight position={[-15, 5, -15]} intensity={0.8} color="#4A9EFF" distance={40} />
         
-        {/* 环境贴图 */}
-        <Environment preset="city" />
+        {/* 半球光提供环境色 */}
+        <hemisphereLight args={['#87CEEB', '#1a1a1a', 0.4]} />
         
         <Suspense fallback={null}>
           <GraphNodes />

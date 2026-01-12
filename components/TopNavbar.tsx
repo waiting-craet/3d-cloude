@@ -420,13 +420,13 @@ export default function TopNavbar() {
 
         {/* 右侧按钮区域 */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* 管理员专属：新建项目/图谱按钮 */}
+          {/* 管理员专属：新建图谱按钮 */}
           {isAdmin && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               style={{
                 padding: '10px 18px',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)',
                 border: 'none',
                 borderRadius: '8px',
                 color: 'white',
@@ -434,22 +434,22 @@ export default function TopNavbar() {
                 fontSize: '13px',
                 fontWeight: '600',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                boxShadow: '0 2px 8px rgba(74, 158, 255, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'translateY(-1px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 158, 255, 0.4)'
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)'
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(74, 158, 255, 0.3)'
               }}
             >
               <span style={{ fontSize: '16px' }}>+</span>
-              新建项目/图谱
+              新建图谱
             </button>
           )}
 
