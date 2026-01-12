@@ -1,10 +1,4 @@
 import { put, list } from '@vercel/blob'
-import * as dotenv from 'dotenv'
-import * as path from 'path'
-
-// 加载环境变量
-dotenv.config({ path: path.resolve(process.cwd(), '.env') })
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 
 async function testBlobConnection() {
   console.log('🔍 测试 Vercel Blob 连接...\n')
