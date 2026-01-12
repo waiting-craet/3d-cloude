@@ -1,7 +1,23 @@
 import { put, list } from '@vercel/blob'
+import * as dotenv from 'dotenv'
+import * as path from 'path'
+
+// 加载环境变量
+dotenv.config({ path: path.resolve(process.cwd(), '.env') })
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 
 async function testBlobConnection() {
   console.log('🔍 测试 Vercel Blob 连接...\n')
+  
+  // 检查环境变量
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error('❌ 错误: BLOB_READ_WRITE_TOKEN 环境变量未设置')
+    console.error('请在 .env 或 .env.local 文件中添加此变量\n')
+    process.exit(1)
+  }
+  
+  console.log('✅ 找到 BLOB_READ_WRITE_TOKEN')
+  console.log(`   Token: ${process.env.BLOB_READ_WRITE_TOKEN.substring(0, 20)}...\n`)
   
   try {
     // 测试上传一个简单的文本文件
