@@ -11,9 +11,6 @@ interface Node {
   width: number
   height: number
   isEditing: boolean
-  imageUrl?: string  // 图片 URL
-  videoUrl?: string  // 视频 URL
-  mediaType?: 'image' | 'video' | null  // 媒体类型
 }
 
 interface Connection {
@@ -49,12 +46,79 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const [editingConnection, setEditingConnection] = useState<string | null>(null)
   const [connectionLabel, setConnectionLabel] = useState('')
   const [hoveredConnection, setHoveredConnection] = useState<string | null>(null)
-  const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)  // 正在上传媒体的节点 ID
+  const [isLoading, setIsLoading] = useState(true)
   
   // 转换相关状态
   const [isConverting, setIsConverting] = useState(false)
   const [conversionError, setConversionError] = useState<string | null>(null)
   const [conversionSuccess, setConversionSuccess] = useState(false)
+
+  // 加载现有图谱数据
+  useEffect(() => {
+    const loadGraphData = async () => {
+      try {
+        setIsLoading(true)
+        
+        // 从数据库加载节点和边
+        const [nodesRes, edgesRes] = await Promise.all([
+          fetch('/api/nodes'),
+          fetch('/api/edges'),
+        ])
+
+        if (nodesRes.ok && edgesRes.ok) {
+          const dbNodes = await nodesRes.json()
+          const dbEdges = await edgesRes.json()
+
+          // 转换数据库节点为工作流节点
+          const workflowNodes: Node[] = dbNodes.map((dbNode: any) => {
+            // 尝试从metadata中恢复2D坐标
+            let x2d = 300
+            let y2d = 300
+            
+            try {
+              const metadata = JSON.parse(dbNode.metadata || '{}')
+              if (metadata.original2D) {
+                x2d = metadata.original2D.x
+                y2d = metadata.original2D.y
+              }
+            } catch (e) {
+              // 如果没有2D坐标，使用随机位置
+              x2d = 300 + Math.random() * 400
+              y2d = 300 + Math.random() * 400
+            }
+
+            return {
+              id: dbNode.id,
+              label: dbNode.name,
+              description: dbNode.description || '',
+              x: x2d,
+              y: y2d,
+              width: 320,
+              height: 180,
+              isEditing: false,
+            }
+          })
+
+          // 转换数据库边为工作流连接
+          const workflowConnections: Connection[] = dbEdges.map((dbEdge: any) => ({
+            id: dbEdge.id,
+            from: dbEdge.fromNodeId,
+            to: dbEdge.toNodeId,
+            label: dbEdge.label === 'RELATES_TO' ? '' : dbEdge.label,
+          }))
+
+          setNodes(workflowNodes)
+          setConnections(workflowConnections)
+        }
+      } catch (error) {
+        console.error('加载图谱数据失败:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadGraphData()
+  }, [])
 
   // 处理画布拖动
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -335,94 +399,6 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     }
   }
 
-<<<<<<< HEAD
-  // 处理媒体上传
-  const handleMediaUpload = async (nodeId: string, file: File) => {
-    try {
-      setUploadingMedia(nodeId)
-      
-      // 验证文件类型
-      const isImage = file.type.startsWith('image/')
-      const isVideo = file.type.startsWith('video/')
-      
-      if (!isImage && !isVideo) {
-        alert('请上传图片或视频文件')
-        return
-      }
-      
-      // 验证文件大小（图片最大 5MB，视频最大 50MB）
-      const maxSize = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024
-      if (file.size > maxSize) {
-        alert(`文件大小超过限制（${isImage ? '5MB' : '50MB'}）`)
-        return
-      }
-      
-      // 创建 FormData
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('nodeId', nodeId)
-      formData.append('type', isImage ? 'image' : 'video')
-      
-      // 上传到 Blob
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-      
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || '上传失败')
-      }
-      
-      const data = await response.json()
-      
-      // 更新节点
-      updateNode(nodeId, {
-        [isImage ? 'imageUrl' : 'videoUrl']: data.url,
-        mediaType: isImage ? 'image' : 'video',
-      })
-      
-      console.log('✅ Media uploaded successfully:', data.url)
-      
-    } catch (error) {
-      console.error('❌ Upload failed:', error)
-      alert('上传失败: ' + (error instanceof Error ? error.message : '未知错误'))
-    } finally {
-      setUploadingMedia(null)
-    }
-  }
-
-  // 删除媒体
-  const handleDeleteMedia = async (nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId)
-    if (!node) return
-    
-    const mediaUrl = node.mediaType === 'image' ? node.imageUrl : node.videoUrl
-    if (!mediaUrl) return
-    
-    try {
-      // 从 Blob 删除
-      await fetch('/api/upload/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: mediaUrl }),
-      })
-      
-      // 更新节点
-      updateNode(nodeId, {
-        imageUrl: undefined,
-        videoUrl: undefined,
-        mediaType: null,
-      })
-      
-      console.log('✅ Media deleted successfully')
-      
-    } catch (error) {
-      console.error('❌ Delete failed:', error)
-      alert('删除失败')
-    }
-  }
-=======
   // 保存并转换为三维图谱
   const saveAndConvert = async () => {
     try {
@@ -450,7 +426,8 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         metadata: {
           canvasScale: scale,
           canvasOffset: offset,
-        }
+        },
+        updateMode: true, // 标记为更新模式
       }
 
       // 3. 调用API
@@ -492,7 +469,6 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     conversionError,
     conversionSuccess,
   }))
->>>>>>> translate2-3
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove)
@@ -671,6 +647,41 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         WebkitUserSelect: 'none',
       }}
     >
+      {/* 加载状态 */}
+      {isLoading && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'white',
+          padding: '32px 48px',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          zIndex: 10002,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '16px',
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #e5e7eb',
+            borderTopColor: '#3b82f6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }} />
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#1f2937',
+          }}>
+            正在加载图谱数据...
+          </div>
+        </div>
+      )}
+
       {/* 左上角添加节点按钮 */}
       <div style={{
         position: 'absolute',
@@ -1009,181 +1020,6 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                     padding: '16px',
                     background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
                   }}>
-                    {/* 媒体预览 */}
-                    {(node.imageUrl || node.videoUrl) && (
-                      <div style={{
-                        position: 'relative',
-                        marginBottom: '12px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                      }}>
-                        {node.mediaType === 'image' && node.imageUrl && (
-                          <img
-                            src={node.imageUrl}
-                            alt="节点图片"
-                            style={{
-                              width: '100%',
-                              height: 'auto',
-                              maxHeight: '200px',
-                              objectFit: 'cover',
-                              display: 'block',
-                            }}
-                          />
-                        )}
-                        {node.mediaType === 'video' && node.videoUrl && (
-                          <video
-                            src={node.videoUrl}
-                            controls
-                            style={{
-                              width: '100%',
-                              height: 'auto',
-                              maxHeight: '200px',
-                              display: 'block',
-                            }}
-                          />
-                        )}
-                        {/* 删除按钮 */}
-                        <button
-                          onClick={() => handleDeleteMedia(node.id)}
-                          style={{
-                            position: 'absolute',
-                            top: '8px',
-                            right: '8px',
-                            width: '32px',
-                            height: '32px',
-                            background: 'rgba(239, 68, 68, 0.9)',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '16px',
-                            color: 'white',
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(220, 38, 38, 1)'
-                            e.currentTarget.style.transform = 'scale(1.1)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.9)'
-                            e.currentTarget.style.transform = 'scale(1)'
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    )}
-                    
-                    {/* 上传按钮 */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '8px',
-                      justifyContent: 'center',
-                    }}>
-                      <label style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        background: uploadingMedia === node.id ? '#9ca3af' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        color: 'white',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: uploadingMedia === node.id ? 'not-allowed' : 'pointer',
-                        textAlign: 'center',
-                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (uploadingMedia !== node.id) {
-                          e.currentTarget.style.transform = 'translateY(-1px)'
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)'
-                      }}
-                      >
-                        <span style={{ fontSize: '16px' }}>🖼️</span>
-                        {uploadingMedia === node.id ? '上传中...' : '上传图片'}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={uploadingMedia === node.id}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              handleMediaUpload(node.id, file)
-                            }
-                            e.target.value = ''
-                          }}
-                          style={{ display: 'none' }}
-                        />
-                      </label>
-                      
-                      <label style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        background: uploadingMedia === node.id ? '#9ca3af' : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        color: 'white',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: uploadingMedia === node.id ? 'not-allowed' : 'pointer',
-                        textAlign: 'center',
-                        boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (uploadingMedia !== node.id) {
-                          e.currentTarget.style.transform = 'translateY(-1px)'
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)'
-                      }}
-                      >
-                        <span style={{ fontSize: '16px' }}>🎬</span>
-                        {uploadingMedia === node.id ? '上传中...' : '上传视频'}
-                        <input
-                          type="file"
-                          accept="video/*"
-                          disabled={uploadingMedia === node.id}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              handleMediaUpload(node.id, file)
-                            }
-                            e.target.value = ''
-                          }}
-                          style={{ display: 'none' }}
-                        />
-                      </label>
-                    </div>
-                    
-                    <div style={{
-                      marginTop: '8px',
-                      fontSize: '11px',
-                      color: '#9ca3af',
-                      textAlign: 'center',
-                    }}>
-                      图片最大 5MB，视频最大 50MB
-                    </div>
                   </div>
                   
                   <button
@@ -1226,42 +1062,6 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                   }}>
                     {node.label || '未命名节点'}
                   </div>
-                  
-                  {/* 媒体预览 */}
-                  {(node.imageUrl || node.videoUrl) && (
-                    <div style={{
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      marginTop: '8px',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                    }}>
-                      {node.mediaType === 'image' && node.imageUrl && (
-                        <img
-                          src={node.imageUrl}
-                          alt={node.label}
-                          style={{
-                            width: '100%',
-                            height: 'auto',
-                            maxHeight: '180px',
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                        />
-                      )}
-                      {node.mediaType === 'video' && node.videoUrl && (
-                        <video
-                          src={node.videoUrl}
-                          controls
-                          style={{
-                            width: '100%',
-                            height: 'auto',
-                            maxHeight: '180px',
-                            display: 'block',
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
                   
                   {node.description && (
                     <div style={{

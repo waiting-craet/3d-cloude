@@ -11,6 +11,8 @@ export interface Node {
   z: number
   color: string
   size?: number
+  imageUrl?: string
+  videoUrl?: string
 }
 
 export interface Edge {
