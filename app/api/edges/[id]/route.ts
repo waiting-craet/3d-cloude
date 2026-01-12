@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// 使用 Node.js Runtime（开发环境）
+export const runtime = 'nodejs'
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }

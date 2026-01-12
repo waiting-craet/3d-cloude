@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// 使用 Node.js Runtime（开发环境）
+export const runtime = 'nodejs'
+
 export async function GET() {
   try {
     const nodes = await prisma.node.findMany({
@@ -20,7 +23,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, type, description, x, y, z, color } = body
+    const { name, type, description, x, y, z, color, size } = body
     
     if (!name || !type) {
       return NextResponse.json(
@@ -37,7 +40,8 @@ export async function POST(request: NextRequest) {
         x: x ?? 0,
         y: y ?? 0,
         z: z ?? 0,
-        color: color ?? '#3b82f6',
+        color: color ?? '#6BB6FF',
+        size: size ?? 1.5,
       },
     })
     

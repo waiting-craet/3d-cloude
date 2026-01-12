@@ -16,7 +16,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #000000;
+  background: #2a2a2a;
 }
 
 #canvas-container {
@@ -25,7 +25,7 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  background: linear-gradient(to bottom, #000000 0%, #0a0a0a 100%);
+  background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
 }
 
 .ui-overlay {
@@ -40,6 +40,7 @@ body {
 
 button {
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 button:hover {
@@ -49,4 +50,48 @@ button:hover {
 
 button:active {
   transform: translateY(0);
+}
+
+input {
+  font-family: inherit;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4A9EFF !important;
+}
+
+/* 节点详情面板滑入动画 */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 节点详情面板滑出动画 */
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+}
+
+/* 平滑的输入框过渡 */
+input, textarea {
+  transition: all 0.2s ease;
+}
+
+input:disabled, textarea:disabled {
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
