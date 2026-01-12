@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-export const runtime = 'edge'
+// 使用 Node.js Runtime（开发环境）
+export const runtime = 'nodejs'
 
 export async function PATCH(
   request: NextRequest,
@@ -9,7 +10,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json()
-    const { name, description, color } = body
+    const { name, description, color, tags } = body
     
     const node = await prisma.node.update({
       where: { id: params.id },
@@ -17,6 +18,7 @@ export async function PATCH(
         ...(name && { name }),
         ...(description !== undefined && { description }),
         ...(color && { color }),
+        ...(tags && { tags }),
       },
     })
     
@@ -24,7 +26,7 @@ export async function PATCH(
   } catch (error) {
     console.error('更新节点失败:', error)
     return NextResponse.json(
-      { error: '更新节点失败' },
+      { error: '更新节点失败', details: String(error) },
       { status: 500 }
     )
   }
@@ -43,7 +45,7 @@ export async function DELETE(
   } catch (error) {
     console.error('删除节点失败:', error)
     return NextResponse.json(
-      { error: '删除节点失败' },
+      { error: '删除节点失败', details: String(error) },
       { status: 500 }
     )
   }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-export const runtime = 'edge'
+// 使用 Node.js Runtime（开发环境）
+export const runtime = 'nodejs'
 
 export async function GET() {
   try {
@@ -13,7 +14,7 @@ export async function GET() {
   } catch (error) {
     console.error('获取节点失败:', error)
     return NextResponse.json(
-      { error: '获取节点失败' },
+      { error: '获取节点失败', details: String(error) },
       { status: 500 }
     )
   }
@@ -22,7 +23,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, type, description, x, y, z, color } = body
+    const { name, type, description, x, y, z, color, size } = body
     
     if (!name || !type) {
       return NextResponse.json(
@@ -39,7 +40,8 @@ export async function POST(request: NextRequest) {
         x: x ?? 0,
         y: y ?? 0,
         z: z ?? 0,
-        color: color ?? '#3b82f6',
+        color: color ?? '#6BB6FF',
+        size: size ?? 1.5,
       },
     })
     
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('创建节点失败:', error)
     return NextResponse.json(
-      { error: '创建节点失败' },
+      { error: '创建节点失败', details: String(error) },
       { status: 500 }
     )
   }
