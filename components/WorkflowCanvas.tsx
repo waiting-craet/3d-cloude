@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 
 interface Node {
   id: string
@@ -23,7 +23,14 @@ interface Connection {
   label?: string
 }
 
-export default function WorkflowCanvas() {
+export interface WorkflowCanvasRef {
+  saveAndConvert: () => Promise<void>
+  isConverting: boolean
+  conversionError: string | null
+  conversionSuccess: boolean
+}
+
+const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 400, y: 200 })
@@ -43,6 +50,11 @@ export default function WorkflowCanvas() {
   const [connectionLabel, setConnectionLabel] = useState('')
   const [hoveredConnection, setHoveredConnection] = useState<string | null>(null)
   const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)  // 正在上传媒体的节点 ID
+  
+  // 转换相关状态
+  const [isConverting, setIsConverting] = useState(false)
+  const [conversionError, setConversionError] = useState<string | null>(null)
+  const [conversionSuccess, setConversionSuccess] = useState(false)
 
   // 处理画布拖动
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -323,6 +335,7 @@ export default function WorkflowCanvas() {
     }
   }
 
+<<<<<<< HEAD
   // 处理媒体上传
   const handleMediaUpload = async (nodeId: string, file: File) => {
     try {
@@ -409,6 +422,77 @@ export default function WorkflowCanvas() {
       alert('删除失败')
     }
   }
+=======
+  // 保存并转换为三维图谱
+  const saveAndConvert = async () => {
+    try {
+      // 1. 验证数据
+      const validNodes = nodes.filter(n => n.label.trim() !== '')
+      if (validNodes.length === 0) {
+        setConversionError('请至少创建一个有效节点')
+        setTimeout(() => setConversionError(null), 3000)
+        return
+      }
+
+      // 2. 准备数据
+      const payload = {
+        nodes: validNodes.map(n => ({
+          id: n.id,
+          label: n.label,
+          description: n.description,
+          x: n.x,
+          y: n.y,
+        })),
+        connections: connections.filter(c => 
+          validNodes.some(n => n.id === c.from) &&
+          validNodes.some(n => n.id === c.to)
+        ),
+        metadata: {
+          canvasScale: scale,
+          canvasOffset: offset,
+        }
+      }
+
+      // 3. 调用API
+      setIsConverting(true)
+      setConversionError(null)
+      
+      const response = await fetch('/api/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || '转换失败')
+      }
+
+      const result = await response.json()
+      
+      // 4. 显示成功并跳转
+      setConversionSuccess(true)
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 1500)
+      
+    } catch (error) {
+      console.error('转换失败:', error)
+      setConversionError(error instanceof Error ? error.message : '转换失败')
+      setTimeout(() => setConversionError(null), 5000)
+    } finally {
+      setIsConverting(false)
+    }
+  }
+
+  // 暴露方法给父组件
+  useImperativeHandle(ref, () => ({
+    saveAndConvert,
+    isConverting,
+    conversionError,
+    conversionSuccess,
+  }))
+>>>>>>> translate2-3
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove)
@@ -1614,6 +1698,107 @@ export default function WorkflowCanvas() {
           </div>
         </>
       )}
+
+      {/* 转换状态提示 */}
+      {isConverting && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'white',
+          padding: '32px 48px',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          zIndex: 10002,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '16px',
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #e5e7eb',
+            borderTopColor: '#3b82f6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }} />
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#1f2937',
+          }}>
+            正在转换为三维图谱...
+          </div>
+        </div>
+      )}
+
+      {/* 转换成功提示 */}
+      {conversionSuccess && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'white',
+          padding: '32px 48px',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          zIndex: 10002,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '16px',
+        }}>
+          <div style={{
+            fontSize: '48px',
+          }}>
+            ✅
+          </div>
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#10b981',
+          }}>
+            转换成功！正在跳转...
+          </div>
+        </div>
+      )}
+
+      {/* 转换错误提示 */}
+      {conversionError && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#ef4444',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+          zIndex: 10001,
+          maxWidth: '500px',
+        }}>
+          ❌ {conversionError}
+        </div>
+      )}
+
+      {/* 添加旋转动画 */}
+      <style jsx>{`
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   )
-}
+})
+
+WorkflowCanvas.displayName = 'WorkflowCanvas'
+
+export default WorkflowCanvas
