@@ -1,13 +1,15 @@
 import KnowledgeGraph from '@/components/KnowledgeGraph'
-import ControlPanel from '@/components/ControlPanel'
-
-export const runtime = 'edge'
+import TopNavbar from '@/components/TopNavbar'
+import NodeDetailPanel from '@/components/NodeDetailPanel'
+import FloatingAddButton from '@/components/FloatingAddButton'
 
 export default function Home() {
   return (
     <main>
+      <TopNavbar />
       <KnowledgeGraph />
-      <ControlPanel />
+      <NodeDetailPanel />
+      <FloatingAddButton />
     </main>
   )
 }
