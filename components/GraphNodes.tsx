@@ -29,6 +29,12 @@ function Node({ node, onClick, onDrag }: NodeProps) {
     if (meshRef.current) {
       const targetScale = hovered ? 1.15 : isSelected ? 1.2 : 1
       meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.15)
+      
+      // 选中时添加轻微的脉动效果
+      if (isSelected) {
+        const pulse = Math.sin(Date.now() * 0.003) * 0.05 + 1.15
+        meshRef.current.scale.setScalar(pulse)
+      }
     }
   })
 
@@ -139,7 +145,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
           e.stopPropagation()
           setHovered(true)
           const { isDragging } = useGraphStore.getState()
-          document.body.style.cursor = isDragging ? 'grabbing' : 'grab'
+          document.body.style.cursor = isDragging ? 'grabbing' : 'pointer'
         }}
         onPointerOut={() => {
           setHovered(false)
@@ -154,20 +160,20 @@ function Node({ node, onClick, onDrag }: NodeProps) {
           color={node.color || '#6BB6FF'} 
           transparent
           opacity={0.9}
-          emissive={isSelected ? node.color || '#6BB6FF' : '#000000'}
-          emissiveIntensity={isSelected ? 0.4 : 0}
+          emissive={isSelected ? node.color || '#6BB6FF' : hovered ? node.color || '#6BB6FF' : '#000000'}
+          emissiveIntensity={isSelected ? 0.5 : hovered ? 0.3 : 0}
           roughness={0.3}
           metalness={0.5}
         />
       </mesh>
       
-      {/* 外层光晕效果 */}
+      {/* 外层光晕效果 - 悬停和选中时更明显 */}
       <mesh>
         <sphereGeometry args={[(node.size || 1.5) * 1.15, 32, 32]} />
         <meshBasicMaterial 
           color={node.color || '#6BB6FF'}
           transparent
-          opacity={0.15}
+          opacity={isSelected ? 0.25 : hovered ? 0.2 : 0.15}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -188,17 +194,19 @@ function Node({ node, onClick, onDrag }: NodeProps) {
         {node.name || '未命名'}
       </Text>
       
-      {/* 选中时的高亮圆环 */}
+      {/* 选中时的高亮圆环 - 添加旋转动画 */}
       {isSelected && (
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[(node.size || 1.5) * 1.3, (node.size || 1.5) * 1.4, 32]} />
-          <meshBasicMaterial 
-            color={node.color || '#6BB6FF'}
-            transparent
-            opacity={0.6}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
+        <group rotation={[Math.PI / 2, 0, Date.now() * 0.001]}>
+          <mesh>
+            <ringGeometry args={[(node.size || 1.5) * 1.3, (node.size || 1.5) * 1.4, 32]} />
+            <meshBasicMaterial 
+              color={node.color || '#6BB6FF'}
+              transparent
+              opacity={0.7}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        </group>
       )}
     </group>
   )
@@ -243,27 +251,32 @@ export default function GraphNodes() {
     } else {
       setSelectedNode(node)
       
-      // 相机动画：将节点移动到屏幕中心
-      const targetPosition = new THREE.Vector3(
-        node.x,
-        node.y,
-        node.z + 15  // 在节点前方 15 单位
-      )
+      // 优化的相机动画：平滑过渡到节点
+      const nodePosition = new THREE.Vector3(node.x, node.y, node.z)
+      const cameraDirection = new THREE.Vector3()
+      camera.getWorldDirection(cameraDirection)
       
-      // 平滑移动相机
+      // 计算理想的相机位置（在节点前方，保持一定距离）
+      const distance = 12
+      const offset = cameraDirection.clone().multiplyScalar(-distance)
+      const targetPosition = nodePosition.clone().add(offset)
+      
+      // 平滑移动相机和目标点
       const startPosition = camera.position.clone()
       const startTime = Date.now()
-      const duration = 1000 // 1秒动画
+      const duration = 800 // 0.8秒动画，更流畅
       
       const animateCamera = () => {
         const elapsed = Date.now() - startTime
         const progress = Math.min(elapsed / duration, 1)
         
-        // 使用缓动函数
-        const easeProgress = 1 - Math.pow(1 - progress, 3)
+        // 使用更舒适的缓动函数 (easeInOutCubic)
+        const easeProgress = progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2
         
         camera.position.lerpVectors(startPosition, targetPosition, easeProgress)
-        camera.lookAt(node.x, node.y, node.z)
+        camera.lookAt(nodePosition.x, nodePosition.y, nodePosition.z)
         
         if (progress < 1) {
           requestAnimationFrame(animateCamera)
