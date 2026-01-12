@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File
     const nodeId = formData.get('nodeId') as string
-    const type = formData.get('type') as string // 'thumbnail' 或 'attachment'
+    const type = formData.get('type') as string // 'thumbnail', 'attachment', 'image', 'video'
     
     if (!file) {
       return NextResponse.json(
@@ -18,27 +18,30 @@ export async function POST(request: NextRequest) {
     }
     
     // 验证文件类型
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+    
+    if (!isImage && !isVideo) {
       return NextResponse.json(
-        { error: '不支持的文件类型，仅支持 JPEG, PNG, GIF, WebP' },
+        { error: '不支持的文件类型，仅支持图片和视频' },
         { status: 400 }
       )
     }
     
-    // 验证文件大小（最大 5MB）
-    const maxSize = 5 * 1024 * 1024 // 5MB
+    // 验证文件大小（图片最大 5MB，视频最大 50MB）
+    const maxSize = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: '文件大小超过限制（最大 5MB）' },
+        { error: `文件大小超过限制（${isImage ? '最大 5MB' : '最大 50MB'}）` },
         { status: 400 }
       )
     }
     
     // 构建文件路径
     const timestamp = Date.now()
+    const fileExtension = file.name.split('.').pop()
     const filename = nodeId 
-      ? `nodes/${nodeId}/${type || 'image'}-${timestamp}-${file.name}`
+      ? `nodes/${nodeId}/${type || 'media'}-${timestamp}.${fileExtension}`
       : `uploads/${timestamp}-${file.name}`
     
     // 上传到 Vercel Blob
@@ -51,6 +54,7 @@ export async function POST(request: NextRequest) {
       pathname: blob.pathname,
       contentType: blob.contentType,
       size: file.size,
+      mediaType: isImage ? 'image' : 'video',
     }, { status: 201 })
     
   } catch (error) {
