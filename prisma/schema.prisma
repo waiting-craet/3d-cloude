@@ -26,9 +26,14 @@ model Node {
   size        Float    @default(1.0)
   opacity     Float    @default(1.0)
   
+  // 图片/图标（存储在 Vercel Blob）
+  imageUrl    String?  // 节点的图片 URL
+  iconUrl     String?  // 节点的图标 URL
+  
   // 文档相关
   documentId  String?  // 如果是 chunk，关联的文档 ID
   chunkIndex  Int?     // 在文档中的顺序
+  coverUrl    String?  // 文档封面图 URL（仅用于 document 类型）
   
   // 向量嵌入（用于语义搜索）
   embedding   String?  // JSON 数组格式的向量
