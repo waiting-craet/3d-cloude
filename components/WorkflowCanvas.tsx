@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 
 interface Node {
@@ -24,7 +23,6 @@ interface Connection {
   label?: string
 }
 
-export default function WorkflowCanvas() {
 export interface WorkflowCanvasRef {
   saveAndConvert: () => Promise<void>
   isConverting: boolean
