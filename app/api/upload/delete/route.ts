@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { deleteImage } from '@/lib/blob-storage'
+import { del } from '@vercel/blob'
 
 export const runtime = 'nodejs'
 
@@ -10,19 +10,20 @@ export async function DELETE(request: NextRequest) {
     
     if (!url) {
       return NextResponse.json(
-        { error: '请提供图片 URL' },
+        { error: '未提供图片 URL' },
         { status: 400 }
       )
     }
     
-    await deleteImage(url)
+    // 删除 Blob 中的文件
+    await del(url)
     
     return NextResponse.json({ success: true })
     
   } catch (error) {
-    console.error('删除失败:', error)
+    console.error('删除文件失败:', error)
     return NextResponse.json(
-      { error: '删除失败', details: String(error) },
+      { error: '删除文件失败', details: String(error) },
       { status: 500 }
     )
   }

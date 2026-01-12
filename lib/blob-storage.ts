@@ -21,8 +21,8 @@ export async function uploadImage(file: File | Buffer, filename: string): Promis
 }
 
 /**
- * 删除 Blob 中的文件
- * @param url - 文件的完整 URL
+ * 删除 Blob 中的图片
+ * @param url - 图片的完整 URL
  */
 export async function deleteImage(url: string): Promise<void> {
   try {
@@ -34,9 +34,9 @@ export async function deleteImage(url: string): Promise<void> {
 }
 
 /**
- * 列出所有上传的文件
+ * 列出所有上传的图片
  * @param prefix - 文件名前缀（可选）
- * @returns 文件列表
+ * @returns 图片列表
  */
 export async function listImages(prefix?: string) {
   try {
@@ -46,29 +46,50 @@ export async function listImages(prefix?: string) {
     
     return blobs
   } catch (error) {
-    console.error('获取文件列表失败:', error)
-    throw new Error('获取文件列表失败')
+    console.error('获取图片列表失败:', error)
+    throw new Error('获取图片列表失败')
   }
 }
 
 /**
- * 上传节点的图片/图标
- * @param file - 图片文件
+ * 上传节点的缩略图
  * @param nodeId - 节点 ID
+ * @param file - 图片文件
  * @returns 图片 URL
  */
-export async function uploadNodeImage(file: File | Buffer, nodeId: string): Promise<string> {
-  const filename = `nodes/${nodeId}/${Date.now()}.png`
+export async function uploadNodeThumbnail(nodeId: string, file: File | Buffer): Promise<string> {
+  const filename = `nodes/${nodeId}/thumbnail.jpg`
   return uploadImage(file, filename)
 }
 
 /**
- * 上传文档的封面图
+ * 上传节点的附件图片
+ * @param nodeId - 节点 ID
  * @param file - 图片文件
- * @param documentId - 文档 ID
+ * @param attachmentName - 附件名称
  * @returns 图片 URL
  */
-export async function uploadDocumentCover(file: File | Buffer, documentId: string): Promise<string> {
-  const filename = `documents/${documentId}/cover.png`
+export async function uploadNodeAttachment(
+  nodeId: string,
+  file: File | Buffer,
+  attachmentName: string
+): Promise<string> {
+  const filename = `nodes/${nodeId}/attachments/${attachmentName}`
   return uploadImage(file, filename)
+}
+
+/**
+ * 删除节点的所有图片
+ * @param nodeId - 节点 ID
+ */
+export async function deleteNodeImages(nodeId: string): Promise<void> {
+  try {
+    const images = await listImages(`nodes/${nodeId}/`)
+    
+    // 批量删除所有相关图片
+    await Promise.all(images.map(img => deleteImage(img.url)))
+  } catch (error) {
+    console.error('删除节点图片失败:', error)
+    throw new Error('删除节点图片失败')
+  }
 }

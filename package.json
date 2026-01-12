@@ -11,6 +11,7 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx scripts/seed.ts",
     "db:test": "tsx scripts/test-connection.ts",
+    "db:test-blob": "tsx scripts/test-blob.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
