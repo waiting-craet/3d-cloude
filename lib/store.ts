@@ -5,6 +5,7 @@ export interface Node {
   name: string
   type: string
   description?: string
+  tags?: string
   x: number
   y: number
   z: number
