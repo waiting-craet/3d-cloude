@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db'
 
 // 使用 Node.js Runtime（开发环境）
 export const runtime = 'nodejs'
+// 标记为动态路由
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
