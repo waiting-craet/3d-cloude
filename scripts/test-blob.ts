@@ -24,7 +24,6 @@ async function testBlobConnection() {
     console.log('✅ 上传成功!')
     console.log('   URL:', blob.url)
     console.log('   路径:', blob.pathname)
-    console.log('   大小:', blob.size, 'bytes')
     console.log('')
     
     // 测试列出文件
