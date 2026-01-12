@@ -1,9 +1,15 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import WorkflowCanvas from '@/components/WorkflowCanvas'
+import { useRef } from 'react'
+import WorkflowCanvas, { type WorkflowCanvasRef } from '@/components/WorkflowCanvas'
 
 export default function WorkflowPage() {
+  const canvasRef = useRef<WorkflowCanvasRef>(null)
+
+  const handleSave = () => {
+    canvasRef.current?.saveAndConvert()
+  }
+
   return (
     <div style={{
       width: '100vw',
@@ -54,23 +60,28 @@ export default function WorkflowPage() {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
-          <button style={{
-            padding: '8px 16px',
-            background: '#3b82f6',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            color: 'white',
-            fontWeight: '500',
-          }}>
-            保存
+          <button 
+            onClick={handleSave}
+            disabled={canvasRef.current?.isConverting}
+            style={{
+              padding: '8px 16px',
+              background: canvasRef.current?.isConverting ? '#9ca3af' : '#3b82f6',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: canvasRef.current?.isConverting ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              color: 'white',
+              fontWeight: '500',
+              opacity: canvasRef.current?.isConverting ? 0.6 : 1,
+            }}
+          >
+            {canvasRef.current?.isConverting ? '转换中...' : '保存并转换为3D'}
           </button>
         </div>
       </div>
 
       {/* 画布区域 */}
-      <WorkflowCanvas />
+      <WorkflowCanvas ref={canvasRef} />
     </div>
   )
 }
