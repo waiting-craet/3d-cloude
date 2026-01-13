@@ -252,3 +252,190 @@ export function getDescriptiveErrorMessage(error: unknown): string {
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+/**
+ * Create a document node
+ */
+export async function createDocumentNode(data: {
+  name: string
+  content?: string
+  description?: string
+  tags?: string[]
+  category?: string
+}): Promise<Node> {
+  return await prisma.node.create({
+    data: {
+      name: data.name,
+      type: 'document',
+      description: data.description || null,
+      x: Math.random() * 1000 - 500,
+      y: Math.random() * 1000 - 500,
+      z: Math.random() * 1000 - 500,
+      color: '#4CAF50',
+      size: 1,
+      metadata: JSON.stringify({
+        content: data.content,
+        tags: data.tags,
+        category: data.category,
+      }),
+    },
+  })
+}
+
+/**
+ * Split document content into chunks and create chunk nodes
+ */
+export async function splitDocumentIntoChunks(
+  documentId: string,
+  content: string,
+  chunkSize: number = 1000
+): Promise<Node[]> {
+  const chunks: string[] = []
+  
+  // Split content into chunks
+  for (let i = 0; i < content.length; i += chunkSize) {
+    chunks.push(content.slice(i, i + chunkSize))
+  }
+  
+  // Create chunk nodes
+  const chunkNodes: Node[] = []
+  for (let i = 0; i < chunks.length; i++) {
+    const chunkNode = await prisma.node.create({
+      data: {
+        name: `Chunk ${i + 1}`,
+        type: 'chunk',
+        description: `Part ${i + 1} of ${chunks.length}`,
+        x: Math.random() * 1000 - 500,
+        y: Math.random() * 1000 - 500,
+        z: Math.random() * 1000 - 500,
+        color: '#2196F3',
+        size: 0.5,
+        metadata: JSON.stringify({
+          content: chunks[i],
+          chunkIndex: i,
+          totalChunks: chunks.length,
+        }),
+      },
+    })
+    
+    // Create edge from document to chunk
+    await prisma.edge.create({
+      data: {
+        fromNodeId: documentId,
+        toNodeId: chunkNode.id,
+        label: 'contains',
+        weight: 1,
+        color: '#999999',
+      },
+    })
+    
+    chunkNodes.push(chunkNode)
+  }
+  
+  return chunkNodes
+}
+
+/**
+ * Get neighbors of a node up to a certain depth
+ */
+export async function getNodeNeighbors(
+  nodeId: string,
+  depth: number = 1
+): Promise<Node[]> {
+  const visited = new Set<string>()
+  const neighbors: Node[] = []
+  
+  async function traverse(currentId: string, currentDepth: number) {
+    if (currentDepth > depth || visited.has(currentId)) {
+      return
+    }
+    
+    visited.add(currentId)
+    
+    // Get outgoing edges
+    const outgoingEdges = await prisma.edge.findMany({
+      where: { fromNodeId: currentId },
+      include: { toNode: true },
+    })
+    
+    // Get incoming edges
+    const incomingEdges = await prisma.edge.findMany({
+      where: { toNodeId: currentId },
+      include: { fromNode: true },
+    })
+    
+    // Add neighbors
+    for (const edge of outgoingEdges) {
+      if (!visited.has(edge.toNode.id)) {
+        neighbors.push(edge.toNode)
+        if (currentDepth < depth) {
+          await traverse(edge.toNode.id, currentDepth + 1)
+        }
+      }
+    }
+    
+    for (const edge of incomingEdges) {
+      if (!visited.has(edge.fromNode.id)) {
+        neighbors.push(edge.fromNode)
+        if (currentDepth < depth) {
+          await traverse(edge.fromNode.id, currentDepth + 1)
+        }
+      }
+    }
+  }
+  
+  await traverse(nodeId, 0)
+  
+  // Remove the original node from results
+  return neighbors.filter(n => n.id !== nodeId)
+}
+
+/**
+ * Search nodes by name or description
+ */
+export async function searchNodes(query: string): Promise<Node[]> {
+  return await prisma.node.findMany({
+    where: {
+      OR: [
+        { name: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+        { type: { contains: query, mode: 'insensitive' } },
+      ],
+    },
+    take: 50,
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+/**
+ * Get graph statistics
+ */
+export async function getGraphStats(): Promise<{
+  totalNodes: number
+  totalEdges: number
+  nodesByType: Record<string, number>
+  avgConnections: number
+}> {
+  const [totalNodes, totalEdges, nodeTypes] = await Promise.all([
+    prisma.node.count(),
+    prisma.edge.count(),
+    prisma.node.groupBy({
+      by: ['type'],
+      _count: true,
+    }),
+  ])
+  
+  const nodesByType: Record<string, number> = {}
+  for (const item of nodeTypes) {
+    nodesByType[item.type] = item._count
+  }
+  
+  const avgConnections = totalNodes > 0 ? (totalEdges * 2) / totalNodes : 0
+  
+  return {
+    totalNodes,
+    totalEdges,
+    nodesByType,
+    avgConnections,
+  }
+}
