@@ -30,6 +30,14 @@ export interface Bounds {
 }
 
 /**
+ * Configuration for 3D coordinate conversion
+ */
+export interface ConversionConfig {
+  heightVariation?: number  // Y-axis variation (default: 5)
+  minNodeDistance?: number  // Minimum distance between nodes (default: 2)
+}
+
+/**
  * 计算节点集合的边界框
  * @param nodes 二维节点数组
  * @returns 边界框坐标
@@ -53,18 +61,22 @@ export function calculateBounds(nodes: Node2D[]): Bounds {
  * 转换规则：
  * - 二维 x → 三维 x (保持水平位置)
  * - 二维 y → 三维 z (二维的垂直变为三维的深度)
- * - 三维 y 设为 0 (所有节点在同一水平面)
+ * - 三维 y 使用正弦波模式添加高度变化
  * - 应用缩放使图谱适应三维视图
  * - 居中显示
  * 
  * @param node 单个二维节点
  * @param allNodes 所有节点（用于计算边界和缩放）
+ * @param config 转换配置
  * @returns 转换后的三维节点数据
  */
 export function convertTo3DCoordinates(
   node: Node2D,
-  allNodes: Node2D[]
+  allNodes: Node2D[],
+  config: ConversionConfig = {}
 ): Node3D {
+  const { heightVariation = 5, minNodeDistance = 2 } = config
+  
   // 1. 计算所有节点的边界框
   const bounds = calculateBounds(allNodes)
   
@@ -78,16 +90,20 @@ export function convertTo3DCoordinates(
   const centerX = (bounds.maxX + bounds.minX) / 2
   const centerY = (bounds.maxY + bounds.minY) / 2
   
-  // 4. 转换坐标
+  // 4. 找到当前节点的索引（用于 Y 轴变化）
+  const nodeIndex = allNodes.findIndex(n => n.id === node.id)
+  
+  // 5. 转换坐标
   // x2d → x3d (保持水平位置)
-  const x3d = (node.x - centerX) * scale * 0.05
+  // 增加缩放因子从 0.05 到 0.3 以获得更好的节点分布
+  const x3d = (node.x - centerX) * scale * 0.3
   
   // y2d → z3d (二维的垂直变为三维的深度)
   // 注意：y 轴反转，因为二维画布的 y 向下增长，而三维空间的 z 向前增长
-  const z3d = -(node.y - centerY) * scale * 0.05
+  const z3d = -(node.y - centerY) * scale * 0.3
   
-  // y3d 设为 0 (所有节点在同一水平面)
-  const y3d = 0
+  // y3d 使用正弦波模式添加高度变化，创建视觉深度
+  const y3d = Math.sin(nodeIndex * 0.5) * heightVariation
   
   return {
     label: node.label,
@@ -103,8 +119,101 @@ export function convertTo3DCoordinates(
 /**
  * 批量转换节点坐标
  * @param nodes 二维节点数组
+ * @param config 转换配置
  * @returns 转换后的三维节点数组
  */
-export function convertNodesToCoordinates(nodes: Node2D[]): Node3D[] {
-  return nodes.map(node => convertTo3DCoordinates(node, nodes))
+export function convertNodesToCoordinates(
+  nodes: Node2D[],
+  config: ConversionConfig = {}
+): Node3D[] {
+  const converted = nodes.map(node => convertTo3DCoordinates(node, nodes, config))
+  
+  // 应用最小距离强制
+  if (config.minNodeDistance && config.minNodeDistance > 0) {
+    return enforceMinimumDistance(converted, config.minNodeDistance)
+  }
+  
+  return converted
+}
+
+/**
+ * 强制节点之间的最小距离
+ * 
+ * 使用迭代方法推开距离过近的节点对
+ * 
+ * @param nodes 三维节点数组
+ * @param minDistance 最小距离
+ * @param maxIterations 最大迭代次数
+ * @returns 调整后的节点数组
+ */
+export function enforceMinimumDistance(
+  nodes: Node3D[],
+  minDistance: number,
+  maxIterations: number = 10
+): Node3D[] {
+  if (nodes.length <= 1) return nodes
+  
+  // 创建可变的坐标数组
+  const positions = nodes.map(n => ({ x: n.x3d, y: n.y3d, z: n.z3d }))
+  
+  // 迭代调整位置
+  for (let iter = 0; iter < maxIterations; iter++) {
+    let adjusted = false
+    
+    // 检查所有节点对
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        const pos1 = positions[i]
+        const pos2 = positions[j]
+        
+        // 计算当前距离
+        const dx = pos2.x - pos1.x
+        const dy = pos2.y - pos1.y
+        const dz = pos2.z - pos1.z
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
+        
+        // 如果距离太近，推开它们
+        if (distance < minDistance && distance > 0) {
+          adjusted = true
+          
+          // 计算推开的方向和距离
+          const pushDistance = (minDistance - distance) / 2
+          const factor = pushDistance / distance
+          
+          // 沿着连接向量推开两个节点
+          pos1.x -= dx * factor
+          pos1.y -= dy * factor
+          pos1.z -= dz * factor
+          
+          pos2.x += dx * factor
+          pos2.y += dy * factor
+          pos2.z += dz * factor
+        }
+      }
+    }
+    
+    // 如果没有调整，提前退出
+    if (!adjusted) break
+  }
+  
+  // 返回更新后的节点
+  return nodes.map((node, i) => ({
+    ...node,
+    x3d: positions[i].x,
+    y3d: positions[i].y,
+    z3d: positions[i].z,
+  }))
+}
+
+/**
+ * 计算两个3D点之间的欧几里得距离
+ */
+export function calculateDistance3D(
+  p1: { x: number; y: number; z: number },
+  p2: { x: number; y: number; z: number }
+): number {
+  const dx = p2.x - p1.x
+  const dy = p2.y - p1.y
+  const dz = p2.z - p1.z
+  return Math.sqrt(dx * dx + dy * dy + dz * dz)
 }

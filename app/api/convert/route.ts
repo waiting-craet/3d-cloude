@@ -7,6 +7,15 @@ import {
   type WorkflowNode,
   type WorkflowConnection,
 } from '@/lib/data-validator'
+import {
+  createNodesBatch,
+  createEdgesBatch,
+  clearAllGraphData,
+  getDescriptiveErrorMessage,
+  isTransactionTimeoutError,
+  type NodeData,
+  type EdgeData,
+} from '@/lib/db-helpers'
 
 /**
  * 转换API请求体
@@ -33,6 +42,10 @@ interface ConversionResponse {
   message?: string
   errors?: string[]
   warnings?: string[]
+  progress?: {
+    stage: string
+    percentage: number
+  }
 }
 
 /**
@@ -85,7 +98,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 4. 坐标转换
+    // 4. 坐标转换（使用增强的配置）
     const convertedNodes = cleaned.nodes.map(node => {
       const node2d: Node2D = {
         id: node.id,
@@ -95,131 +108,133 @@ export async function POST(request: Request) {
         y: node.y,
       }
       return {
-        ...convertTo3DCoordinates(node2d, cleaned.nodes as Node2D[]),
+        ...convertTo3DCoordinates(node2d, cleaned.nodes as Node2D[], {
+          heightVariation: 5,
+          minNodeDistance: 2,
+        }),
         originalId: node.id,
       }
     })
 
-    // 5. 使用事务创建或更新数据库记录
-    const result = await prisma.$transaction(async (tx) => {
-      let createdNodes
-      let idMap: Map<string, string>
+    // 5. 使用批处理创建数据库记录
+    let createdNodes
+    let idMap: Map<string, string>
 
+    try {
       if (updateMode) {
-        // 更新模式：先删除所有现有数据，然后重新创建
-        await tx.edge.deleteMany({})
-        await tx.node.deleteMany({})
-        
-        // 创建新节点
-        createdNodes = await Promise.all(
-          convertedNodes.map(node =>
-            tx.node.create({
-              data: {
-                name: node.label,
-                type: 'concept',
-                description: node.description || null,
-                x: node.x3d,
-                y: node.y3d,
-                z: node.z3d,
-                color: '#3b82f6',
-                size: 1.0,
-                metadata: JSON.stringify({
-                  original2D: {
-                    x: node.x2d,
-                    y: node.y2d,
-                  },
-                  convertedAt: new Date().toISOString(),
-                  canvasMetadata: metadata,
-                }),
-              },
-            })
-          )
-        )
-
-        // 创建ID映射：原始ID -> 数据库ID
-        idMap = new Map(
-          createdNodes.map((node, i) => [convertedNodes[i].originalId, node.id])
-        )
-      } else {
-        // 创建模式：直接创建新节点
-        createdNodes = await Promise.all(
-          convertedNodes.map(node =>
-            tx.node.create({
-              data: {
-                name: node.label,
-                type: 'concept',
-                description: node.description || null,
-                x: node.x3d,
-                y: node.y3d,
-                z: node.z3d,
-                color: '#3b82f6',
-                size: 1.0,
-                metadata: JSON.stringify({
-                  original2D: {
-                    x: node.x2d,
-                    y: node.y2d,
-                  },
-                  convertedAt: new Date().toISOString(),
-                  canvasMetadata: metadata,
-                }),
-              },
-            })
-          )
-        )
-
-        // 创建ID映射：原始ID -> 数据库ID
-        idMap = new Map(
-          createdNodes.map((node, i) => [convertedNodes[i].originalId, node.id])
-        )
+        // 更新模式：先删除所有现有数据
+        await clearAllGraphData()
       }
-
-      // 创建边
-      const createdEdges = await Promise.all(
-        cleaned.connections
-          .filter(conn => idMap.has(conn.from) && idMap.has(conn.to))
-          .map(conn =>
-            tx.edge.create({
-              data: {
-                fromNodeId: idMap.get(conn.from)!,
-                toNodeId: idMap.get(conn.to)!,
-                label: conn.label || 'RELATES_TO',
-                weight: 1.0,
-                color: '#3b82f6',
-                properties: JSON.stringify({
-                  original2DConnection: conn.id,
-                  convertedAt: new Date().toISOString(),
-                }),
-              },
-            })
-          )
+      
+      // 准备节点数据
+      const nodeDataArray: NodeData[] = convertedNodes.map(node => ({
+        name: node.label,
+        type: 'concept',
+        description: node.description || null,
+        x: node.x3d,
+        y: node.y3d,
+        z: node.z3d,
+        color: '#3b82f6',
+        size: 1.0,
+        metadata: JSON.stringify({
+          original2D: {
+            x: node.x2d,
+            y: node.y2d,
+          },
+          convertedAt: new Date().toISOString(),
+          canvasMetadata: metadata,
+        }),
+      }))
+      
+      // 使用批处理创建节点
+      const nodeResult = await createNodesBatch(nodeDataArray, 15, 100)
+      
+      if (nodeResult.errors.length > 0) {
+        throw nodeResult.errors[0]
+      }
+      
+      createdNodes = nodeResult.items
+      
+      // 创建ID映射：原始ID -> 数据库ID
+      idMap = new Map(
+        createdNodes.map((node, i) => [convertedNodes[i].originalId, node.id])
       )
-
-      return {
-        nodes: createdNodes,
-        edges: createdEdges,
+      
+      // 准备边数据
+      const edgeDataArray: EdgeData[] = cleaned.connections
+        .filter(conn => idMap.has(conn.from) && idMap.has(conn.to))
+        .map(conn => ({
+          fromNodeId: idMap.get(conn.from)!,
+          toNodeId: idMap.get(conn.to)!,
+          label: conn.label || 'RELATES_TO',
+          weight: 1.0,
+          color: '#3b82f6',
+          properties: JSON.stringify({
+            original2DConnection: conn.id,
+            convertedAt: new Date().toISOString(),
+          }),
+        }))
+      
+      // 使用批处理创建边
+      const edgeResult = await createEdgesBatch(edgeDataArray, 20, 50)
+      
+      if (edgeResult.errors.length > 0) {
+        console.warn('Some edges failed to create:', edgeResult.errors)
       }
-    })
+      
+      const createdEdges = edgeResult.items
 
-    // 6. 返回成功响应
-    return NextResponse.json({
-      success: true,
-      stats: {
-        nodesCreated: result.nodes.length,
-        edgesCreated: result.edges.length,
-      },
-      warnings: validationResult.warnings.length > 0 
-        ? validationResult.warnings 
-        : undefined,
-    } as ConversionResponse)
+      // 6. 返回成功响应
+      return NextResponse.json({
+        success: true,
+        stats: {
+          nodesCreated: createdNodes.length,
+          edgesCreated: createdEdges.length,
+        },
+        warnings: validationResult.warnings.length > 0 
+          ? validationResult.warnings 
+          : undefined,
+      } as ConversionResponse)
+      
+    } catch (dbError) {
+      // 数据库错误处理
+      console.error('Database operation failed:', dbError)
+      
+      // 尝试清理部分创建的数据
+      try {
+        if (updateMode) {
+          await clearAllGraphData()
+        }
+      } catch (cleanupError) {
+        console.error('Cleanup failed:', cleanupError)
+      }
+      
+      throw dbError
+    }
 
   } catch (error) {
     console.error('转换失败:', error)
+    
+    // 获取描述性错误消息
+    const errorMessage = getDescriptiveErrorMessage(error)
+    
+    // 检查是否是事务超时错误
+    if (isTransactionTimeoutError(error)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: errorMessage,
+          errors: ['事务超时。请尝试减少节点数量或联系支持。'],
+        } as ConversionResponse,
+        { status: 408 } // Request Timeout
+      )
+    }
     
     // 返回错误响应
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : '转换过程中发生未知错误',
+        message: errorMessage,
       } as ConversionResponse,
       { status: 500 }
     )
