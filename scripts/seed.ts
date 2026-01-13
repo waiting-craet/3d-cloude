@@ -14,7 +14,33 @@ async function main() {
   await prisma.edge.deleteMany()
   await prisma.node.deleteMany()
   await prisma.graph.deleteMany()
+  await prisma.project.deleteMany()
   console.log('✓ 清空现有数据')
+
+  // 创建项目
+  const project = await prisma.project.create({
+    data: {
+      name: 'RAG 知识图谱项目',
+      description: 'Retrieval-Augmented Generation 系统演示',
+      isPublic: true,
+    },
+  })
+
+  console.log('✓ 创建项目')
+
+  // 创建图谱记录
+  const graph = await prisma.graph.create({
+    data: {
+      name: 'RAG 树状知识图谱',
+      description: 'RAG 系统的树状结构展示',
+      nodeCount: 8,
+      edgeCount: 7,
+      isPublic: true,
+      projectId: project.id,
+    },
+  })
+
+  console.log('✓ 创建图谱记录')
 
   // 创建根节点（最左边）
   const root = await prisma.node.create({
@@ -30,6 +56,7 @@ async function main() {
       z: 0,
       tags: JSON.stringify(['AI', 'RAG', '核心']),
       category: '根节点',
+      graphId: graph.id,
     },
   })
 
@@ -49,6 +76,7 @@ async function main() {
       z: 0,
       tags: JSON.stringify(['检索', '向量']),
       category: '检索',
+      graphId: graph.id,
     },
   })
 
@@ -65,6 +93,7 @@ async function main() {
       z: 0,
       tags: JSON.stringify(['数据库', '向量']),
       category: '检索',
+      graphId: graph.id,
     },
   })
 
@@ -84,6 +113,7 @@ async function main() {
       z: 0,
       tags: JSON.stringify(['存储', '知识']),
       category: '知识',
+      graphId: graph.id,
     },
   })
 
@@ -100,6 +130,7 @@ async function main() {
       z: 0,
       tags: JSON.stringify(['嵌入', '模型']),
       category: '知识',
+      graphId: graph.id,
     },
   })
 
@@ -116,6 +147,7 @@ async function main() {
       z: 0,
       tags: JSON.stringify(['处理', '文档']),
       category: '知识',
+      graphId: graph.id,
     },
   })
 
@@ -135,6 +167,7 @@ async function main() {
       z: 0,
       tags: JSON.stringify(['生成', 'LLM']),
       category: '生成',
+      graphId: graph.id,
     },
   })
 
@@ -151,6 +184,7 @@ async function main() {
       z: 0,
       tags: JSON.stringify(['LLM', '模型']),
       category: '生成',
+      graphId: graph.id,
     },
   })
 
@@ -166,6 +200,7 @@ async function main() {
         label: 'CONNECTS_TO',
         weight: 1.0,
         color: '#888888',
+        graphId: graph.id,
       },
     }),
     prisma.edge.create({
@@ -175,6 +210,7 @@ async function main() {
         label: 'CONNECTS_TO',
         weight: 1.0,
         color: '#888888',
+        graphId: graph.id,
       },
     }),
     prisma.edge.create({
@@ -184,6 +220,7 @@ async function main() {
         label: 'CONNECTS_TO',
         weight: 1.0,
         color: '#888888',
+        graphId: graph.id,
       },
     }),
     
@@ -195,6 +232,7 @@ async function main() {
         label: 'LEADS_TO',
         weight: 0.9,
         color: '#888888',
+        graphId: graph.id,
       },
     }),
     
@@ -206,6 +244,7 @@ async function main() {
         label: 'LEADS_TO',
         weight: 0.9,
         color: '#888888',
+        graphId: graph.id,
       },
     }),
     prisma.edge.create({
@@ -215,6 +254,7 @@ async function main() {
         label: 'LEADS_TO',
         weight: 0.9,
         color: '#888888',
+        graphId: graph.id,
       },
     }),
     
@@ -226,24 +266,12 @@ async function main() {
         label: 'LEADS_TO',
         weight: 0.9,
         color: '#888888',
+        graphId: graph.id,
       },
     }),
   ])
 
   console.log('✓ 创建边（树状连接）')
-
-  // 创建图谱记录
-  await prisma.graph.create({
-    data: {
-      name: 'RAG 树状知识图谱',
-      description: 'RAG 系统的树状结构展示',
-      nodeCount: 8,
-      edgeCount: 7,
-      isPublic: true,
-    },
-  })
-
-  console.log('✓ 创建图谱记录')
 
   // 统计信息
   const nodeCount = await prisma.node.count()
