@@ -571,7 +571,7 @@ export default function TopNavbar() {
                       </div>
                     )}
                   </div>
-                ))
+                ))}
               ) : (
                 <div style={{
                   padding: '30px 20px',

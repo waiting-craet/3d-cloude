@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import DeleteButton from './DeleteButton'
+import DeleteConfirmDialog from './DeleteConfirmDialog'
 
 /**
  * 项目-图谱管理组件
@@ -42,6 +44,18 @@ interface Node {
   graphId: string
 }
 
+interface DeleteDialogState {
+  isOpen: boolean
+  type: 'project' | 'graph' | null
+  id: string | null
+  name: string | null
+  stats: {
+    nodeCount: number
+    edgeCount: number
+    graphCount?: number
+  }
+}
+
 export default function ProjectGraphManager() {
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
@@ -49,6 +63,16 @@ export default function ProjectGraphManager() {
   const [selectedGraph, setSelectedGraph] = useState<Graph | null>(null)
   const [nodes, setNodes] = useState<Node[]>([])
   const [loading, setLoading] = useState(false)
+  
+  // 删除相关状态
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({
+    isOpen: false,
+    type: null,
+    id: null,
+    name: null,
+    stats: { nodeCount: 0, edgeCount: 0 },
+  })
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 加载所有项目
   const loadProjects = async () => {
@@ -195,6 +219,103 @@ export default function ProjectGraphManager() {
     loadNodes(graph.id)
   }
 
+  // 删除项目处理
+  const handleDeleteProject = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation() // 阻止触发选择事件
+    setDeleteDialog({
+      isOpen: true,
+      type: 'project',
+      id: project.id,
+      name: project.name,
+      stats: {
+        nodeCount: project.nodeCount,
+        edgeCount: project.edgeCount,
+        graphCount: graphs.filter((g) => g.projectId === project.id).length,
+      },
+    })
+  }
+
+  // 删除图谱处理
+  const handleDeleteGraph = (e: React.MouseEvent, graph: Graph) => {
+    e.stopPropagation() // 阻止触发选择事件
+    setDeleteDialog({
+      isOpen: true,
+      type: 'graph',
+      id: graph.id,
+      name: graph.name,
+      stats: {
+        nodeCount: graph.nodeCount,
+        edgeCount: graph.edgeCount,
+      },
+    })
+  }
+
+  // 确认删除
+  const confirmDelete = async () => {
+    if (!deleteDialog.id || !deleteDialog.type) return
+
+    setIsDeleting(true)
+    try {
+      const endpoint =
+        deleteDialog.type === 'project'
+          ? `/api/projects/${deleteDialog.id}`
+          : `/api/graphs/${deleteDialog.id}`
+
+      const res = await fetch(endpoint, { method: 'DELETE' })
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || '删除失败')
+      }
+
+      // 显示成功消息
+      alert(
+        `成功删除 ${deleteDialog.name}！\n删除了 ${data.deletedNodeCount} 个节点和 ${data.deletedEdgeCount} 条边`
+      )
+
+      // 刷新列表
+      if (deleteDialog.type === 'project') {
+        loadProjects()
+        setSelectedProject(null)
+        setGraphs([])
+        setNodes([])
+      } else {
+        if (selectedProject) {
+          loadGraphs(selectedProject.id)
+        }
+        setSelectedGraph(null)
+        setNodes([])
+      }
+
+      // 关闭对话框
+      setDeleteDialog({
+        isOpen: false,
+        type: null,
+        id: null,
+        name: null,
+        stats: { nodeCount: 0, edgeCount: 0 },
+      })
+    } catch (error) {
+      console.error('删除失败:', error)
+      alert(`删除失败: ${error instanceof Error ? error.message : '未知错误'}`)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // 关闭删除对话框
+  const closeDeleteDialog = () => {
+    if (!isDeleting) {
+      setDeleteDialog({
+        isOpen: false,
+        type: null,
+        id: null,
+        name: null,
+        stats: { nodeCount: 0, edgeCount: 0 },
+      })
+    }
+  }
+
   useEffect(() => {
     loadProjects()
   }, [])
@@ -223,12 +344,19 @@ export default function ProjectGraphManager() {
                 onClick={() => selectProject(project)}
                 className={`p-3 border rounded cursor-pointer hover:bg-gray-50 ${
                   selectedProject?.id === project.id ? 'bg-blue-50 border-blue-500' : ''
-                }`}
+                } flex items-center justify-between`}
               >
-                <div className="font-medium">{project.name}</div>
-                <div className="text-sm text-gray-500">
-                  {project.nodeCount} 节点 · {project.edgeCount} 边
+                <div className="flex-1">
+                  <div className="font-medium">{project.name}</div>
+                  <div className="text-sm text-gray-500">
+                    {project.nodeCount} 节点 · {project.edgeCount} 边
+                  </div>
                 </div>
+                <DeleteButton
+                  onDelete={(e) => handleDeleteProject(e, project)}
+                  disabled={isDeleting}
+                  ariaLabel={`删除项目 ${project.name}`}
+                />
               </div>
             ))}
           </div>
@@ -256,17 +384,24 @@ export default function ProjectGraphManager() {
                 onClick={() => selectGraph(graph)}
                 className={`p-3 border rounded cursor-pointer hover:bg-gray-50 ${
                   selectedGraph?.id === graph.id ? 'bg-green-50 border-green-500' : ''
-                }`}
+                } flex items-start justify-between`}
               >
-                <div className="font-medium">{graph.name}</div>
-                <div className="text-sm text-gray-500">
-                  {graph.nodeCount} 节点 · {graph.edgeCount} 边
+                <div className="flex-1">
+                  <div className="font-medium">{graph.name}</div>
+                  <div className="text-sm text-gray-500">
+                    {graph.nodeCount} 节点 · {graph.edgeCount} 边
+                  </div>
+                  {graph.isPublic && (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                      公开
+                    </span>
+                  )}
                 </div>
-                {graph.isPublic && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                    公开
-                  </span>
-                )}
+                <DeleteButton
+                  onDelete={(e) => handleDeleteGraph(e, graph)}
+                  disabled={isDeleting}
+                  ariaLabel={`删除图谱 ${graph.name}`}
+                />
               </div>
             ))}
           </div>
@@ -324,6 +459,19 @@ export default function ProjectGraphManager() {
           <div>节点数: {nodes.length}</div>
         </div>
       </div>
+
+      {/* 删除确认对话框 */}
+      {deleteDialog.type && (
+        <DeleteConfirmDialog
+          isOpen={deleteDialog.isOpen}
+          onClose={closeDeleteDialog}
+          onConfirm={confirmDelete}
+          entityType={deleteDialog.type}
+          entityName={deleteDialog.name || ''}
+          stats={deleteDialog.stats}
+          isDeleting={isDeleting}
+        />
+      )}
     </div>
   )
 }

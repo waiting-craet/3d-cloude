@@ -481,7 +481,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       // 2. 准备数据
       const payload = {
         nodes: validNodes.map(n => ({
-          id: n.id,
+          id: n.id,  // 保留数据库ID（如果存在）
           label: n.label,
           description: n.description,
           x: n.x,
@@ -492,22 +492,22 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         connections: connections.filter(c => 
           validNodes.some(n => n.id === c.from) &&
           validNodes.some(n => n.id === c.to)
-        ),
-        graphId: currentGraph.id,  // 添加图谱ID
-        metadata: {
-          canvasScale: scale,
-          canvasOffset: offset,
-        }
+        ).map(c => ({
+          id: c.id,  // 保留数据库ID（如果存在）
+          from: c.from,
+          to: c.to,
+          label: c.label,
+        })),
       }
 
-      // 3. 调用API
+      // 3. 调用同步API
       setIsConverting(true)
       setConversionError(null)
       
-      console.log('🔄 开始转换2D数据到图谱:', currentGraph.name)
+      console.log('🔄 开始同步2D数据到图谱:', currentGraph.name)
       console.log('📊 节点数:', payload.nodes.length, '连接数:', payload.connections.length)
       
-      const response = await fetch('/api/convert', {
+      const response = await fetch(`/api/graphs/${currentGraph.id}/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -515,12 +515,13 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || '转换失败')
+        throw new Error(error.message || '同步失败')
       }
 
       const result = await response.json()
       
-      console.log('✅ 转换成功:', result)
+      console.log('✅ 同步成功:', result)
+      console.log('📊 统计:', result.stats)
       
       // 4. 显示成功并跳转
       setConversionSuccess(true)
@@ -529,8 +530,8 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       }, 1500)
       
     } catch (error) {
-      console.error('❌ 转换失败:', error)
-      setConversionError(error instanceof Error ? error.message : '转换失败')
+      console.error('❌ 同步失败:', error)
+      setConversionError(error instanceof Error ? error.message : '同步失败')
       setTimeout(() => setConversionError(null), 5000)
     } finally {
       setIsConverting(false)
