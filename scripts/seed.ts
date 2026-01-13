@@ -22,7 +22,6 @@ async function main() {
     data: {
       name: 'RAG 知识图谱项目',
       description: 'Retrieval-Augmented Generation 系统演示',
-      isPublic: true,
     },
   })
 

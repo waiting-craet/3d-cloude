@@ -25,6 +25,11 @@ Property 'size' does not exist on type 'PutBlobResult'.
 Property 'project' is missing in type '{ name: string; description: string; nodeCount: number; edgeCount: number; isPublic: true; }' but required in type 'GraphCreateInput'.
 ```
 
+### 错误 4: Project 模型不存在的字段
+```
+Object literal may only specify known properties, and 'isPublic' does not exist in type 'ProjectCreateInput'.
+```
+
 ## 根本原因
 
 ### 原因 1: 缺少函数实现
@@ -35,6 +40,9 @@ Property 'project' is missing in type '{ name: string; description: string; node
 
 ### 原因 3: 数据模型关系错误
 `scripts/seed.ts` 中创建 Graph 时没有关联到 Project，但根据 Prisma schema，Graph 必须关联到一个 Project（`projectId` 是必需字段）。
+
+### 原因 4: 使用了不存在的字段
+`scripts/seed.ts` 中创建 Project 时使用了 `isPublic` 字段，但 Project 模型中不存在此字段（只有 Graph 模型有 `isPublic` 字段）。
 
 ## 解决方案
 
@@ -67,12 +75,12 @@ size: file.size,
 4. 创建所有 Edge 并关联到 Graph（通过 `graphId`）
 
 ```typescript
-// 创建项目
+// 创建项目（移除不存在的 isPublic 字段）
 const project = await prisma.project.create({
   data: {
     name: 'RAG 知识图谱项目',
     description: 'Retrieval-Augmented Generation 系统演示',
-    isPublic: true,
+    // isPublic: true,  // ❌ 删除：Project 模型没有此字段
   },
 })
 
@@ -83,7 +91,7 @@ const graph = await prisma.graph.create({
     description: 'RAG 系统的树状结构展示',
     nodeCount: 8,
     edgeCount: 7,
-    isPublic: true,
+    isPublic: true,  // ✅ Graph 模型有此字段
     projectId: project.id,  // 关联到项目
   },
 })
