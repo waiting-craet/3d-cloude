@@ -9,92 +9,90 @@ datasource db {
 
 // 节点模型 - 知识图谱中的实体
 model Node {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  type        String   // document, chunk, concept, entity 等
+  type        String // document, chunk, concept, entity 等
   description String?
-  content     String?  // 节点的实际内容（用于文档块）
-  metadata    String?  // JSON 格式的元数据
-  
+  content     String? // 节点的实际内容（用于文档块）
+  metadata    String? // JSON 格式的元数据
+
   // 3D 位置
-  x           Float    @default(0)
-  y           Float    @default(0)
-  z           Float    @default(0)
-  
+  x Float @default(0)
+  y Float @default(0)
+  z Float @default(0)
+
   // 视觉属性
-  color       String   @default("#3b82f6")
-  size        Float    @default(1.0)
-  opacity     Float    @default(1.0)
-  
+  color   String @default("#3b82f6")
+  size    Float  @default(1.0)
+  opacity Float  @default(1.0)
+
   // 图片/图标（存储在 Vercel Blob）
-  imageUrl    String?  // 节点的图片 URL
-  iconUrl     String?  // 节点的图标 URL
-  
+  imageUrl String? // 节点的图片 URL
+  iconUrl  String? // 节点的图标 URL
+
   // 文档相关
-  documentId  String?  // 如果是 chunk，关联的文档 ID
-  chunkIndex  Int?     // 在文档中的顺序
-  coverUrl    String?  // 文档封面图 URL（仅用于 document 类型）
-  
+  documentId String? // 如果是 chunk，关联的文档 ID
+  chunkIndex Int? // 在文档中的顺序
+  coverUrl   String? // 文档封面图 URL（仅用于 document 类型）
+
   // 向量嵌入（用于语义搜索）
-  embedding   String?  // JSON 数组格式的向量
-  
+  embedding String? // JSON 数组格式的向量
+
   // 标签和分类
-  tags        String?  // JSON 数组格式
-  category    String?
-  
-  // 图谱关联（新增）
-  graphId     String?
-  graph       Graph?   @relation(fields: [graphId], references: [id], onDelete: Cascade)
-  
-  // 项目关联
-  projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
+  tags     String? // JSON 数组格式
+  category String?
+
+  // 项目和图谱关联
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  graphId String?
+  graph   Graph?  @relation(fields: [graphId], references: [id], onDelete: Cascade)
+
   // 时间戳
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // 关系
   outgoingEdges Edge[] @relation("FromNode")
   incomingEdges Edge[] @relation("ToNode")
-  
+
   // 文档的 chunks
-  chunks      Node[]   @relation("DocumentChunks")
-  document    Node?    @relation("DocumentChunks", fields: [documentId], references: [id], onDelete: Cascade)
+  chunks   Node[] @relation("DocumentChunks")
+  document Node?  @relation("DocumentChunks", fields: [documentId], references: [id], onDelete: Cascade)
 
   @@index([type])
   @@index([documentId])
   @@index([category])
   @@index([createdAt])
-  @@index([graphId])
   @@index([projectId])
+  @@index([graphId])
 }
 
 // 边模型 - 节点之间的关系
 model Edge {
-  id          String   @id @default(cuid())
-  fromNodeId  String
-  toNodeId    String
-  label       String   // PART_OF, RELATES_TO, REFERENCES 等
-  weight      Float    @default(1.0)
-  
+  id         String @id @default(cuid())
+  fromNodeId String
+  toNodeId   String
+  label      String // PART_OF, RELATES_TO, REFERENCES 等
+  weight     Float  @default(1.0)
+
   // 关系属性
-  properties  String?  // JSON 格式的额外属性
+  properties    String? // JSON 格式的额外属性
   bidirectional Boolean @default(false) // 是否双向关系
-  
+
   // 视觉属性
-  color       String?
-  style       String?  // solid, dashed, dotted
-  
-  // 图谱关联（新增）
-  graphId     String?
-  graph       Graph?   @relation(fields: [graphId], references: [id], onDelete: Cascade)
-  
-  // 项目关联
-  projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
+  color String?
+  style String? // solid, dashed, dotted
+
+  // 项目和图谱关联
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  graphId String?
+  graph   Graph?  @relation(fields: [graphId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 
   fromNode Node @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
   toNode   Node @relation("ToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
@@ -102,85 +100,85 @@ model Edge {
   @@index([fromNodeId])
   @@index([toNodeId])
   @@index([label])
-  @@index([graphId])
   @@index([projectId])
+  @@index([graphId])
 }
 
 // 项目模型 - 管理多个知识图谱
 model Project {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
-  
+
   // 项目配置
-  settings    String?  // JSON 格式的配置
-  
+  settings String? // JSON 格式的配置
+
   // 统计信息
-  nodeCount   Int      @default(0)
-  edgeCount   Int      @default(0)
-  
+  nodeCount Int @default(0)
+  edgeCount Int @default(0)
+
   // 时间戳
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // 关联关系
-  graphs      Graph[]
-  nodes       Node[]
-  edges       Edge[]
-  
+  graphs Graph[]
+  nodes  Node[]
+  edges  Edge[]
+
   @@index([createdAt])
 }
 
 // 图谱模型 - 管理多个知识图谱
 model Graph {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
-  
-  // 项目关联（新增）
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  // 图谱配置
-  settings    String?  // JSON 格式的配置
-  isPublic    Boolean  @default(false)
-  
-  // 统计信息
-  nodeCount   Int      @default(0)
-  edgeCount   Int      @default(0)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // 关联关系
-  nodes       Node[]
-  edges       Edge[]
 
-  @@index([projectId])
+  // 图谱配置
+  settings String? // JSON 格式的配置
+  isPublic Boolean @default(false)
+
+  // 统计信息
+  nodeCount Int @default(0)
+  edgeCount Int @default(0)
+
+  // 项目关联
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // 关联关系
+  nodes Node[]
+  edges Edge[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([createdAt])
+  @@index([projectId])
 }
 
 // 用户模型（可选，用于多用户支持）
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String?
-  avatar      String?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id     String  @id @default(cuid())
+  email  String  @unique
+  name   String?
+  avatar String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
 }
 
 // 搜索历史
 model SearchHistory {
-  id          String   @id @default(cuid())
-  query       String
-  results     String?  // JSON 格式的搜索结果
-  userId      String?
-  
-  createdAt   DateTime @default(now())
+  id      String  @id @default(cuid())
+  query   String
+  results String? // JSON 格式的搜索结果
+  userId  String?
+
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([createdAt])
