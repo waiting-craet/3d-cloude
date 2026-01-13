@@ -1,339 +1,254 @@
-import { prisma } from './db'
+/**
+ * Database Helper Utilities
+ * 
+ * Provides batch operations for creating nodes and edges to avoid
+ * transaction timeouts and connection pool exhaustion.
+ */
+
+import { prisma } from '@/lib/db'
 import type { Node, Edge } from '@prisma/client'
 
-// ==================== 节点操作 ====================
-
 /**
- * 创建文档节点
+ * Node data for batch creation
  */
-export async function createDocumentNode(data: {
+export interface NodeData {
   name: string
-  content?: string
-  description?: string
-  metadata?: Record<string, any>
-  tags?: string[]
-  category?: string
-  position?: { x: number; y: number; z: number }
-}) {
-  return await prisma.node.create({
-    data: {
-      name: data.name,
-      type: 'document',
-      content: data.content,
-      description: data.description,
-      metadata: data.metadata ? JSON.stringify(data.metadata) : null,
-      tags: data.tags ? JSON.stringify(data.tags) : null,
-      category: data.category,
-      x: data.position?.x ?? Math.random() * 20 - 10,
-      y: data.position?.y ?? Math.random() * 10,
-      z: data.position?.z ?? Math.random() * 20 - 10,
-      color: '#FFB6C1',
-      size: 2.0,
-    },
-  })
+  type: string
+  description?: string | null
+  x: number
+  y: number
+  z: number
+  color: string
+  size: number
+  metadata?: string
 }
 
 /**
- * 创建 Chunk 节点
+ * Edge data for batch creation
  */
-export async function createChunkNode(data: {
-  name: string
-  content: string
-  documentId: string
-  chunkIndex: number
-  position?: { x: number; y: number; z: number }
-}) {
-  return await prisma.node.create({
-    data: {
-      name: data.name,
-      type: 'chunk',
-      content: data.content,
-      documentId: data.documentId,
-      chunkIndex: data.chunkIndex,
-      x: data.position?.x ?? Math.random() * 20 - 10,
-      y: data.position?.y ?? Math.random() * 10 - 20,
-      z: data.position?.z ?? Math.random() * 20 - 10,
-      color: '#FFE4B5',
-      size: 1.5,
-    },
-  })
-}
-
-/**
- * 将文档分割成多个 chunks
- */
-export async function splitDocumentIntoChunks(
-  documentId: string,
-  content: string,
-  chunkSize: number = 500
-) {
-  const chunks: string[] = []
-  
-  // 简单的分割逻辑（按字符数）
-  for (let i = 0; i < content.length; i += chunkSize) {
-    chunks.push(content.slice(i, i + chunkSize))
-  }
-
-  const document = await prisma.node.findUnique({
-    where: { id: documentId },
-  })
-
-  if (!document) {
-    throw new Error('文档不存在')
-  }
-
-  // 创建 chunk 节点
-  const chunkNodes = await Promise.all(
-    chunks.map((chunk, index) =>
-      createChunkNode({
-        name: `${document.name} - Chunk ${index + 1}`,
-        content: chunk,
-        documentId,
-        chunkIndex: index,
-        position: {
-          x: document.x + (index - chunks.length / 2) * 5,
-          y: document.y - 10,
-          z: document.z,
-        },
-      })
-    )
-  )
-
-  // 创建 PART_OF 关系
-  await Promise.all(
-    chunkNodes.map((chunk) =>
-      prisma.edge.create({
-        data: {
-          fromNodeId: chunk.id,
-          toNodeId: documentId,
-          label: 'PART_OF',
-          weight: 1.0,
-        },
-      })
-    )
-  )
-
-  return chunkNodes
-}
-
-/**
- * 获取文档的所有 chunks
- */
-export async function getDocumentChunks(documentId: string) {
-  return await prisma.node.findMany({
-    where: {
-      documentId,
-      type: 'chunk',
-    },
-    orderBy: {
-      chunkIndex: 'asc',
-    },
-  })
-}
-
-// ==================== 关系操作 ====================
-
-/**
- * 创建节点之间的关系
- */
-export async function createRelationship(data: {
+export interface EdgeData {
   fromNodeId: string
   toNodeId: string
   label: string
-  weight?: number
-  properties?: Record<string, any>
-  bidirectional?: boolean
-}) {
-  return await prisma.edge.create({
-    data: {
-      fromNodeId: data.fromNodeId,
-      toNodeId: data.toNodeId,
-      label: data.label,
-      weight: data.weight ?? 1.0,
-      properties: data.properties ? JSON.stringify(data.properties) : null,
-      bidirectional: data.bidirectional ?? false,
-    },
-  })
+  weight: number
+  color: string
+  properties?: string
 }
 
 /**
- * 获取节点的所有关系
+ * Batch creation result
  */
-export async function getNodeRelationships(nodeId: string) {
-  const [outgoing, incoming] = await Promise.all([
-    prisma.edge.findMany({
-      where: { fromNodeId: nodeId },
-      include: { toNode: true },
-    }),
-    prisma.edge.findMany({
-      where: { toNodeId: nodeId },
-      include: { fromNode: true },
-    }),
-  ])
-
-  return { outgoing, incoming }
-}
-
-// ==================== 搜索操作 ====================
-
-/**
- * 搜索节点（按名称、内容、标签）
- */
-export async function searchNodes(query: string) {
-  return await prisma.node.findMany({
-    where: {
-      OR: [
-        { name: { contains: query } },
-        { description: { contains: query } },
-        { content: { contains: query } },
-        { tags: { contains: query } },
-      ],
-    },
-    take: 20,
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
+export interface BatchResult<T> {
+  items: T[]
+  errors: Error[]
 }
 
 /**
- * 按类型获取节点
+ * Create nodes in batches to avoid transaction timeouts
+ * 
+ * @param nodes Array of node data to create
+ * @param batchSize Number of nodes to create per batch (default: 15)
+ * @param delayMs Delay between batches in milliseconds (default: 100)
+ * @returns Array of created nodes
  */
-export async function getNodesByType(type: string) {
-  return await prisma.node.findMany({
-    where: { type },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
-}
+export async function createNodesBatch(
+  nodes: NodeData[],
+  batchSize: number = 15,
+  delayMs: number = 100
+): Promise<BatchResult<Node>> {
+  const createdNodes: Node[] = []
+  const errors: Error[] = []
 
-/**
- * 按分类获取节点
- */
-export async function getNodesByCategory(category: string) {
-  return await prisma.node.findMany({
-    where: { category },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
-}
-
-// ==================== 图谱统计 ====================
-
-/**
- * 获取图谱统计信息
- */
-export async function getGraphStats() {
-  const [nodeCount, edgeCount, nodesByType] = await Promise.all([
-    prisma.node.count(),
-    prisma.edge.count(),
-    prisma.node.groupBy({
-      by: ['type'],
-      _count: true,
-    }),
-  ])
-
-  return {
-    nodeCount,
-    edgeCount,
-    nodesByType: nodesByType.map((item) => ({
-      type: item.type,
-      count: item._count,
-    })),
+  // Split nodes into batches
+  const batches: NodeData[][] = []
+  for (let i = 0; i < nodes.length; i += batchSize) {
+    batches.push(nodes.slice(i, i + batchSize))
   }
-}
 
-/**
- * 获取节点的邻居节点
- */
-export async function getNodeNeighbors(nodeId: string, depth: number = 1) {
-  const visited = new Set<string>([nodeId])
-  const neighbors: Node[] = []
-
-  async function traverse(currentId: string, currentDepth: number) {
-    if (currentDepth > depth) return
-
-    const edges = await prisma.edge.findMany({
-      where: {
-        OR: [{ fromNodeId: currentId }, { toNodeId: currentId }],
-      },
-      include: {
-        fromNode: true,
-        toNode: true,
-      },
-    })
-
-    for (const edge of edges) {
-      const neighbor = edge.fromNodeId === currentId ? edge.toNode : edge.fromNode
+  // Process each batch sequentially
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i]
+    
+    try {
+      // Create all nodes in this batch
+      const batchNodes = await Promise.all(
+        batch.map(nodeData =>
+          prisma.node.create({
+            data: nodeData,
+          })
+        )
+      )
       
-      if (!visited.has(neighbor.id)) {
-        visited.add(neighbor.id)
-        neighbors.push(neighbor)
-        
-        if (currentDepth < depth) {
-          await traverse(neighbor.id, currentDepth + 1)
-        }
+      createdNodes.push(...batchNodes)
+      
+      // Add delay between batches to allow connection cleanup
+      if (i < batches.length - 1) {
+        await delay(delayMs)
       }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      errors.push(err)
+      
+      // If a batch fails, try to continue with remaining batches
+      console.error(`Batch ${i + 1}/${batches.length} failed:`, err.message)
     }
   }
 
-  await traverse(nodeId, 1)
-  return neighbors
-}
-
-// ==================== 批量操作 ====================
-
-/**
- * 批量创建节点
- */
-export async function bulkCreateNodes(nodes: Array<{
-  name: string
-  type: string
-  content?: string
-  x?: number
-  y?: number
-  z?: number
-  color?: string
-}>) {
-  return await prisma.node.createMany({
-    data: nodes.map((node) => ({
-      name: node.name,
-      type: node.type,
-      content: node.content,
-      x: node.x ?? Math.random() * 20 - 10,
-      y: node.y ?? Math.random() * 10,
-      z: node.z ?? Math.random() * 20 - 10,
-      color: node.color ?? '#3b82f6',
-    })),
-  })
+  return { items: createdNodes, errors }
 }
 
 /**
- * 批量创建关系
+ * Create edges in batches to avoid transaction timeouts
+ * 
+ * @param edges Array of edge data to create
+ * @param batchSize Number of edges to create per batch (default: 20)
+ * @param delayMs Delay between batches in milliseconds (default: 50)
+ * @returns Array of created edges
  */
-export async function bulkCreateEdges(edges: Array<{
-  fromNodeId: string
-  toNodeId: string
-  label: string
-  weight?: number
-}>) {
-  return await prisma.edge.createMany({
-    data: edges.map((edge) => ({
-      fromNodeId: edge.fromNodeId,
-      toNodeId: edge.toNodeId,
-      label: edge.label,
-      weight: edge.weight ?? 1.0,
-    })),
-  })
+export async function createEdgesBatch(
+  edges: EdgeData[],
+  batchSize: number = 20,
+  delayMs: number = 50
+): Promise<BatchResult<Edge>> {
+  const createdEdges: Edge[] = []
+  const errors: Error[] = []
+
+  // Split edges into batches
+  const batches: EdgeData[][] = []
+  for (let i = 0; i < edges.length; i += batchSize) {
+    batches.push(edges.slice(i, i + batchSize))
+  }
+
+  // Process each batch sequentially
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i]
+    
+    try {
+      // Create all edges in this batch
+      const batchEdges = await Promise.all(
+        batch.map(edgeData =>
+          prisma.edge.create({
+            data: edgeData,
+          })
+        )
+      )
+      
+      createdEdges.push(...batchEdges)
+      
+      // Add delay between batches to allow connection cleanup
+      if (i < batches.length - 1) {
+        await delay(delayMs)
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      errors.push(err)
+      
+      // If a batch fails, try to continue with remaining batches
+      console.error(`Edge batch ${i + 1}/${batches.length} failed:`, err.message)
+    }
+  }
+
+  return { items: createdEdges, errors }
 }
 
 /**
- * 清空所有数据
+ * Delete all nodes and edges (for update mode)
+ * Uses batching to avoid timeout on large datasets
  */
-export async function clearAllData() {
-  await prisma.edge.deleteMany()
-  await prisma.node.deleteMany()
-  await prisma.searchHistory.deleteMany()
+export async function clearAllGraphData(): Promise<void> {
+  // Delete edges first (due to foreign key constraints)
+  await prisma.edge.deleteMany({})
+  
+  // Then delete nodes
+  await prisma.node.deleteMany({})
+}
+
+/**
+ * Retry a database operation with exponential backoff
+ * 
+ * @param operation Function to retry
+ * @param maxRetries Maximum number of retry attempts
+ * @param initialDelayMs Initial delay in milliseconds
+ * @returns Result of the operation
+ */
+export async function retryOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelayMs: number = 1000
+): Promise<T> {
+  let lastError: Error | null = null
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation()
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      
+      // Don't retry on the last attempt
+      if (attempt === maxRetries) {
+        break
+      }
+      
+      // Exponential backoff
+      const delayTime = initialDelayMs * Math.pow(2, attempt)
+      console.warn(`Operation failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delayTime}ms...`)
+      await delay(delayTime)
+    }
+  }
+  
+  throw lastError || new Error('Operation failed after retries')
+}
+
+/**
+ * Check if an error is a transaction timeout error
+ */
+export function isTransactionTimeoutError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  
+  const message = error.message.toLowerCase()
+  return (
+    message.includes('transaction') &&
+    (message.includes('timeout') || message.includes('unable to start'))
+  )
+}
+
+/**
+ * Get a descriptive error message for database errors
+ */
+export function getDescriptiveErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return 'An unknown error occurred during database operation'
+  }
+  
+  const message = error.message
+  
+  // Transaction timeout
+  if (isTransactionTimeoutError(error)) {
+    return 'Database transaction timeout: The operation took too long. Try with fewer nodes or contact support.'
+  }
+  
+  // Connection errors
+  if (message.includes('connection') || message.includes('connect')) {
+    return 'Database connection error: Unable to connect to the database. Please try again.'
+  }
+  
+  // Constraint violations
+  if (message.includes('unique constraint') || message.includes('duplicate')) {
+    return 'Data conflict: A node or connection with this identifier already exists.'
+  }
+  
+  // Foreign key violations
+  if (message.includes('foreign key') || message.includes('reference')) {
+    return 'Data integrity error: Referenced node does not exist.'
+  }
+  
+  // Default: return the original message
+  return `Database error: ${message}`
+}
+
+/**
+ * Utility function to delay execution
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }

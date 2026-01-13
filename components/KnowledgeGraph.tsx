@@ -8,16 +8,17 @@ import GraphEdges from './GraphEdges'
 import { useGraphStore } from '@/lib/store'
 
 export default function KnowledgeGraph() {
-  const { fetchGraph, setSelectedNode, setConnectingFromNode, isDragging, nodes, edges } = useGraphStore()
+  const { fetchGraph, setSelectedNode, setConnectingFromNode, isDragging, nodes, edges, currentGraph } = useGraphStore()
   const controlsRef = useRef<any>(null)
 
+  // 监听当前图谱的变化，重新加载数据
   useEffect(() => {
-    console.log('🔍 KnowledgeGraph mounted, fetching data...')
+    console.log('🔍 当前图谱变化，重新加载数据:', currentGraph?.name || '无')
     fetchGraph()
-  }, [fetchGraph])
+  }, [currentGraph, fetchGraph])
 
   useEffect(() => {
-    console.log('📊 Nodes:', nodes.length, 'Edges:', edges.length)
+    console.log('📊 当前显示 - 节点:', nodes.length, '边:', edges.length)
   }, [nodes, edges])
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { useGraphStore } from '@/lib/store'
 
 interface Node {
   id: string
@@ -57,6 +58,47 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
 
   // 媒体上传状态
   const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)
+
+  // 从store获取当前图谱
+  const { currentGraph, nodes: storeNodes, edges: storeEdges } = useGraphStore()
+
+  // 加载当前图谱的数据
+  useEffect(() => {
+    if (!currentGraph) {
+      console.log('⚠️ 2D视图: 没有选择图谱')
+      return
+    }
+
+    console.log('🔄 2D视图: 加载图谱数据:', currentGraph.name)
+
+    // 将3D节点转换为2D节点
+    const converted2DNodes: Node[] = storeNodes.map((node, index) => ({
+      id: node.id,
+      label: node.name,
+      description: node.description || '',
+      x: node.x * 50 + 300, // 转换坐标
+      y: node.y * 50 + 300,
+      width: 200,
+      height: 100,
+      isEditing: false,
+      imageUrl: node.imageUrl,
+      videoUrl: node.videoUrl,
+      mediaType: node.imageUrl ? 'image' : node.videoUrl ? 'video' : null,
+    }))
+
+    // 将3D边转换为2D连接
+    const converted2DConnections: Connection[] = storeEdges.map(edge => ({
+      id: edge.id,
+      from: edge.fromNodeId,
+      to: edge.toNodeId,
+      label: edge.label,
+    }))
+
+    console.log('✅ 2D视图: 加载了', converted2DNodes.length, '个节点和', converted2DConnections.length, '条连接')
+
+    setNodes(converted2DNodes)
+    setConnections(converted2DConnections)
+  }, [currentGraph, storeNodes, storeEdges])
 
   // 处理画布拖动
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -421,6 +463,13 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   // 保存并转换为三维图谱
   const saveAndConvert = async () => {
     try {
+      // 0. 检查是否选择了图谱
+      if (!currentGraph) {
+        setConversionError('请先选择一个图谱')
+        setTimeout(() => setConversionError(null), 3000)
+        return
+      }
+
       // 1. 验证数据
       const validNodes = nodes.filter(n => n.label.trim() !== '')
       if (validNodes.length === 0) {
@@ -432,27 +481,33 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       // 2. 准备数据
       const payload = {
         nodes: validNodes.map(n => ({
-          id: n.id,
+          id: n.id,  // 保留数据库ID（如果存在）
           label: n.label,
           description: n.description,
           x: n.x,
           y: n.y,
+          imageUrl: n.imageUrl,
+          videoUrl: n.videoUrl,
         })),
         connections: connections.filter(c => 
           validNodes.some(n => n.id === c.from) &&
           validNodes.some(n => n.id === c.to)
-        ),
-        metadata: {
-          canvasScale: scale,
-          canvasOffset: offset,
-        }
+        ).map(c => ({
+          id: c.id,  // 保留数据库ID（如果存在）
+          from: c.from,
+          to: c.to,
+          label: c.label,
+        })),
       }
 
-      // 3. 调用API
+      // 3. 调用同步API
       setIsConverting(true)
       setConversionError(null)
       
-      const response = await fetch('/api/convert', {
+      console.log('🔄 开始同步2D数据到图谱:', currentGraph.name)
+      console.log('📊 节点数:', payload.nodes.length, '连接数:', payload.connections.length)
+      
+      const response = await fetch(`/api/graphs/${currentGraph.id}/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -460,10 +515,13 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || '转换失败')
+        throw new Error(error.message || '同步失败')
       }
 
       const result = await response.json()
+      
+      console.log('✅ 同步成功:', result)
+      console.log('📊 统计:', result.stats)
       
       // 4. 显示成功并跳转
       setConversionSuccess(true)
@@ -472,8 +530,8 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       }, 1500)
       
     } catch (error) {
-      console.error('转换失败:', error)
-      setConversionError(error instanceof Error ? error.message : '转换失败')
+      console.error('❌ 同步失败:', error)
+      setConversionError(error instanceof Error ? error.message : '同步失败')
       setTimeout(() => setConversionError(null), 5000)
     } finally {
       setIsConverting(false)
