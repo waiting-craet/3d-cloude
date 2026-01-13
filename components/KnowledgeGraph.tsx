@@ -8,7 +8,7 @@ import GraphEdges from './GraphEdges'
 import { useGraphStore } from '@/lib/store'
 
 export default function KnowledgeGraph() {
-  const { fetchGraph, setSelectedNode, setConnectingFromNode, isDragging, nodes, edges, currentGraph } = useGraphStore()
+  const { fetchGraph, setSelectedNode, setConnectingFromNode, isDragging, nodes, edges, currentGraph, selectedNode } = useGraphStore()
   const controlsRef = useRef<any>(null)
 
   // 监听当前图谱的变化，重新加载数据
@@ -28,6 +28,53 @@ export default function KnowledgeGraph() {
       console.log('OrbitControls enabled:', !isDragging)  // 调试日志
     }
   }, [isDragging])
+
+  // 当选中节点时，相机聚焦到该节点
+  useEffect(() => {
+    if (selectedNode && controlsRef.current) {
+      const { x, y, z } = selectedNode
+      const controls = controlsRef.current
+      
+      // 计算相机应该移动到的位置（在节点前方一定距离）
+      const distance = 15
+      const cameraX = x + distance * 0.7
+      const cameraY = y + distance * 0.5
+      const cameraZ = z + distance * 0.7
+      
+      // 平滑移动相机
+      const camera = controls.object
+      const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z }
+      const startTarget = { x: controls.target.x, y: controls.target.y, z: controls.target.z }
+      const duration = 800 // 动画持续时间（毫秒）
+      const startTime = Date.now()
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime
+        const progress = Math.min(elapsed / duration, 1)
+        
+        // 使用缓动函数使动画更平滑
+        const easeProgress = 1 - Math.pow(1 - progress, 3)
+        
+        // 更新相机位置
+        camera.position.x = startPos.x + (cameraX - startPos.x) * easeProgress
+        camera.position.y = startPos.y + (cameraY - startPos.y) * easeProgress
+        camera.position.z = startPos.z + (cameraZ - startPos.z) * easeProgress
+        
+        // 更新控制器目标（聚焦到节点）
+        controls.target.x = startTarget.x + (x - startTarget.x) * easeProgress
+        controls.target.y = startTarget.y + (y - startTarget.y) * easeProgress
+        controls.target.z = startTarget.z + (z - startTarget.z) * easeProgress
+        
+        controls.update()
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        }
+      }
+      
+      animate()
+    }
+  }, [selectedNode])
 
   const handleCanvasClick = (e: any) => {
     // 只有当点击的不是节点时才取消选择

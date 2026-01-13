@@ -14,6 +14,7 @@ export default function TopNavbar() {
     currentProject, 
     currentGraph,
     setProjects,
+    setSelectedNode,
     createProject,
     addGraphToProject,
     switchGraph,
@@ -51,9 +52,9 @@ export default function TopNavbar() {
   })
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // 实时搜索节点
+  // 实时搜索当前图谱的节点
   useEffect(() => {
-    if (searchQuery.trim()) {
+    if (searchQuery.trim() && currentGraph) {
       const results = nodes.filter(node => 
         node.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
@@ -63,7 +64,7 @@ export default function TopNavbar() {
       setSearchResults([])
       setShowResults(false)
     }
-  }, [searchQuery, nodes])
+  }, [searchQuery, nodes, currentGraph])
 
   // 页面加载时恢复状态
   useEffect(() => {
@@ -552,34 +553,40 @@ export default function TopNavbar() {
         <div style={{ position: 'relative', flex: '0 0 400px' }}>
           <input
             type="text"
-            placeholder="搜索节点..."
+            placeholder={currentGraph ? `搜索 ${currentGraph.name} 中的节点...` : "请先选择一个知识图谱"}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => searchQuery && setShowResults(true)}
             onBlur={() => setTimeout(() => setShowResults(false), 200)}
+            disabled={!currentGraph}
             style={{
               width: '100%',
               padding: '10px 16px',
-              background: 'rgba(255, 255, 255, 0.08)',
+              background: currentGraph ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.03)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '8px',
-              color: 'white',
+              color: currentGraph ? 'white' : 'rgba(255, 255, 255, 0.4)',
               fontSize: '14px',
               outline: 'none',
               transition: 'all 0.2s',
+              cursor: currentGraph ? 'text' : 'not-allowed',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
-              e.currentTarget.style.borderColor = 'rgba(74, 158, 255, 0.5)'
+              if (currentGraph) {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
+                e.currentTarget.style.borderColor = 'rgba(74, 158, 255, 0.5)'
+              }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'
+              if (currentGraph) {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'
+              }
             }}
           />
           
           {/* 搜索结果下拉框 */}
-          {showResults && searchResults.length > 0 && (
+          {showResults && currentGraph && (
             <div style={{
               position: 'absolute',
               top: '100%',
@@ -594,26 +601,80 @@ export default function TopNavbar() {
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
               zIndex: 1001,
             }}>
-              {searchResults.map((node) => (
-                <div
-                  key={node.id}
-                  style={{
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.background = 'rgba(74, 158, 255, 0.15)'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ color: 'white', fontSize: '14px', fontWeight: '500' }}>
-                    {node.name}
+              {searchResults.length > 0 ? (
+                <>
+                  {/* 搜索结果头部 */}
+                  <div style={{
+                    padding: '10px 16px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                  }}>
+                    找到 {searchResults.length} 个节点
                   </div>
-                  <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px', marginTop: '4px' }}>
-                    类型: {node.type}
+                  
+                  {/* 搜索结果列表 */}
+                  {searchResults.map((node) => (
+                    <div
+                      key={node.id}
+                      onClick={() => {
+                        setSelectedNode(node)
+                        setSearchQuery('')
+                        setShowResults(false)
+                      }}
+                      style={{
+                        padding: '12px 16px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(74, 158, 255, 0.15)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{ 
+                        color: 'white', 
+                        fontSize: '14px', 
+                        fontWeight: '500',
+                        marginBottom: '4px',
+                      }}>
+                        {node.name}
+                      </div>
+                      <div style={{ 
+                        color: 'rgba(255, 255, 255, 0.5)', 
+                        fontSize: '12px',
+                        display: 'flex',
+                        gap: '12px',
+                      }}>
+                        <span>类型: {node.type}</span>
+                        {node.description && (
+                          <span style={{ 
+                            maxWidth: '200px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {node.description}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div style={{
+                  padding: '30px 20px',
+                  textAlign: 'center',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '14px',
+                }}>
+                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>🔍</div>
+                  <div>未找到匹配的节点</div>
+                  <div style={{ fontSize: '12px', marginTop: '8px' }}>
+                    尝试使用其他关键词搜索
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
