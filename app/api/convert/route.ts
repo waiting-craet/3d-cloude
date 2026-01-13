@@ -18,6 +18,7 @@ interface ConversionRequest {
     canvasScale?: number
     canvasOffset?: { x: number; y: number }
   }
+  updateMode?: boolean // 是否为更新模式
 }
 
 /**
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   try {
     // 1. 解析请求体
     const body: ConversionRequest = await request.json()
-    const { nodes, connections, metadata } = body
+    const { nodes, connections, metadata, updateMode = false } = body
 
     // 2. 数据验证
     if (!nodes || !Array.isArray(nodes)) {
@@ -99,38 +100,78 @@ export async function POST(request: Request) {
       }
     })
 
-    // 5. 使用事务创建数据库记录
+    // 5. 使用事务创建或更新数据库记录
     const result = await prisma.$transaction(async (tx) => {
-      // 创建节点
-      const createdNodes = await Promise.all(
-        convertedNodes.map(node =>
-          tx.node.create({
-            data: {
-              name: node.label,
-              type: 'concept',
-              description: node.description || null,
-              x: node.x3d,
-              y: node.y3d,
-              z: node.z3d,
-              color: '#3b82f6',
-              size: 1.0,
-              metadata: JSON.stringify({
-                original2D: {
-                  x: node.x2d,
-                  y: node.y2d,
-                },
-                convertedAt: new Date().toISOString(),
-                canvasMetadata: metadata,
-              }),
-            },
-          })
-        )
-      )
+      let createdNodes
+      let idMap: Map<string, string>
 
-      // 创建ID映射：原始ID -> 数据库ID
-      const idMap = new Map(
-        createdNodes.map((node, i) => [convertedNodes[i].originalId, node.id])
-      )
+      if (updateMode) {
+        // 更新模式：先删除所有现有数据，然后重新创建
+        await tx.edge.deleteMany({})
+        await tx.node.deleteMany({})
+        
+        // 创建新节点
+        createdNodes = await Promise.all(
+          convertedNodes.map(node =>
+            tx.node.create({
+              data: {
+                name: node.label,
+                type: 'concept',
+                description: node.description || null,
+                x: node.x3d,
+                y: node.y3d,
+                z: node.z3d,
+                color: '#3b82f6',
+                size: 1.0,
+                metadata: JSON.stringify({
+                  original2D: {
+                    x: node.x2d,
+                    y: node.y2d,
+                  },
+                  convertedAt: new Date().toISOString(),
+                  canvasMetadata: metadata,
+                }),
+              },
+            })
+          )
+        )
+
+        // 创建ID映射：原始ID -> 数据库ID
+        idMap = new Map(
+          createdNodes.map((node, i) => [convertedNodes[i].originalId, node.id])
+        )
+      } else {
+        // 创建模式：直接创建新节点
+        createdNodes = await Promise.all(
+          convertedNodes.map(node =>
+            tx.node.create({
+              data: {
+                name: node.label,
+                type: 'concept',
+                description: node.description || null,
+                x: node.x3d,
+                y: node.y3d,
+                z: node.z3d,
+                color: '#3b82f6',
+                size: 1.0,
+                metadata: JSON.stringify({
+                  original2D: {
+                    x: node.x2d,
+                    y: node.y2d,
+                  },
+                  convertedAt: new Date().toISOString(),
+                  canvasMetadata: metadata,
+                }),
+              },
+            })
+          )
+        )
+
+        // 创建ID映射：原始ID -> 数据库ID
+        idMap = new Map(
+          createdNodes.map((node, i) => [convertedNodes[i].originalId, node.id])
+        )
+      }
 
       // 创建边
       const createdEdges = await Promise.all(

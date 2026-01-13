@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useGraphStore } from '@/lib/store'
+import { useRouter } from 'next/navigation'
 
 export default function NodeDetailPanel() {
-  const { selectedNode, setSelectedNode, updateNode, deleteNode, fetchGraph } = useGraphStore()
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [tags, setTags] = useState('')
+  const { selectedNode, setSelectedNode, deleteNode, fetchGraph } = useGraphStore()
   const [isAdmin, setIsAdmin] = useState(false)
+  const router = useRouter()
 
   // 检查管理员状态
   useEffect(() => {
@@ -30,23 +29,13 @@ export default function NodeDetailPanel() {
     }
   }, [])
 
-  useEffect(() => {
-    if (selectedNode) {
-      setName(selectedNode.name || '')
-      setDescription(selectedNode.description || '')
-      // 解析 tags（如果是 JSON 字符串）
-      try {
-        const parsedTags = selectedNode.tags ? JSON.parse(selectedNode.tags) : []
-        setTags(Array.isArray(parsedTags) ? parsedTags.join(', ') : '')
-      } catch {
-        setTags('')
-      }
-    }
-  }, [selectedNode])
+  const handleClose = () => {
+    setSelectedNode(null)
+  }
 
-  const handleModify = () => {
-    // 修改功能暂不开发，仅显示提示
-    alert('修改功能即将上线，敬请期待！')
+  const handleEdit = () => {
+    // 跳转到二维图谱编辑页面
+    router.push('/workflow')
   }
 
   const handleDelete = async () => {
@@ -66,10 +55,6 @@ export default function NodeDetailPanel() {
       console.error('删除失败:', error)
       alert('删除失败，请重试')
     }
-  }
-
-  const handleClose = () => {
-    setSelectedNode(null)
   }
 
   if (!selectedNode) return null
@@ -148,7 +133,7 @@ export default function NodeDetailPanel() {
         overflowY: 'auto',
         flex: 1,
       }}>
-        {/* 名称 */}
+        {/* 名称 - 只读展示 */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{
             display: 'block',
@@ -159,34 +144,21 @@ export default function NodeDetailPanel() {
           }}>
             名称
           </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="输入节点名称"
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '2px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '14px',
-              outline: 'none',
-              transition: 'all 0.2s',
-              background: 'white',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#6BB6FF'
-              e.target.style.boxShadow = '0 0 0 3px rgba(107, 182, 255, 0.1)'
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e5e7eb'
-              e.target.style.boxShadow = 'none'
-            }}
-            disabled={!isAdmin}
-          />
+          <div style={{
+            width: '100%',
+            padding: '12px',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            fontSize: '14px',
+            background: '#f9fafb',
+            color: '#1f2937',
+            minHeight: '44px',
+          }}>
+            {selectedNode.name || '未命名'}
+          </div>
         </div>
 
-        {/* 描述 */}
+        {/* 描述 - 只读展示 */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{
             display: 'block',
@@ -197,72 +169,67 @@ export default function NodeDetailPanel() {
           }}>
             简介
           </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="输入节点简介"
-            rows={4}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '2px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '14px',
-              outline: 'none',
-              resize: 'vertical',
-              fontFamily: 'inherit',
-              transition: 'all 0.2s',
-              background: 'white',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#6BB6FF'
-              e.target.style.boxShadow = '0 0 0 3px rgba(107, 182, 255, 0.1)'
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e5e7eb'
-              e.target.style.boxShadow = 'none'
-            }}
-            disabled={!isAdmin}
-          />
+          <div style={{
+            width: '100%',
+            padding: '12px',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            fontSize: '14px',
+            background: '#f9fafb',
+            color: '#1f2937',
+            minHeight: '100px',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}>
+            {selectedNode.description || '暂无简介'}
+          </div>
         </div>
 
-        {/* 标签 */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{
-            display: 'block',
-            fontSize: '14px',
-            fontWeight: '500',
-            color: '#374151',
-            marginBottom: '8px',
-          }}>
-            标签
-          </label>
-          <input
-            type="text"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="用逗号分隔，例如：AI, RAG, NLP"
-            style={{
-              width: '100%',
-              padding: '12px',
+        {/* 媒体展示模块 */}
+        {(selectedNode.imageUrl || selectedNode.videoUrl) && (
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '8px',
+            }}>
+              媒体内容
+            </label>
+            <div style={{
               border: '2px solid #e5e7eb',
               borderRadius: '8px',
-              fontSize: '14px',
-              outline: 'none',
-              transition: 'all 0.2s',
-              background: 'white',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#6BB6FF'
-              e.target.style.boxShadow = '0 0 0 3px rgba(107, 182, 255, 0.1)'
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e5e7eb'
-              e.target.style.boxShadow = 'none'
-            }}
-            disabled={!isAdmin}
-          />
-        </div>
+              overflow: 'hidden',
+              background: '#f9fafb',
+            }}>
+              {selectedNode.videoUrl ? (
+                <video
+                  src={selectedNode.videoUrl}
+                  controls
+                  style={{
+                    width: '100%',
+                    maxHeight: '300px',
+                    display: 'block',
+                  }}
+                >
+                  您的浏览器不支持视频播放
+                </video>
+              ) : selectedNode.imageUrl ? (
+                <img
+                  src={selectedNode.imageUrl}
+                  alt={selectedNode.name || '节点图片'}
+                  style={{
+                    width: '100%',
+                    maxHeight: '300px',
+                    objectFit: 'contain',
+                    display: 'block',
+                  }}
+                />
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* 元信息 */}
         <div style={{
@@ -349,7 +316,7 @@ export default function NodeDetailPanel() {
           background: 'rgba(249, 250, 251, 0.8)',
         }}>
           <button
-            onClick={handleModify}
+            onClick={handleEdit}
             style={{
               flex: 1,
               padding: '12px',
@@ -410,38 +377,6 @@ export default function NodeDetailPanel() {
             <span style={{ fontSize: '16px' }}>🗑️</span>
             删除
           </button>
-        </div>
-      )}
-      
-      {/* 非管理员提示 */}
-      {!isAdmin && (
-        <div style={{
-          padding: '24px',
-          borderTop: '1px solid #e5e7eb',
-          textAlign: 'center',
-          background: 'linear-gradient(135deg, rgba(156, 163, 175, 0.05) 0%, rgba(156, 163, 175, 0.1) 100%)',
-        }}>
-          <div style={{ 
-            fontSize: '32px',
-            marginBottom: '12px',
-          }}>
-            🔒
-          </div>
-          <div style={{ 
-            color: '#6b7280',
-            fontSize: '14px',
-            fontWeight: '500',
-            marginBottom: '6px',
-          }}>
-            仅查看模式
-          </div>
-          <div style={{ 
-            fontSize: '12px',
-            color: '#9ca3af',
-            lineHeight: '1.5',
-          }}>
-            需要管理员权限才能修改或删除节点
-          </div>
         </div>
       )}
     </div>
