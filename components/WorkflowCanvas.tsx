@@ -54,7 +54,9 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const [isConverting, setIsConverting] = useState(false)
   const [conversionError, setConversionError] = useState<string | null>(null)
   const [conversionSuccess, setConversionSuccess] = useState(false)
->>>>>>> translate2-3
+
+  // 媒体上传状态
+  const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)
 
   // 处理画布拖动
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -254,6 +256,87 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     }
   }
 
+  // 处理媒体上传
+  const handleMediaUpload = async (nodeId: string, file: File) => {
+    try {
+      // 验证文件大小
+      const maxSize = file.type.startsWith('image/') ? 5 * 1024 * 1024 : 50 * 1024 * 1024
+      if (file.size > maxSize) {
+        alert(`文件太大！${file.type.startsWith('image/') ? '图片' : '视频'}最大${file.type.startsWith('image/') ? '5MB' : '50MB'}`)
+        return
+      }
+
+      setUploadingMedia(nodeId)
+
+      // 创建 FormData
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('nodeId', nodeId)
+      formData.append('type', file.type.startsWith('image/') ? 'image' : 'video')
+
+      // 上传到 API
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        // 显示详细的错误信息
+        const errorMsg = data.message || data.error || '上传失败'
+        throw new Error(errorMsg)
+      }
+
+      // 更新节点
+      updateNode(nodeId, {
+        imageUrl: data.mediaType === 'image' ? data.url : undefined,
+        videoUrl: data.mediaType === 'video' ? data.url : undefined,
+        mediaType: data.mediaType,
+      })
+
+    } catch (error) {
+      console.error('上传失败:', error)
+      const errorMessage = error instanceof Error ? error.message : '上传失败，请重试'
+      alert(errorMessage)
+    } finally {
+      setUploadingMedia(null)
+    }
+  }
+
+  // 删除媒体
+  const handleDeleteMedia = async (nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId)
+    if (!node) return
+
+    const mediaUrl = node.imageUrl || node.videoUrl
+    if (!mediaUrl) return
+
+    try {
+      // 调用删除 API
+      const response = await fetch('/api/upload/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: mediaUrl }),
+      })
+
+      if (!response.ok) {
+        throw new Error('删除失败')
+      }
+
+      // 更新节点
+      updateNode(nodeId, {
+        imageUrl: undefined,
+        videoUrl: undefined,
+        mediaType: null,
+      })
+
+    } catch (error) {
+      console.error('删除媒体失败:', error)
+      alert('删除失败，请重试')
+    }
+  }
+
   // 处理连接点按下（开始拖拽连线）
   const handleConnectionPointMouseDown = (e: React.MouseEvent, nodeId: string) => {
     console.log('🟢 Connection point clicked:', nodeId)
@@ -404,7 +487,6 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     conversionError,
     conversionSuccess,
   }))
->>>>>>> translate2-3
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove)
