@@ -52,19 +52,77 @@ export default function TopNavbar() {
       setAdminUsername(savedUsername)
     }
 
-    // 加载项目数据
-    const savedProjects = localStorage.getItem('projects')
-    if (savedProjects) {
-      const parsedProjects = JSON.parse(savedProjects)
-      setProjects(parsedProjects)
-      
-      // 恢复当前项目和图谱
-      const currentProjectId = localStorage.getItem('currentProjectId')
-      const currentGraphId = localStorage.getItem('currentGraphId')
-      if (currentProjectId && currentGraphId) {
-        switchGraph(currentProjectId, currentGraphId)
+    // 从数据库加载项目数据
+    const loadProjects = async () => {
+      try {
+        console.log('正在从数据库加载项目...')
+        const res = await fetch('/api/projects')
+        if (res.ok) {
+          const data = await res.json()
+          const projects = data.projects || []
+          
+          console.log('加载到的项目数:', projects.length)
+          
+          // 转换为前端格式
+          const formattedProjects = await Promise.all(
+            projects.map(async (project: any) => {
+              // 获取项目的图谱列表
+              const graphsRes = await fetch(`/api/projects/${project.id}/graphs`)
+              const graphsData = await graphsRes.json()
+              
+              console.log(`项目 ${project.name} 的图谱数:`, graphsData.graphs?.length || 0)
+              
+              return {
+                id: project.id,
+                name: project.name,
+                graphs: (graphsData.graphs || []).map((graph: any) => ({
+                  id: graph.id,
+                  name: graph.name,
+                  projectId: project.id,
+                  nodeCount: graph.nodeCount || 0,
+                  edgeCount: graph.edgeCount || 0,
+                  createdAt: graph.createdAt,
+                })),
+              }
+            })
+          )
+          
+          setProjects(formattedProjects)
+          
+          // 检查localStorage中的ID是否有效
+          const currentProjectId = localStorage.getItem('currentProjectId')
+          const currentGraphId = localStorage.getItem('currentGraphId')
+          
+          // 验证ID是否是真实的数据库ID（cuid格式）
+          const isValidId = (id: string | null) => id && id.startsWith('cmk')
+          
+          if (isValidId(currentProjectId) && isValidId(currentGraphId)) {
+            // 验证项目和图谱是否存在
+            const project = formattedProjects.find(p => p.id === currentProjectId)
+            const graph = project?.graphs.find(g => g.id === currentGraphId)
+            
+            if (project && graph) {
+              console.log('恢复上次选择的图谱:', graph.name)
+              switchGraph(currentProjectId!, currentGraphId!)
+            } else {
+              console.log('上次选择的图谱不存在，清理localStorage')
+              localStorage.removeItem('currentProjectId')
+              localStorage.removeItem('currentGraphId')
+            }
+          } else {
+            // 清理旧的本地ID
+            console.log('检测到旧的本地ID，清理localStorage')
+            localStorage.removeItem('currentProjectId')
+            localStorage.removeItem('currentGraphId')
+            localStorage.removeItem('projects')
+          }
+        }
+      } catch (error) {
+        console.error('加载项目失败:', error)
       }
     }
+    
+    loadProjects()
   }, [setProjects, switchGraph])
 
   // 点击外部关闭项目菜单

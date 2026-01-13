@@ -23,6 +23,7 @@ import {
 interface ConversionRequest {
   nodes: WorkflowNode[]
   connections: WorkflowConnection[]
+  graphId?: string  // 添加图谱ID
   metadata?: {
     canvasScale?: number
     canvasOffset?: { x: number; y: number }
@@ -57,7 +58,9 @@ export async function POST(request: Request) {
   try {
     // 1. 解析请求体
     const body: ConversionRequest = await request.json()
-    const { nodes, connections, metadata, updateMode = false } = body
+    const { nodes, connections, graphId, metadata, updateMode = false } = body
+
+    console.log('🔄 收到转换请求 - 图谱ID:', graphId, '节点数:', nodes?.length)
 
     // 2. 数据验证
     if (!nodes || !Array.isArray(nodes)) {
@@ -69,6 +72,35 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    // 验证图谱ID
+    if (!graphId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: '请先选择一个图谱',
+        } as ConversionResponse,
+        { status: 400 }
+      )
+    }
+
+    // 验证图谱是否存在
+    const graph = await prisma.graph.findUnique({
+      where: { id: graphId },
+      select: { id: true, projectId: true, name: true },
+    })
+
+    if (!graph) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: '图谱不存在',
+        } as ConversionResponse,
+        { status: 404 }
+      )
+    }
+
+    console.log('✅ 图谱验证通过:', graph.name)
 
     // 验证数据完整性
     const validationResult = validateWorkflowData(nodes, connections || [])
@@ -116,73 +148,91 @@ export async function POST(request: Request) {
       }
     })
 
-    // 5. 使用批处理创建数据库记录
-    let createdNodes
-    let idMap: Map<string, string>
+    // 5. 直接使用数据库创建节点和边
+    let createdNodes: any[] = []
+    let createdEdges: any[] = []
 
     try {
-      if (updateMode) {
-        // 更新模式：先删除所有现有数据
-        await clearAllGraphData()
-      }
+      console.log('📝 开始创建节点...')
       
-      // 准备节点数据
-      const nodeDataArray: NodeData[] = convertedNodes.map(node => ({
-        name: node.label,
-        type: 'concept',
-        description: node.description || null,
-        x: node.x3d,
-        y: node.y3d,
-        z: node.z3d,
-        color: '#3b82f6',
-        size: 1.0,
-        metadata: JSON.stringify({
-          original2D: {
-            x: node.x2d,
-            y: node.y2d,
-          },
-          convertedAt: new Date().toISOString(),
-          canvasMetadata: metadata,
-        }),
-      }))
-      
-      // 使用批处理创建节点
-      const nodeResult = await createNodesBatch(nodeDataArray, 15, 100)
-      
-      if (nodeResult.errors.length > 0) {
-        throw nodeResult.errors[0]
-      }
-      
-      createdNodes = nodeResult.items
-      
-      // 创建ID映射：原始ID -> 数据库ID
-      idMap = new Map(
-        createdNodes.map((node, i) => [convertedNodes[i].originalId, node.id])
+      // 使用事务批量创建节点
+      createdNodes = await Promise.all(
+        convertedNodes.map(async (node) => {
+          const created = await prisma.node.create({
+            data: {
+              name: node.label,
+              type: 'concept',
+              description: node.description || '',
+              x: node.x3d,
+              y: node.y3d,
+              z: node.z3d,
+              color: '#3b82f6',
+              size: 1.5,
+              projectId: graph.projectId,
+              graphId: graphId,
+            },
+          })
+          return {
+            ...created,
+            originalId: node.originalId,
+          }
+        })
       )
+
+      console.log(`✅ 创建了 ${createdNodes.length} 个节点`)
+
+      // 更新图谱的节点计数
+      await prisma.graph.update({
+        where: { id: graphId },
+        data: { nodeCount: { increment: createdNodes.length } },
+      })
+
+      // 更新项目的节点计数
+      await prisma.project.update({
+        where: { id: graph.projectId },
+        data: { nodeCount: { increment: createdNodes.length } },
+      })
+
+      // 创建ID映射：原始ID -> 数据库ID
+      const idMap = new Map(
+        createdNodes.map(node => [node.originalId, node.id])
+      )
+
+      // 创建边
+      console.log('🔗 开始创建边...')
       
-      // 准备边数据
-      const edgeDataArray: EdgeData[] = cleaned.connections
+      const edgesToCreate = cleaned.connections
         .filter(conn => idMap.has(conn.from) && idMap.has(conn.to))
         .map(conn => ({
           fromNodeId: idMap.get(conn.from)!,
           toNodeId: idMap.get(conn.to)!,
           label: conn.label || 'RELATES_TO',
           weight: 1.0,
-          color: '#3b82f6',
-          properties: JSON.stringify({
-            original2DConnection: conn.id,
-            convertedAt: new Date().toISOString(),
-          }),
+          projectId: graph.projectId,
+          graphId: graphId,
         }))
-      
-      // 使用批处理创建边
-      const edgeResult = await createEdgesBatch(edgeDataArray, 20, 50)
-      
-      if (edgeResult.errors.length > 0) {
-        console.warn('Some edges failed to create:', edgeResult.errors)
+
+      if (edgesToCreate.length > 0) {
+        createdEdges = await Promise.all(
+          edgesToCreate.map(edgeData => 
+            prisma.edge.create({ data: edgeData })
+          )
+        )
+
+        // 更新图谱的边计数
+        await prisma.graph.update({
+          where: { id: graphId },
+          data: { edgeCount: { increment: createdEdges.length } },
+        })
+
+        // 更新项目的边计数
+        await prisma.project.update({
+          where: { id: graph.projectId },
+          data: { edgeCount: { increment: createdEdges.length } },
+        })
       }
-      
-      const createdEdges = edgeResult.items
+
+      console.log(`✅ 创建了 ${createdEdges.length} 条边`)
 
       // 6. 返回成功响应
       return NextResponse.json({
@@ -198,17 +248,7 @@ export async function POST(request: Request) {
       
     } catch (dbError) {
       // 数据库错误处理
-      console.error('Database operation failed:', dbError)
-      
-      // 尝试清理部分创建的数据
-      try {
-        if (updateMode) {
-          await clearAllGraphData()
-        }
-      } catch (cleanupError) {
-        console.error('Cleanup failed:', cleanupError)
-      }
-      
+      console.error('❌ Database operation failed:', dbError)
       throw dbError
     }
 

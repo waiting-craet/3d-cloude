@@ -88,15 +88,33 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   
   addNode: async (node) => {
     try {
-      const response = await fetch('/api/nodes', {
+      const state = get()
+      const currentGraph = state.currentGraph
+      
+      if (!currentGraph) {
+        console.error('请先选择一个图谱')
+        return
+      }
+      
+      // 使用图谱API创建节点
+      const response = await fetch(`/api/graphs/${currentGraph.id}/nodes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(node),
       })
       
       if (response.ok) {
-        const newNode = await response.json()
+        const data = await response.json()
+        const newNode = data.node
         set((state) => ({ nodes: [...state.nodes, newNode] }))
+        
+        // 更新图谱的节点计数
+        set((state) => ({
+          currentGraph: state.currentGraph ? {
+            ...state.currentGraph,
+            nodeCount: state.currentGraph.nodeCount + 1
+          } : null
+        }))
       } else {
         const error = await response.json()
         console.error('创建节点失败:', error)
@@ -108,15 +126,33 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   
   addEdge: async (edge) => {
     try {
-      const response = await fetch('/api/edges', {
+      const state = get()
+      const currentGraph = state.currentGraph
+      
+      if (!currentGraph) {
+        console.error('请先选择一个图谱')
+        return
+      }
+      
+      // 使用图谱API创建边
+      const response = await fetch(`/api/graphs/${currentGraph.id}/edges`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(edge),
       })
       
       if (response.ok) {
-        const newEdge = await response.json()
+        const data = await response.json()
+        const newEdge = data.edge
         set((state) => ({ edges: [...state.edges, newEdge] }))
+        
+        // 更新图谱的边计数
+        set((state) => ({
+          currentGraph: state.currentGraph ? {
+            ...state.currentGraph,
+            edgeCount: state.currentGraph.edgeCount + 1
+          } : null
+        }))
       } else {
         const error = await response.json()
         console.error('创建关系失败:', error)
@@ -198,92 +234,173 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   
   fetchGraph: async () => {
     try {
+      const state = get()
+      const currentGraph = state.currentGraph
+      
+      // 如果没有选择图谱，清空数据
+      if (!currentGraph) {
+        console.log('⚠️ 没有选择图谱，清空节点和边')
+        set({ nodes: [], edges: [] })
+        return
+      }
+      
+      console.log('🔄 正在加载图谱数据:', currentGraph.name, currentGraph.id)
+      
+      // 使用图谱专属API加载数据
       const [nodesRes, edgesRes] = await Promise.all([
-        fetch('/api/nodes'),
-        fetch('/api/edges'),
+        fetch(`/api/graphs/${currentGraph.id}/nodes`),
+        fetch(`/api/graphs/${currentGraph.id}/edges`),
       ])
       
       if (nodesRes.ok && edgesRes.ok) {
-        const nodes = await nodesRes.json()
-        const edges = await edgesRes.json()
+        const nodesData = await nodesRes.json()
+        const edgesData = await edgesRes.json()
+        
+        const nodes = nodesData.nodes || []
+        const edges = edgesData.edges || []
+        
+        console.log('✅ 图谱数据加载成功:', nodes.length, '个节点,', edges.length, '条边')
         set({ nodes, edges })
       } else {
-        console.error('获取数据失败')
+        console.error('❌ 获取数据失败 - 节点:', nodesRes.status, '边:', edgesRes.status)
+        set({ nodes: [], edges: [] })
       }
     } catch (error) {
-      console.error('获取图谱数据失败:', error)
+      console.error('❌ 获取图谱数据失败:', error)
+      set({ nodes: [], edges: [] })
     }
   },
 
-  createProject: (projectName, graphName) => {
-    const projectId = `project-${Date.now()}`
-    const graphId = `graph-${Date.now()}`
-    
-    const newGraph: KnowledgeGraph = {
-      id: graphId,
-      name: graphName,
-      projectId: projectId,
-      nodeCount: 0,
-      edgeCount: 0,
-      createdAt: new Date().toISOString(),
-    }
-    
-    const newProject: Project = {
-      id: projectId,
-      name: projectName,
-      graphs: [newGraph],
-    }
-    
-    set((state) => ({
-      projects: [...state.projects, newProject],
-      currentProject: newProject,
-      currentGraph: newGraph,
-      nodes: [],
-      edges: [],
-    }))
+  createProject: async (projectName, graphName) => {
+    try {
+      // 1. 创建项目
+      const projectRes = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: projectName,
+          description: `项目: ${projectName}`,
+        }),
+      })
+      
+      if (!projectRes.ok) {
+        console.error('创建项目失败')
+        return
+      }
+      
+      const projectData = await projectRes.json()
+      const project = projectData.project
+      
+      // 2. 在项目中创建图谱
+      const graphRes = await fetch(`/api/projects/${project.id}/graphs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: graphName,
+          description: `图谱: ${graphName}`,
+        }),
+      })
+      
+      if (!graphRes.ok) {
+        console.error('创建图谱失败')
+        return
+      }
+      
+      const graphData = await graphRes.json()
+      const graph = graphData.graph
+      
+      // 3. 更新本地状态
+      const newProject: Project = {
+        id: project.id,
+        name: project.name,
+        graphs: [{
+          id: graph.id,
+          name: graph.name,
+          projectId: project.id,
+          nodeCount: 0,
+          edgeCount: 0,
+          createdAt: graph.createdAt,
+        }],
+      }
+      
+      set((state) => ({
+        projects: [...state.projects, newProject],
+        currentProject: newProject,
+        currentGraph: newProject.graphs[0],
+        nodes: [],
+        edges: [],
+      }))
 
-    // 保存到 localStorage
-    const projects = [...get().projects]
-    localStorage.setItem('projects', JSON.stringify(projects))
-    localStorage.setItem('currentProjectId', projectId)
-    localStorage.setItem('currentGraphId', graphId)
+      // 保存到 localStorage
+      const projects = get().projects
+      localStorage.setItem('projects', JSON.stringify(projects))
+      localStorage.setItem('currentProjectId', project.id)
+      localStorage.setItem('currentGraphId', graph.id)
+      
+      console.log('项目和图谱创建成功:', newProject)
+    } catch (error) {
+      console.error('创建项目失败:', error)
+    }
   },
 
-  addGraphToProject: (projectId, graphName) => {
-    const graphId = `graph-${Date.now()}`
-    
-    const newGraph: KnowledgeGraph = {
-      id: graphId,
-      name: graphName,
-      projectId: projectId,
-      nodeCount: 0,
-      edgeCount: 0,
-      createdAt: new Date().toISOString(),
-    }
-    
-    set((state) => ({
-      projects: state.projects.map((project) =>
-        project.id === projectId
-          ? { ...project, graphs: [...project.graphs, newGraph] }
-          : project
-      ),
-      currentGraph: newGraph,
-      nodes: [],
-      edges: [],
-    }))
+  addGraphToProject: async (projectId, graphName) => {
+    try {
+      // 在项目中创建图谱
+      const graphRes = await fetch(`/api/projects/${projectId}/graphs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: graphName,
+          description: `图谱: ${graphName}`,
+        }),
+      })
+      
+      if (!graphRes.ok) {
+        console.error('创建图谱失败')
+        return
+      }
+      
+      const graphData = await graphRes.json()
+      const graph = graphData.graph
+      
+      const newGraph: KnowledgeGraph = {
+        id: graph.id,
+        name: graph.name,
+        projectId: projectId,
+        nodeCount: 0,
+        edgeCount: 0,
+        createdAt: graph.createdAt,
+      }
+      
+      set((state) => ({
+        projects: state.projects.map((project) =>
+          project.id === projectId
+            ? { ...project, graphs: [...project.graphs, newGraph] }
+            : project
+        ),
+        currentGraph: newGraph,
+        nodes: [],
+        edges: [],
+      }))
 
-    // 保存到 localStorage
-    const projects = get().projects
-    localStorage.setItem('projects', JSON.stringify(projects))
-    localStorage.setItem('currentGraphId', graphId)
+      // 保存到 localStorage
+      const projects = get().projects
+      localStorage.setItem('projects', JSON.stringify(projects))
+      localStorage.setItem('currentGraphId', graph.id)
+      
+      console.log('图谱创建成功:', newGraph)
+    } catch (error) {
+      console.error('添加图谱失败:', error)
+    }
   },
 
-  switchGraph: (projectId, graphId) => {
+  switchGraph: async (projectId, graphId) => {
     const state = get()
     const project = state.projects.find((p) => p.id === projectId)
     const graph = project?.graphs.find((g) => g.id === graphId)
     
     if (project && graph) {
+      // 先设置当前项目和图谱
       set({
         currentProject: project,
         currentGraph: graph,
@@ -295,8 +412,34 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       localStorage.setItem('currentProjectId', projectId)
       localStorage.setItem('currentGraphId', graphId)
 
-      // 这里可以从后端加载对应图谱的数据
-      // 暂时清空节点和边
+      // 从数据库加载对应图谱的节点和边
+      try {
+        console.log('正在加载图谱数据:', graphId)
+        
+        const [nodesRes, edgesRes] = await Promise.all([
+          fetch(`/api/graphs/${graphId}/nodes`),
+          fetch(`/api/graphs/${graphId}/edges`),
+        ])
+        
+        if (nodesRes.ok && edgesRes.ok) {
+          const nodesData = await nodesRes.json()
+          const edgesData = await edgesRes.json()
+          
+          console.log('加载的节点数:', nodesData.nodes?.length || 0)
+          console.log('加载的边数:', edgesData.edges?.length || 0)
+          
+          set({ 
+            nodes: nodesData.nodes || [], 
+            edges: edgesData.edges || [] 
+          })
+        } else {
+          console.error('加载图谱数据失败')
+          console.error('节点响应状态:', nodesRes.status)
+          console.error('边响应状态:', edgesRes.status)
+        }
+      } catch (error) {
+        console.error('加载图谱数据时出错:', error)
+      }
     }
   },
 }))
