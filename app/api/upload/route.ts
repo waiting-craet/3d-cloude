@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       url: blob.url,
       pathname: blob.pathname,
       contentType: blob.contentType,
-      size: blob.size,
+      size: file.size,
       mediaType: isImage ? 'image' : 'video',
     })
 
