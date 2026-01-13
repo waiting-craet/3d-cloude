@@ -42,6 +42,14 @@ model Node {
   tags        String?  // JSON 数组格式
   category    String?
   
+  // 图谱关联（新增）
+  graphId     String?
+  graph       Graph?   @relation(fields: [graphId], references: [id], onDelete: Cascade)
+  
+  // 项目关联
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
   // 时间戳
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -58,6 +66,8 @@ model Node {
   @@index([documentId])
   @@index([category])
   @@index([createdAt])
+  @@index([graphId])
+  @@index([projectId])
 }
 
 // 边模型 - 节点之间的关系
@@ -76,6 +86,14 @@ model Edge {
   color       String?
   style       String?  // solid, dashed, dotted
   
+  // 图谱关联（新增）
+  graphId     String?
+  graph       Graph?   @relation(fields: [graphId], references: [id], onDelete: Cascade)
+  
+  // 项目关联
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
   createdAt   DateTime @default(now())
 
   fromNode Node @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
@@ -84,6 +102,33 @@ model Edge {
   @@index([fromNodeId])
   @@index([toNodeId])
   @@index([label])
+  @@index([graphId])
+  @@index([projectId])
+}
+
+// 项目模型 - 管理多个知识图谱
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // 项目配置
+  settings    String?  // JSON 格式的配置
+  
+  // 统计信息
+  nodeCount   Int      @default(0)
+  edgeCount   Int      @default(0)
+  
+  // 时间戳
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // 关联关系
+  graphs      Graph[]
+  nodes       Node[]
+  edges       Edge[]
+  
+  @@index([createdAt])
 }
 
 // 图谱模型 - 管理多个知识图谱
@@ -91,6 +136,10 @@ model Graph {
   id          String   @id @default(cuid())
   name        String
   description String?
+  
+  // 项目关联（新增）
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   // 图谱配置
   settings    String?  // JSON 格式的配置
@@ -102,7 +151,12 @@ model Graph {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  // 关联关系
+  nodes       Node[]
+  edges       Edge[]
 
+  @@index([projectId])
   @@index([createdAt])
 }
 
