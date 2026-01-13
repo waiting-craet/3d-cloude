@@ -80,42 +80,18 @@ export default function TopNavbar() {
       console.log('✗ 未检测到管理员状态')
     }
 
-    // 从数据库加载项目数据
+    // 从数据库加载项目数据（使用优化的 API）
     const loadProjects = async () => {
       try {
         console.log('正在从数据库加载项目...')
-        const res = await fetch('/api/projects')
+        const res = await fetch('/api/projects/with-graphs')
         if (res.ok) {
           const data = await res.json()
           const projects = data.projects || []
           
           console.log('加载到的项目数:', projects.length)
           
-          // 转换为前端格式
-          const formattedProjects = await Promise.all(
-            projects.map(async (project: any) => {
-              // 获取项目的图谱列表
-              const graphsRes = await fetch(`/api/projects/${project.id}/graphs`)
-              const graphsData = await graphsRes.json()
-              
-              console.log(`项目 ${project.name} 的图谱数:`, graphsData.graphs?.length || 0)
-              
-              return {
-                id: project.id,
-                name: project.name,
-                graphs: (graphsData.graphs || []).map((graph: any) => ({
-                  id: graph.id,
-                  name: graph.name,
-                  projectId: project.id,
-                  nodeCount: graph.nodeCount || 0,
-                  edgeCount: graph.edgeCount || 0,
-                  createdAt: graph.createdAt,
-                })),
-              }
-            })
-          )
-          
-          setProjects(formattedProjects)
+          setProjects(projects)
           
           // 检查localStorage中的ID是否有效
           const currentProjectId = localStorage.getItem('currentProjectId')
@@ -126,8 +102,8 @@ export default function TopNavbar() {
           
           if (isValidId(currentProjectId) && isValidId(currentGraphId)) {
             // 验证项目和图谱是否存在
-            const project = formattedProjects.find(p => p.id === currentProjectId)
-            const graph = project?.graphs.find(g => g.id === currentGraphId)
+            const project = projects.find((p: any) => p.id === currentProjectId)
+            const graph = project?.graphs.find((g: any) => g.id === currentGraphId)
             
             if (project && graph) {
               console.log('恢复上次选择的图谱:', graph.name)
@@ -271,43 +247,6 @@ export default function TopNavbar() {
         `成功删除 ${deleteDialog.name}！\n删除了 ${data.deletedNodeCount} 个节点和 ${data.deletedEdgeCount} 条边`
       )
 
-      // 重新加载项目数据
-      const projectsRes = await fetch('/api/projects')
-      if (projectsRes.ok) {
-        const projectsData = await projectsRes.json()
-        const formattedProjects = await Promise.all(
-          (projectsData.projects || []).map(async (project: any) => {
-            const graphsRes = await fetch(`/api/projects/${project.id}/graphs`)
-            const graphsData = await graphsRes.json()
-            
-            return {
-              id: project.id,
-              name: project.name,
-              graphs: (graphsData.graphs || []).map((graph: any) => ({
-                id: graph.id,
-                name: graph.name,
-                projectId: project.id,
-                nodeCount: graph.nodeCount || 0,
-                edgeCount: graph.edgeCount || 0,
-                createdAt: graph.createdAt,
-              })),
-            }
-          })
-        )
-        
-        setProjects(formattedProjects)
-        
-        // 如果删除的是当前选中的项目或图谱，清除选中状态
-        if (deleteDialog.type === 'project' && currentProject?.id === deleteDialog.id) {
-          localStorage.removeItem('currentProjectId')
-          localStorage.removeItem('currentGraphId')
-          window.location.reload()
-        } else if (deleteDialog.type === 'graph' && currentGraph?.id === deleteDialog.id) {
-          localStorage.removeItem('currentGraphId')
-          window.location.reload()
-        }
-      }
-
       // 关闭对话框
       setDeleteDialog({
         isOpen: false,
@@ -316,6 +255,25 @@ export default function TopNavbar() {
         name: null,
         stats: { nodeCount: 0, edgeCount: 0 },
       })
+
+      // 如果删除的是当前选中的项目或图谱，直接刷新页面
+      if (deleteDialog.type === 'project' && currentProject?.id === deleteDialog.id) {
+        localStorage.removeItem('currentProjectId')
+        localStorage.removeItem('currentGraphId')
+        window.location.reload()
+        return
+      } else if (deleteDialog.type === 'graph' && currentGraph?.id === deleteDialog.id) {
+        localStorage.removeItem('currentGraphId')
+        window.location.reload()
+        return
+      }
+
+      // 否则，使用优化的 API 一次性重新加载所有项目和图谱
+      const projectsRes = await fetch('/api/projects/with-graphs')
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json()
+        setProjects(projectsData.projects || [])
+      }
     } catch (error) {
       console.error('删除失败:', error)
       alert(`删除失败: ${error instanceof Error ? error.message : '未知错误'}`)
