@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import DeleteButton from './DeleteButton'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
+import LoadingSpinner from './LoadingSpinner'
 
 /**
  * 项目-图谱管理组件
@@ -83,6 +84,7 @@ export default function ProjectGraphManager() {
       setProjects(data.projects)
     } catch (error) {
       console.error('加载项目失败:', error)
+      alert('加载项目失败，请重试')
     } finally {
       setLoading(false)
     }
@@ -97,6 +99,7 @@ export default function ProjectGraphManager() {
       setGraphs(data.graphs)
     } catch (error) {
       console.error('加载图谱失败:', error)
+      alert('加载图谱失败，请重试')
     } finally {
       setLoading(false)
     }
@@ -111,6 +114,7 @@ export default function ProjectGraphManager() {
       setNodes(data.nodes)
     } catch (error) {
       console.error('加载节点失败:', error)
+      alert('加载节点失败，请重试')
     } finally {
       setLoading(false)
     }
@@ -324,6 +328,9 @@ export default function ProjectGraphManager() {
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">项目-图谱管理</h1>
 
+      {/* 全局加载提示 */}
+      {loading && <LoadingSpinner message="正在加载中..." />}
+
       <div className="grid grid-cols-3 gap-6">
         {/* 项目列表 */}
         <div className="border rounded-lg p-4">
@@ -336,7 +343,6 @@ export default function ProjectGraphManager() {
               + 新建
             </button>
           </div>
-          {loading && <p className="text-gray-500">加载中...</p>}
           <div className="space-y-2">
             {projects.map((project) => (
               <div

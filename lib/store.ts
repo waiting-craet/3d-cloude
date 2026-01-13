@@ -44,6 +44,7 @@ export interface GraphStore {
   selectedNode: Node | null
   connectingFromNode: Node | null
   isDragging: boolean
+  isLoading: boolean
   projects: Project[]
   currentProject: Project | null
   currentGraph: KnowledgeGraph | null
@@ -52,6 +53,7 @@ export interface GraphStore {
   setSelectedNode: (node: Node | null) => void
   setConnectingFromNode: (node: Node | null) => void
   setIsDragging: (isDragging: boolean) => void
+  setIsLoading: (isLoading: boolean) => void
   setProjects: (projects: Project[]) => void
   setCurrentProject: (project: Project | null) => void
   setCurrentGraph: (graph: KnowledgeGraph | null) => void
@@ -73,6 +75,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   selectedNode: null,
   connectingFromNode: null,
   isDragging: false,
+  isLoading: false,
   projects: [],
   currentProject: null,
   currentGraph: null,
@@ -82,6 +85,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setSelectedNode: (node) => set({ selectedNode: node }),
   setConnectingFromNode: (node) => set({ connectingFromNode: node }),
   setIsDragging: (isDragging) => set({ isDragging }),
+  setIsLoading: (isLoading) => set({ isLoading }),
   setProjects: (projects) => set({ projects }),
   setCurrentProject: (project) => set({ currentProject: project }),
   setCurrentGraph: (graph) => set({ currentGraph: graph }),
@@ -240,11 +244,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       // 如果没有选择图谱，清空数据
       if (!currentGraph) {
         console.log('⚠️ 没有选择图谱，清空节点和边')
-        set({ nodes: [], edges: [] })
+        set({ nodes: [], edges: [], isLoading: false })
         return
       }
       
       console.log('🔄 正在加载图谱数据:', currentGraph.name, currentGraph.id)
+      set({ isLoading: true })
       
       // 使用图谱专属API加载数据
       const [nodesRes, edgesRes] = await Promise.all([
@@ -260,14 +265,14 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         const edges = edgesData.edges || []
         
         console.log('✅ 图谱数据加载成功:', nodes.length, '个节点,', edges.length, '条边')
-        set({ nodes, edges })
+        set({ nodes, edges, isLoading: false })
       } else {
         console.error('❌ 获取数据失败 - 节点:', nodesRes.status, '边:', edgesRes.status)
-        set({ nodes: [], edges: [] })
+        set({ nodes: [], edges: [], isLoading: false })
       }
     } catch (error) {
       console.error('❌ 获取图谱数据失败:', error)
-      set({ nodes: [], edges: [] })
+      set({ nodes: [], edges: [], isLoading: false })
     }
   },
 
@@ -406,6 +411,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         currentGraph: graph,
         nodes: [],
         edges: [],
+        isLoading: true,
       })
 
       // 保存到 localStorage
@@ -430,15 +436,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
           
           set({ 
             nodes: nodesData.nodes || [], 
-            edges: edgesData.edges || [] 
+            edges: edgesData.edges || [],
+            isLoading: false,
           })
         } else {
           console.error('加载图谱数据失败')
           console.error('节点响应状态:', nodesRes.status)
           console.error('边响应状态:', edgesRes.status)
+          set({ isLoading: false })
         }
       } catch (error) {
         console.error('加载图谱数据时出错:', error)
+        set({ isLoading: false })
       }
     }
   },

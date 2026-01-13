@@ -5,10 +5,11 @@ import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import { Suspense, useEffect, useRef } from 'react'
 import GraphNodes from './GraphNodes'
 import GraphEdges from './GraphEdges'
+import LoadingSpinner from './LoadingSpinner'
 import { useGraphStore } from '@/lib/store'
 
 export default function KnowledgeGraph() {
-  const { fetchGraph, setSelectedNode, setConnectingFromNode, isDragging, nodes, edges, currentGraph, selectedNode } = useGraphStore()
+  const { fetchGraph, setSelectedNode, setConnectingFromNode, isDragging, nodes, edges, currentGraph, selectedNode, isLoading } = useGraphStore()
   const controlsRef = useRef<any>(null)
 
   // 监听当前图谱的变化，重新加载数据
@@ -86,6 +87,14 @@ export default function KnowledgeGraph() {
 
   return (
     <div id="canvas-container">
+      {/* 加载提示 */}
+      {isLoading && (
+        <LoadingSpinner 
+          message="正在加载知识图谱..." 
+          submessage={currentGraph?.name || '加载中'}
+        />
+      )}
+
       {/* Debug indicator */}
       <div style={{
         position: 'absolute',
