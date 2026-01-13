@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 export default function NodeDetailPanel() {
   const { selectedNode, setSelectedNode, deleteNode, fetchGraph } = useGraphStore()
   const [isAdmin, setIsAdmin] = useState(false)
+  const [showMediaModal, setShowMediaModal] = useState(false)
+  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null)
   const router = useRouter()
 
   // 检查管理员状态
@@ -32,6 +34,27 @@ export default function NodeDetailPanel() {
   const handleClose = () => {
     setSelectedNode(null)
   }
+
+  const handleMediaClick = (type: 'image' | 'video') => {
+    setMediaType(type)
+    setShowMediaModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowMediaModal(false)
+    setMediaType(null)
+  }
+
+  // ESC键关闭模态窗口
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showMediaModal) {
+        handleCloseModal()
+      }
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [showMediaModal])
 
   const handleEdit = () => {
     // 跳转到二维图谱编辑页面
@@ -197,35 +220,93 @@ export default function NodeDetailPanel() {
             }}>
               媒体内容
             </label>
-            <div style={{
-              border: '2px solid #e5e7eb',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              background: '#f9fafb',
-            }}>
+            <div 
+              style={{
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                background: '#f9fafb',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onClick={() => handleMediaClick(selectedNode.videoUrl ? 'video' : 'image')}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 182, 255, 0.3)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
               {selectedNode.videoUrl ? (
-                <video
-                  src={selectedNode.videoUrl}
-                  controls
-                  style={{
-                    width: '100%',
-                    maxHeight: '300px',
-                    display: 'block',
-                  }}
-                >
-                  您的浏览器不支持视频播放
-                </video>
+                <>
+                  <video
+                    src={selectedNode.videoUrl}
+                    style={{
+                      width: '100%',
+                      maxHeight: '300px',
+                      display: 'block',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    您的浏览器不支持视频播放
+                  </video>
+                  {/* 播放图标提示 */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '60px',
+                    height: '60px',
+                    background: 'rgba(0, 0, 0, 0.6)',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none',
+                  }}>
+                    <span style={{ 
+                      fontSize: '30px',
+                      color: 'white',
+                      marginLeft: '4px',
+                    }}>▶</span>
+                  </div>
+                </>
               ) : selectedNode.imageUrl ? (
-                <img
-                  src={selectedNode.imageUrl}
-                  alt={selectedNode.name || '节点图片'}
-                  style={{
-                    width: '100%',
-                    maxHeight: '300px',
-                    objectFit: 'contain',
-                    display: 'block',
-                  }}
-                />
+                <>
+                  <img
+                    src={selectedNode.imageUrl}
+                    alt={selectedNode.name || '节点图片'}
+                    style={{
+                      width: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'contain',
+                      display: 'block',
+                    }}
+                  />
+                  {/* 放大图标提示 */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    width: '36px',
+                    height: '36px',
+                    background: 'rgba(0, 0, 0, 0.6)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none',
+                  }}>
+                    <span style={{ 
+                      fontSize: '20px',
+                      color: 'white',
+                    }}>🔍</span>
+                  </div>
+                </>
               ) : null}
             </div>
           </div>
@@ -377,6 +458,101 @@ export default function NodeDetailPanel() {
             <span style={{ fontSize: '16px' }}>🗑️</span>
             删除
           </button>
+        </div>
+      )}
+
+      {/* 媒体放大模态窗口 */}
+      {showMediaModal && selectedNode && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px',
+            opacity: 1,
+            transition: 'opacity 0.3s ease-out',
+          }}
+          onClick={handleCloseModal}
+        >
+          {/* 关闭按钮 */}
+          <button
+            onClick={handleCloseModal}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              width: '48px',
+              height: '48px',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              color: 'white',
+              fontSize: '32px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              zIndex: 10000,
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
+              e.currentTarget.style.transform = 'rotate(90deg)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
+              e.currentTarget.style.transform = 'rotate(0deg)'
+            }}
+          >
+            ×
+          </button>
+
+          {/* 媒体内容 */}
+          <div 
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {mediaType === 'video' && selectedNode.videoUrl ? (
+              <video
+                src={selectedNode.videoUrl}
+                controls
+                autoPlay
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '90vh',
+                  borderRadius: '8px',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                }}
+              >
+                您的浏览器不支持视频播放
+              </video>
+            ) : mediaType === 'image' && selectedNode.imageUrl ? (
+              <img
+                src={selectedNode.imageUrl}
+                alt={selectedNode.name || '节点图片'}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '90vh',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                }}
+              />
+            ) : null}
+          </div>
         </div>
       )}
     </div>
