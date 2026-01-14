@@ -65,12 +65,13 @@ export default function GraphEdges() {
                 lockZ={false}
               >
                 <Text
-                  fontSize={0.5}
-                  color="#ffffff"
+                  fontSize={0.4}
+                  color="#cccccc"
                   anchorX="center"
                   anchorY="middle"
-                  outlineWidth={0.05}
+                  outlineWidth={0.04}
                   outlineColor="#000000"
+                  outlineOpacity={0.7}
                 >
                   {edge.label}
                 </Text>

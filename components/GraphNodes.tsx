@@ -301,8 +301,6 @@ function Node({ node, onClick, onDrag }: NodeProps) {
         outlineOpacity={0.9}
         maxWidth={6}
         textAlign="center"
-        font="/fonts/bold-font.woff"
-        fontWeight={700}
       >
         {node.name || '未命名'}
       </Text>
