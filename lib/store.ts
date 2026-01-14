@@ -318,23 +318,74 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       const graph = graphData.graph
       console.log('✅ 图谱创建成功:', graph.id)
       
-      // 3. 重新从数据库加载所有项目（关键修改：确保数据一致性）
+      // 3. 重新从数据库加载所有项目（带重试机制）
       console.log('🔄 重新加载项目列表...')
-      const projectsRes = await fetch('/api/projects/with-graphs')
-      if (!projectsRes.ok) {
-        throw new Error('重新加载项目列表失败')
+      
+      let projects: any[] = []
+      let newProject: any = null
+      let newGraph: any = null
+      let retryCount = 0
+      const maxRetries = 3
+      
+      // 重试逻辑：确保数据库写入已完成
+      while (retryCount < maxRetries) {
+        // 添加短暂延迟，让数据库有时间同步
+        if (retryCount > 0) {
+          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries})`)
+          await new Promise(resolve => setTimeout(resolve, 500 * retryCount))
+        }
+        
+        const projectsRes = await fetch('/api/projects/with-graphs', {
+          // 添加缓存控制，确保获取最新数据
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          },
+        })
+        
+        if (!projectsRes.ok) {
+          throw new Error('重新加载项目列表失败')
+        }
+        
+        const projectsData = await projectsRes.json()
+        projects = projectsData.projects || []
+        console.log('✅ 项目列表加载成功，共', projects.length, '个项目')
+        
+        // 找到刚创建的项目和图谱
+        newProject = projects.find((p: any) => p.id === project.id)
+        newGraph = newProject?.graphs.find((g: any) => g.id === graph.id)
+        
+        if (newProject && newGraph) {
+          console.log('✅ 找到新创建的项目和图谱')
+          break
+        }
+        
+        retryCount++
+        if (retryCount < maxRetries) {
+          console.log('⚠️ 未找到新创建的数据，准备重试...')
+        }
       }
       
-      const projectsData = await projectsRes.json()
-      const projects = projectsData.projects || []
-      console.log('✅ 项目列表加载成功，共', projects.length, '个项目')
-      
-      // 找到刚创建的项目和图谱
-      const newProject = projects.find((p: any) => p.id === project.id)
-      const newGraph = newProject?.graphs.find((g: any) => g.id === graph.id)
-      
+      // 如果重试后仍未找到，使用创建时返回的数据构建对象
       if (!newProject || !newGraph) {
-        throw new Error('无法在重新加载的数据中找到新创建的项目或图谱')
+        console.log('⚠️ 重试后仍未找到，使用创建响应数据')
+        newProject = {
+          id: project.id,
+          name: project.name,
+          graphs: [{
+            id: graph.id,
+            name: graph.name,
+            projectId: project.id,
+            nodeCount: 0,
+            edgeCount: 0,
+            createdAt: graph.createdAt,
+          }],
+        }
+        newGraph = newProject.graphs[0]
+        
+        // 将新项目添加到列表中
+        projects = [newProject, ...projects.filter((p: any) => p.id !== project.id)]
       }
       
       // 4. 更新 GraphStore 状态
@@ -382,23 +433,82 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       const graph = graphData.graph
       console.log('✅ 图谱创建成功:', graph.id)
       
-      // 2. 重新从数据库加载所有项目（关键修改：确保数据一致性）
+      // 2. 重新从数据库加载所有项目（带重试机制）
       console.log('🔄 重新加载项目列表...')
-      const projectsRes = await fetch('/api/projects/with-graphs')
-      if (!projectsRes.ok) {
-        throw new Error('重新加载项目列表失败')
+      
+      let projects: any[] = []
+      let project: any = null
+      let newGraph: any = null
+      let retryCount = 0
+      const maxRetries = 3
+      
+      // 重试逻辑：确保数据库写入已完成
+      while (retryCount < maxRetries) {
+        // 添加短暂延迟，让数据库有时间同步
+        if (retryCount > 0) {
+          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries})`)
+          await new Promise(resolve => setTimeout(resolve, 500 * retryCount))
+        }
+        
+        const projectsRes = await fetch('/api/projects/with-graphs', {
+          // 添加缓存控制，确保获取最新数据
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          },
+        })
+        
+        if (!projectsRes.ok) {
+          throw new Error('重新加载项目列表失败')
+        }
+        
+        const projectsData = await projectsRes.json()
+        projects = projectsData.projects || []
+        console.log('✅ 项目列表加载成功，共', projects.length, '个项目')
+        
+        // 找到对应的项目和新创建的图谱
+        project = projects.find((p: any) => p.id === projectId)
+        newGraph = project?.graphs.find((g: any) => g.id === graph.id)
+        
+        if (project && newGraph) {
+          console.log('✅ 找到项目和新创建的图谱')
+          break
+        }
+        
+        retryCount++
+        if (retryCount < maxRetries) {
+          console.log('⚠️ 未找到新创建的图谱，准备重试...')
+        }
       }
       
-      const projectsData = await projectsRes.json()
-      const projects = projectsData.projects || []
-      console.log('✅ 项目列表加载成功，共', projects.length, '个项目')
-      
-      // 找到对应的项目和新创建的图谱
-      const project = projects.find((p: any) => p.id === projectId)
-      const newGraph = project?.graphs.find((g: any) => g.id === graph.id)
-      
+      // 如果重试后仍未找到，使用创建时返回的数据构建对象
       if (!project || !newGraph) {
-        throw new Error('无法在重新加载的数据中找到项目或新创建的图谱')
+        console.log('⚠️ 重试后仍未找到，使用创建响应数据')
+        
+        // 找到现有项目或创建新的项目对象
+        project = projects.find((p: any) => p.id === projectId)
+        if (!project) {
+          throw new Error('无法找到目标项目')
+        }
+        
+        newGraph = {
+          id: graph.id,
+          name: graph.name,
+          projectId: projectId,
+          nodeCount: 0,
+          edgeCount: 0,
+          createdAt: graph.createdAt,
+        }
+        
+        // 将新图谱添加到项目的图谱列表中
+        project = {
+          ...project,
+          graphs: [newGraph, ...(project.graphs || []).filter((g: any) => g.id !== graph.id)],
+        }
+        
+        // 更新项目列表
+        projects = projects.map((p: any) => p.id === projectId ? project : p)
       }
       
       // 3. 更新 GraphStore 状态
