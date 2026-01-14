@@ -6,6 +6,103 @@ import { Text } from '@react-three/drei'
 import { useGraphStore } from '@/lib/store'
 import * as THREE from 'three'
 
+// ==================== 配置常量 ====================
+
+interface BillboardConfig {
+  updateThreshold: number
+  smoothFactor: number
+}
+
+const DEFAULT_BILLBOARD_CONFIG: BillboardConfig = {
+  updateThreshold: 0.1,   // 摄像机移动0.1单位才更新
+  smoothFactor: 0.15      // 平滑因子,值越小越平滑
+}
+
+// ==================== 工具函数 ====================
+
+/**
+ * 检查是否应该更新billboard
+ * @param lastCameraPosition - 上次摄像机位置
+ * @param currentCameraPosition - 当前摄像机位置
+ * @param threshold - 距离阈值
+ * @returns 是否应该更新
+ */
+function shouldUpdateBillboard(
+  lastCameraPosition: THREE.Vector3,
+  currentCameraPosition: THREE.Vector3,
+  threshold: number = DEFAULT_BILLBOARD_CONFIG.updateThreshold
+): boolean {
+  return lastCameraPosition.distanceTo(currentCameraPosition) > threshold
+}
+
+/**
+ * 更新文本旋转使其面向摄像机
+ * @param textRef - 文本mesh引用
+ * @param camera - 摄像机对象
+ * @param nodePosition - 节点位置
+ */
+function updateTextRotation(
+  textRef: React.RefObject<any>,
+  camera: THREE.Camera,
+  nodePosition: THREE.Vector3
+): void {
+  if (!textRef.current) return
+  
+  try {
+    // 验证位置数据
+    if (!isFinite(nodePosition.x) || !isFinite(nodePosition.y) || !isFinite(nodePosition.z)) {
+      console.error('Invalid node position for billboard update')
+      return
+    }
+    
+    // 计算从文本到摄像机的方向
+    const direction = new THREE.Vector3()
+    direction.subVectors(camera.position, nodePosition)
+    direction.y = 0 // 保持垂直方向,避免文字倒置
+    direction.normalize()
+    
+    // 计算目标旋转角度
+    const angle = Math.atan2(direction.x, direction.z)
+    
+    // 平滑旋转到目标角度
+    const currentRotation = textRef.current.rotation.y
+    const targetRotation = angle
+    
+    // 处理角度环绕问题
+    let delta = targetRotation - currentRotation
+    if (delta > Math.PI) delta -= 2 * Math.PI
+    if (delta < -Math.PI) delta += 2 * Math.PI
+    
+    // 应用平滑插值
+    textRef.current.rotation.y = currentRotation + delta * DEFAULT_BILLBOARD_CONFIG.smoothFactor
+  } catch (error) {
+    console.error('Billboard update failed:', error)
+  }
+}
+
+/**
+ * 验证节点数据
+ * @param node - 节点对象
+ * @returns 是否有效
+ */
+function validateNodeData(node: any): boolean {
+  // 检查节点坐标
+  if (!isFinite(node.x) || !isFinite(node.y) || !isFinite(node.z)) {
+    console.error(`Invalid node coordinates: ${node.id}`, node)
+    return false
+  }
+  
+  // 检查节点大小
+  if (node.size !== undefined && (!isFinite(node.size) || node.size < 0)) {
+    console.warn(`Invalid node size: ${node.id}, using default`)
+    node.size = 1.5
+  }
+  
+  return true
+}
+
+// ==================== 组件 ====================
+
 interface NodeProps {
   node: any
   onClick: (node: any, event: ThreeEvent<MouseEvent>) => void
@@ -15,6 +112,8 @@ interface NodeProps {
 function Node({ node, onClick, onDrag }: NodeProps) {
   const groupRef = useRef<THREE.Group>(null)
   const meshRef = useRef<THREE.Mesh>(null)
+  const textRef = useRef<any>(null)
+  const lastCameraPos = useRef(new THREE.Vector3())
   const [hovered, setHovered] = useState(false)
   const [isPressed, setIsPressed] = useState(false)
   const pressTimer = useRef<NodeJS.Timeout | null>(null)
@@ -26,6 +125,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
   const isSelected = selectedNode?.id === node.id
 
   useFrame(() => {
+    // 更新球体缩放动画
     if (meshRef.current) {
       const targetScale = hovered ? 1.15 : isSelected ? 1.2 : 1
       meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.15)
@@ -35,6 +135,16 @@ function Node({ node, onClick, onDrag }: NodeProps) {
         const pulse = Math.sin(Date.now() * 0.003) * 0.05 + 1.15
         meshRef.current.scale.setScalar(pulse)
       }
+    }
+    
+    // 更新billboard文本
+    if (shouldUpdateBillboard(lastCameraPos.current, camera.position)) {
+      updateTextRotation(
+        textRef,
+        camera,
+        new THREE.Vector3(node.x, node.y, node.z)
+      )
+      lastCameraPos.current.copy(camera.position)
     }
   })
 
@@ -178,8 +288,9 @@ function Node({ node, onClick, onDrag }: NodeProps) {
         />
       </mesh>
       
-      {/* 节点名称 - 在球体上方 - 移除字体URL以避免加载错误 */}
+      {/* 节点名称 - Billboard效果 */}
       <Text
+        ref={textRef}
         position={[0, (node.size || 1.5) + 0.8, 0]}
         fontSize={0.5}
         color="#FFFFFF"
@@ -214,27 +325,20 @@ function Node({ node, onClick, onDrag }: NodeProps) {
 
 export default function GraphNodes() {
   const { nodes, setSelectedNode, connectingFromNode, setConnectingFromNode, addEdge, updateNodePosition } = useGraphStore()
-  const { camera } = useThree()
-
-  // 调试：打印节点数据
-  useEffect(() => {
-    console.log('🎨 GraphNodes rendering with nodes:', nodes.length)
-    if (nodes.length > 0) {
-      console.log('First node:', nodes[0])
-      console.log('All nodes:', nodes)
-    }
-  }, [nodes])
 
   // 如果没有节点，显示提示
   if (nodes.length === 0) {
-    console.log('⚠️ No nodes to render')
     return null
   }
 
-  console.log('✅ Rendering', nodes.length, 'nodes')
-
   const handleNodeClick = (node: any, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation()
+    
+    // 验证节点数据
+    if (!validateNodeData(node)) {
+      console.error('Cannot interact with invalid node')
+      return
+    }
     
     // 如果正在连线模式
     if (connectingFromNode) {
@@ -249,41 +353,8 @@ export default function GraphNodes() {
       }
       setConnectingFromNode(null)
     } else {
+      // 选中节点 - 摄像机聚焦由KnowledgeGraph组件处理
       setSelectedNode(node)
-      
-      // 优化的相机动画：平滑过渡到节点
-      const nodePosition = new THREE.Vector3(node.x, node.y, node.z)
-      const cameraDirection = new THREE.Vector3()
-      camera.getWorldDirection(cameraDirection)
-      
-      // 计算理想的相机位置（在节点前方，保持一定距离）
-      const distance = 12
-      const offset = cameraDirection.clone().multiplyScalar(-distance)
-      const targetPosition = nodePosition.clone().add(offset)
-      
-      // 平滑移动相机和目标点
-      const startPosition = camera.position.clone()
-      const startTime = Date.now()
-      const duration = 800 // 0.8秒动画，更流畅
-      
-      const animateCamera = () => {
-        const elapsed = Date.now() - startTime
-        const progress = Math.min(elapsed / duration, 1)
-        
-        // 使用更舒适的缓动函数 (easeInOutCubic)
-        const easeProgress = progress < 0.5
-          ? 4 * progress * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 3) / 2
-        
-        camera.position.lerpVectors(startPosition, targetPosition, easeProgress)
-        camera.lookAt(nodePosition.x, nodePosition.y, nodePosition.z)
-        
-        if (progress < 1) {
-          requestAnimationFrame(animateCamera)
-        }
-      }
-      
-      animateCamera()
     }
   }
 
