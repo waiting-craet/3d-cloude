@@ -49,8 +49,24 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
+    console.log('📝 [projects] 开始创建项目...')
+    
+    // 检查数据库连接
+    if (!process.env.DATABASE_URL) {
+      console.error('❌ [projects] DATABASE_URL 未设置')
+      return NextResponse.json(
+        { 
+          error: 'DATABASE_URL 环境变量未设置',
+          details: '请在 Vercel 中配置 DATABASE_URL 环境变量'
+        },
+        { status: 500 }
+      )
+    }
+    
     const body = await request.json()
     const { name, description } = body
+    
+    console.log(`📝 [projects] 项目名称: ${name}`)
     
     // 验证项目名称
     if (!name || typeof name !== 'string') {
@@ -76,13 +92,16 @@ export async function POST(request: NextRequest) {
       },
     })
     
+    console.log(`✅ [projects] 项目创建成功: ${project.id}`)
+    
     return NextResponse.json({ project }, { status: 201 })
   } catch (error) {
-    console.error('创建项目失败:', error)
+    console.error('❌ [projects] 创建项目失败:', error)
     return NextResponse.json(
       { 
         error: '创建项目失败',
-        details: error instanceof Error ? error.message : '未知错误'
+        details: error instanceof Error ? error.message : '未知错误',
+        stack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     )

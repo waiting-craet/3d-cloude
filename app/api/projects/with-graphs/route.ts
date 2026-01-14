@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// 使用 Node.js Runtime
+export const runtime = 'nodejs'
+
 /**
  * GET /api/projects/with-graphs - 获取所有项目及其图谱（优化版）
  * 
@@ -8,6 +11,20 @@ import { prisma } from '@/lib/db'
  */
 export async function GET() {
   try {
+    console.log('📊 [with-graphs] 开始查询项目和图谱...')
+    
+    // 检查数据库连接
+    if (!process.env.DATABASE_URL) {
+      console.error('❌ [with-graphs] DATABASE_URL 未设置')
+      return NextResponse.json(
+        { 
+          error: 'DATABASE_URL 环境变量未设置',
+          details: '请在 Vercel 中配置 DATABASE_URL 环境变量'
+        },
+        { status: 500 }
+      )
+    }
+    
     // 一次性查询所有项目及其图谱
     const projects = await prisma.project.findMany({
       include: {
@@ -30,6 +47,8 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
 
+    console.log(`✅ [with-graphs] 查询成功，找到 ${projects.length} 个项目`)
+
     // 格式化数据
     const formattedProjects = projects.map(project => ({
       id: project.id,
@@ -48,7 +67,7 @@ export async function GET() {
       projects: formattedProjects,
     })
   } catch (error) {
-    console.error('获取项目和图谱失败:', error)
+    console.error('❌ [with-graphs] 获取项目和图谱失败:', error)
     return NextResponse.json(
       { 
         error: '获取项目和图谱失败',
