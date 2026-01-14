@@ -267,39 +267,75 @@ export default function TopNavbar() {
     if (!deleteDialog.id || !deleteDialog.type) return
 
     setIsDeleting(true)
+    
+    // 保存删除信息，用于后续验证
+    const deletingId = deleteDialog.id
+    const deletingType = deleteDialog.type
+    const deletingName = deleteDialog.name
+    
     try {
       const endpoint =
         deleteDialog.type === 'project'
           ? `/api/projects/${deleteDialog.id}`
           : `/api/graphs/${deleteDialog.id}`
 
-      console.log(`🗑️ 开始删除 ${deleteDialog.type}:`, deleteDialog.name)
+      console.log(`🗑️ [DELETE] 开始删除 ${deleteDialog.type}:`, deleteDialog.name, `ID: ${deleteDialog.id}`)
       
       const res = await fetch(endpoint, { method: 'DELETE' })
       
       // 处理不同的错误状态码
       if (!res.ok) {
-        const data = await res.json()
-        
         if (res.status === 404) {
-          // 404 错误：项目或图谱不存在
+          // 404 错误：项目或图谱已经不存在（可能已被删除）
           const entityName = deleteDialog.type === 'project' ? '项目' : '图谱'
-          throw new Error(`${entityName}不存在`)
+          console.log(`⚠️ [DELETE] ${entityName}不存在 (404)，可能已被删除，立即刷新下拉框`)
+          
+          // 关闭对话框
+          setDeleteDialog({
+            isOpen: false,
+            type: null,
+            id: null,
+            name: null,
+            stats: { nodeCount: 0, edgeCount: 0 },
+          })
+          
+          // 立即刷新项目列表
+          console.log('🔄 [DELETE] 立即刷新项目列表...')
+          const projectsRes = await fetch('/api/projects/with-graphs', {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+            },
+          })
+          
+          if (projectsRes.ok) {
+            const projectsData = await projectsRes.json()
+            const projects = projectsData.projects || []
+            setProjects(projects)
+            console.log('✅ [DELETE] 项目列表已刷新')
+          }
+          
+          // 显示友好提示
+          alert(`该${entityName}已被删除`)
+          return
         } else if (res.status === 500) {
-          // 500 错误：服务器错误，显示 API 返回的错误消息
+          // 500 错误：服务器错误
+          const data = await res.json()
           throw new Error(data.error || data.message || '服务器错误')
         } else {
           // 其他错误
+          const data = await res.json()
           throw new Error(data.error || '删除失败')
         }
       }
 
       const data = await res.json()
-      console.log('✅ 删除成功:', data)
+      console.log('✅ [DELETE] 删除API调用成功:', data)
 
       // 显示成功消息
       alert(
-        `成功删除 ${deleteDialog.name}！\n删除了 ${data.deletedNodeCount} 个节点和 ${data.deletedEdgeCount} 条边`
+        `成功删除 ${deletingName}！\n删除了 ${data.deletedNodeCount} 个节点和 ${data.deletedEdgeCount} 条边`
       )
 
       // 关闭对话框
@@ -312,12 +348,12 @@ export default function TopNavbar() {
       })
 
       // 检查是否删除的是当前选中的项目或图谱
-      const isCurrentProject = deleteDialog.type === 'project' && currentProject?.id === deleteDialog.id
-      const isCurrentGraph = deleteDialog.type === 'graph' && currentGraph?.id === deleteDialog.id
+      const isCurrentProject = deletingType === 'project' && currentProject?.id === deletingId
+      const isCurrentGraph = deletingType === 'graph' && currentGraph?.id === deletingId
       
       if (isCurrentProject || isCurrentGraph) {
         // 清理选择并刷新页面
-        console.log('🔄 删除了当前选中的项目/图谱，清理状态并刷新页面')
+        console.log('🔄 [DELETE] 删除了当前选中的项目/图谱，清理状态并刷新页面')
         localStorage.removeItem('currentProjectId')
         localStorage.removeItem('currentGraphId')
         window.location.reload()
@@ -325,10 +361,10 @@ export default function TopNavbar() {
       }
 
       // 记住当前展开的项目ID（如果删除的是图谱）
-      const expandedProjectId = deleteDialog.type === 'graph' ? hoveredProjectId : null
+      const expandedProjectId = deletingType === 'graph' ? hoveredProjectId : null
 
       // 重新加载项目列表（使用重试机制确保获取最新数据）
-      console.log('🔄 开始刷新项目列表...')
+      console.log('🔄 [DELETE] 开始验证删除并刷新项目列表...')
       let retryCount = 0
       const maxRetries = 3
       let verified = false
@@ -337,10 +373,11 @@ export default function TopNavbar() {
         // 添加短暂延迟，让数据库有时间同步（指数退避）
         if (retryCount > 0) {
           const delay = 500 * retryCount
-          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries}, 延迟 ${delay}ms)`)
+          console.log(`⏳ [DELETE] 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries}, 延迟 ${delay}ms)`)
           await new Promise(resolve => setTimeout(resolve, delay))
         }
 
+        console.log(`🔍 [DELETE] 尝试 ${retryCount + 1}/${maxRetries}: 获取最新项目列表...`)
         const projectsRes = await fetch('/api/projects/with-graphs', {
           // 添加缓存控制，确保获取最新数据
           cache: 'no-store',
@@ -354,47 +391,55 @@ export default function TopNavbar() {
           const projectsData = await projectsRes.json()
           const projects = projectsData.projects || []
           
+          console.log(`📊 [DELETE] 获取到 ${projects.length} 个项目`)
+          
           // 验证删除是否成功（检查被删除的项目/图谱是否还存在）
-          if (deleteDialog.type === 'project') {
-            const stillExists = projects.some((p: any) => p.id === deleteDialog.id)
+          if (deletingType === 'project') {
+            const stillExists = projects.some((p: any) => p.id === deletingId)
+            console.log(`🔍 [DELETE] 验证项目 ${deletingId} 是否还存在: ${stillExists}`)
+            
             if (!stillExists) {
               // 删除成功，更新状态
               setProjects(projects)
               verified = true
-              console.log('✅ 项目删除成功，列表已更新')
+              console.log('✅ [DELETE] 项目删除验证成功，列表已更新')
             } else {
-              console.log('⚠️ 项目仍然存在，继续重试...')
+              console.log('⚠️ [DELETE] 项目仍然存在，继续重试...')
             }
-          } else if (deleteDialog.type === 'graph') {
-            const project = projects.find((p: any) => 
-              p.graphs.some((g: any) => g.id === deleteDialog.id)
+          } else if (deletingType === 'graph') {
+            const projectWithGraph = projects.find((p: any) => 
+              p.graphs.some((g: any) => g.id === deletingId)
             )
-            if (!project) {
+            console.log(`🔍 [DELETE] 验证图谱 ${deletingId} 是否还存在: ${!!projectWithGraph}`)
+            
+            if (!projectWithGraph) {
               // 删除成功，更新状态
               setProjects(projects)
               verified = true
-              console.log('✅ 图谱删除成功，列表已更新')
+              console.log('✅ [DELETE] 图谱删除验证成功，列表已更新')
               
               // 如果删除的是图谱，保持项目展开状态
               if (expandedProjectId) {
                 setHoveredProjectId(expandedProjectId)
               }
             } else {
-              console.log('⚠️ 图谱仍然存在，继续重试...')
+              console.log('⚠️ [DELETE] 图谱仍然存在，继续重试...')
             }
           }
+        } else {
+          console.error(`❌ [DELETE] 获取项目列表失败: ${projectsRes.status}`)
         }
         
         retryCount++
       }
 
-      // 如果重试后仍未验证成功，强制刷新页面
+      // 如果重试后仍未验证成功，立即强制刷新页面
       if (!verified) {
-        console.log('⚠️ 重试后仍未验证删除成功，强制刷新页面')
+        console.error('❌ [DELETE] 重试后仍未验证删除成功，立即强制刷新页面')
         window.location.reload()
       }
     } catch (error) {
-      console.error('❌ 删除失败:', error)
+      console.error('❌ [DELETE] 删除失败:', error)
       const errorMessage = error instanceof Error ? error.message : '未知错误'
       alert(`删除失败: ${errorMessage}`)
       

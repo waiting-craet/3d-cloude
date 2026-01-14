@@ -51,12 +51,14 @@ The approach involves coordinating state updates with navigation actions and ens
     - Clear selection and reload if needed
     - Implement retry loop with verification
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
+    - **Status**: ✅ FIXED in Task 7.2
 
   - [x] 3.2 Enhance error handling for deletions
     - Display specific error messages for 404 and 500 errors
     - Preserve state when deletion fails
     - Force reload if verification fails after max retries
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
+    - **Status**: ✅ FIXED in Task 7.3
 
   - [x] 3.3 Write unit tests for delete flow
     - Test successful deletion triggers refresh
@@ -114,7 +116,30 @@ The approach involves coordinating state updates with navigation actions and ens
     - **Validates: Requirements 4.3**
     - **Status**: ✅ IMPLEMENTED - `components/__tests__/dropdown.property.test.tsx`
 
-- [ ] 7. Final checkpoint - Ensure all tests pass
+- [x] 7. Fix production deletion verification bug
+  - [x] 7.1 Add immediate UI feedback during deletion
+    - Disable all delete buttons immediately when deletion starts ✅
+    - Show loading state in dropdown during refresh ✅
+    - Prevent user interaction until verification completes ✅
+    - _Requirements: 2.3, 2.6, 4.3_
+    - **Status**: ✅ IMPLEMENTED
+  
+  - [x] 7.2 Improve verification logic robustness
+    - Add more detailed logging for debugging ✅
+    - Ensure verification check runs correctly for both projects and graphs ✅
+    - Add fallback: if verification fails, immediately reload page (don't wait) ✅
+    - Save deletion info before closing dialog for accurate verification ✅
+    - _Requirements: 2.3, 2.6, 3.4_
+    - **Status**: ✅ IMPLEMENTED
+  
+  - [x] 7.3 Handle 404 errors gracefully
+    - When delete API returns 404, immediately refresh dropdown ✅
+    - Show user-friendly message: "该项目/图谱已被删除" ✅
+    - Don't show error alert for 404 (it's expected if already deleted) ✅
+    - _Requirements: 4.1, 4.3_
+    - **Status**: ✅ IMPLEMENTED
+
+- [ ] 8. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
