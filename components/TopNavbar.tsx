@@ -292,11 +292,27 @@ export default function TopNavbar() {
         return
       }
 
+      // 记住当前展开的项目ID（如果删除的是图谱）
+      const expandedProjectId = deleteDialog.type === 'graph' ? hoveredProjectId : null
+
       // 否则，使用优化的 API 一次性重新加载所有项目和图谱
-      const projectsRes = await fetch('/api/projects/with-graphs')
+      const projectsRes = await fetch('/api/projects/with-graphs', {
+        // 添加缓存控制，确保获取最新数据
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      })
+      
       if (projectsRes.ok) {
         const projectsData = await projectsRes.json()
         setProjects(projectsData.projects || [])
+        
+        // 如果删除的是图谱，保持项目展开状态
+        if (expandedProjectId) {
+          setHoveredProjectId(expandedProjectId)
+        }
       }
     } catch (error) {
       console.error('删除失败:', error)

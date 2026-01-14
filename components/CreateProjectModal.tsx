@@ -25,6 +25,7 @@ export default function CreateProjectModal({
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [graphName, setGraphName] = useState('')
   const [error, setError] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
 
   useEffect(() => {
     if (existingProjects.length > 0 && !selectedProjectId) {

@@ -79,7 +79,14 @@ export default function ProjectGraphManager() {
   const loadProjects = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/projects')
+      const res = await fetch('/api/projects', {
+        // 添加缓存控制，确保获取最新数据
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      })
       const data = await res.json()
       setProjects(data.projects)
     } catch (error) {
@@ -94,7 +101,14 @@ export default function ProjectGraphManager() {
   const loadGraphs = async (projectId: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/projects/${projectId}/graphs`)
+      const res = await fetch(`/api/projects/${projectId}/graphs`, {
+        // 添加缓存控制，确保获取最新数据
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      })
       const data = await res.json()
       setGraphs(data.graphs)
     } catch (error) {
@@ -109,7 +123,14 @@ export default function ProjectGraphManager() {
   const loadNodes = async (graphId: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/graphs/${graphId}/nodes`)
+      const res = await fetch(`/api/graphs/${graphId}/nodes`, {
+        // 添加缓存控制，确保获取最新数据
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      })
       const data = await res.json()
       setNodes(data.nodes)
     } catch (error) {
