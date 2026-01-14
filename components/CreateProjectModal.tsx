@@ -38,6 +38,11 @@ export default function CreateProjectModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // 防止重复提交
+    if (isCreating) {
+      return
+    }
+    
     if (!graphName.trim()) {
       setError('请输入知识图谱名称')
       return
@@ -56,6 +61,9 @@ export default function CreateProjectModal({
     const finalProjectName = isNewProject ? projectName : 
       existingProjects.find(p => p.id === selectedProjectId)?.name || ''
 
+    setIsCreating(true)
+    setError('')
+    
     try {
       await onCreate(finalProjectName, graphName, isNewProject)
       
@@ -66,6 +74,8 @@ export default function CreateProjectModal({
       onClose()
     } catch (error) {
       setError(error instanceof Error ? error.message : '创建失败，请重试')
+    } finally {
+      setIsCreating(false)
     }
   }
 
@@ -340,6 +350,7 @@ export default function CreateProjectModal({
             <button
               type="button"
               onClick={onClose}
+              disabled={isCreating}
               style={{
                 flex: 1,
                 padding: '12px',
@@ -347,45 +358,74 @@ export default function CreateProjectModal({
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 borderRadius: '8px',
                 color: 'white',
-                cursor: 'pointer',
+                cursor: isCreating ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
                 fontWeight: '600',
                 transition: 'all 0.2s',
+                opacity: isCreating ? 0.5 : 1,
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
+                if (!isCreating) {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
+                }
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                if (!isCreating) {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                }
               }}
             >
               取消
             </button>
             <button
               type="submit"
+              disabled={isCreating}
               style={{
                 flex: 1,
                 padding: '12px',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: isCreating 
+                  ? 'rgba(16, 185, 129, 0.5)' 
+                  : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 border: 'none',
                 borderRadius: '8px',
                 color: 'white',
-                cursor: 'pointer',
+                cursor: isCreating ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
                 fontWeight: '600',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                boxShadow: isCreating 
+                  ? 'none' 
+                  : '0 2px 8px rgba(16, 185, 129, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)'
+                if (!isCreating) {
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)'
+                }
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)'
+                if (!isCreating) {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)'
+                }
               }}
             >
-              创建
+              {isCreating && (
+                <span style={{
+                  display: 'inline-block',
+                  width: '14px',
+                  height: '14px',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  borderTopColor: 'white',
+                  borderRadius: '50%',
+                  animation: 'spin 0.6s linear infinite',
+                }} />
+              )}
+              {isCreating ? '创建中...' : '创建'}
             </button>
           </div>
         </form>
@@ -409,6 +449,15 @@ export default function CreateProjectModal({
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
           }
         }
       `}</style>
