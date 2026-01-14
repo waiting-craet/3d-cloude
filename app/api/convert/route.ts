@@ -206,7 +206,7 @@ export async function POST(request: Request) {
         .map(conn => ({
           fromNodeId: idMap.get(conn.from)!,
           toNodeId: idMap.get(conn.to)!,
-          label: conn.label || 'RELATES_TO',
+          label: conn.label || '',
           weight: 1.0,
           projectId: graph.projectId,
           graphId: graphId,

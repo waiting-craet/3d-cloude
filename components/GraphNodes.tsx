@@ -347,7 +347,7 @@ export default function GraphNodes() {
         addEdge({
           fromNodeId: connectingFromNode.id,
           toNodeId: node.id,
-          label: 'RELATES_TO',
+          label: '',
           weight: 1.0,
         })
       }

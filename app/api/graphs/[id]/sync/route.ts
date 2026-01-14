@@ -238,7 +238,7 @@ export async function POST(
             return {
               fromNodeId,
               toNodeId,
-              label: wConn.label || 'RELATES_TO',
+              label: wConn.label || '',
               weight: 1.0,
               projectId: graph.projectId,
               graphId: graphId,
