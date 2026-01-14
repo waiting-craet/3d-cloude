@@ -280,7 +280,7 @@ export default function TopNavbar() {
         stats: { nodeCount: 0, edgeCount: 0 },
       })
 
-      // 如果删除的是当前选中的项目或图谱，直接刷新页面
+      // 如果删除的是当前选中的项目或图谱，清理localStorage并刷新页面
       if (deleteDialog.type === 'project' && currentProject?.id === deleteDialog.id) {
         localStorage.removeItem('currentProjectId')
         localStorage.removeItem('currentGraphId')
@@ -295,24 +295,65 @@ export default function TopNavbar() {
       // 记住当前展开的项目ID（如果删除的是图谱）
       const expandedProjectId = deleteDialog.type === 'graph' ? hoveredProjectId : null
 
-      // 否则，使用优化的 API 一次性重新加载所有项目和图谱
-      const projectsRes = await fetch('/api/projects/with-graphs', {
-        // 添加缓存控制，确保获取最新数据
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-        },
-      })
-      
-      if (projectsRes.ok) {
-        const projectsData = await projectsRes.json()
-        setProjects(projectsData.projects || [])
-        
-        // 如果删除的是图谱，保持项目展开状态
-        if (expandedProjectId) {
-          setHoveredProjectId(expandedProjectId)
+      // 重新加载项目列表（使用重试机制确保获取最新数据）
+      let retryCount = 0
+      const maxRetries = 3
+      let projectsLoaded = false
+
+      while (retryCount < maxRetries && !projectsLoaded) {
+        // 添加短暂延迟，让数据库有时间同步
+        if (retryCount > 0) {
+          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries})`)
+          await new Promise(resolve => setTimeout(resolve, 500 * retryCount))
         }
+
+        const projectsRes = await fetch('/api/projects/with-graphs', {
+          // 添加缓存控制，确保获取最新数据
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          },
+        })
+        
+        if (projectsRes.ok) {
+          const projectsData = await projectsRes.json()
+          const projects = projectsData.projects || []
+          
+          // 验证删除是否成功（检查被删除的项目/图谱是否还存在）
+          if (deleteDialog.type === 'project') {
+            const stillExists = projects.some((p: any) => p.id === deleteDialog.id)
+            if (!stillExists) {
+              // 删除成功，更新状态
+              setProjects(projects)
+              projectsLoaded = true
+              console.log('✅ 项目删除成功，列表已更新')
+            }
+          } else if (deleteDialog.type === 'graph') {
+            const project = projects.find((p: any) => 
+              p.graphs.some((g: any) => g.id === deleteDialog.id)
+            )
+            if (!project) {
+              // 删除成功，更新状态
+              setProjects(projects)
+              projectsLoaded = true
+              console.log('✅ 图谱删除成功，列表已更新')
+              
+              // 如果删除的是图谱，保持项目展开状态
+              if (expandedProjectId) {
+                setHoveredProjectId(expandedProjectId)
+              }
+            }
+          }
+        }
+        
+        retryCount++
+      }
+
+      // 如果重试后仍未成功，强制刷新页面
+      if (!projectsLoaded) {
+        console.log('⚠️ 重试后仍未获取最新数据，强制刷新页面')
+        window.location.reload()
       }
     } catch (error) {
       console.error('删除失败:', error)
