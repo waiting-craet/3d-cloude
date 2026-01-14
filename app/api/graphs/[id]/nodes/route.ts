@@ -102,7 +102,7 @@ export async function POST(
       })
       
       // 更新图谱的节点计数
-      await tx.graph.update({
+      const updatedGraph = await tx.graph.update({
         where: { id: graphId },
         data: { nodeCount: { increment: 1 } },
       })
@@ -113,10 +113,19 @@ export async function POST(
         data: { nodeCount: { increment: 1 } },
       })
       
-      return node
+      return { node, updatedGraph }
     })
     
-    return NextResponse.json({ node: result }, { status: 201 })
+    console.log(`✅ [graphs/${graphId}/nodes] 节点创建成功: ${result.node.id}`)
+    console.log(`📊 [graphs/${graphId}/nodes] 图谱节点数: ${result.updatedGraph.nodeCount}`)
+    
+    return NextResponse.json({ 
+      node: result.node,
+      graph: {
+        nodeCount: result.updatedGraph.nodeCount,
+        edgeCount: result.updatedGraph.edgeCount,
+      },
+    }, { status: 201 })
   } catch (error) {
     console.error('创建节点失败:', error)
     return NextResponse.json(

@@ -62,6 +62,9 @@ export async function DELETE(
   try {
     const { id } = params
     
+    console.log(`🗑️ [projects/${id}] 开始删除项目...`)
+    console.log(`🗑️ [projects/${id}] 项目ID: ${id}`)
+    
     // 查询项目及其节点（获取图片 URL）
     const project = await prisma.project.findUnique({
       where: { id },
@@ -77,15 +80,22 @@ export async function DELETE(
         edges: {
           select: { id: true },
         },
+        graphs: {
+          select: { id: true, name: true },
+        },
       },
     })
     
     if (!project) {
+      console.error(`❌ [projects/${id}] 项目不存在`)
       return NextResponse.json(
         { error: '项目不存在' },
         { status: 404 }
       )
     }
+    
+    console.log(`📊 [projects/${id}] 项目: ${project.name}`)
+    console.log(`📊 [projects/${id}] 包含: ${project.graphs.length} 个图谱, ${project.nodes.length} 个节点, ${project.edges.length} 条边`)
     
     // 收集所有需要删除的图片 URL
     const imageUrls: string[] = []
@@ -95,15 +105,18 @@ export async function DELETE(
       if (node.coverUrl) imageUrls.push(node.coverUrl)
     })
     
-    // 删除项目（级联删除节点和边）
+    // 删除项目（级联删除图谱、节点和边）
+    console.log(`🗑️ [projects/${id}] 正在删除项目...`)
     await prisma.project.delete({
       where: { id },
     })
+    console.log(`✅ [projects/${id}] 项目已从数据库删除`)
     
     // 删除 Blob 存储中的文件
     let deletedFileCount = 0
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
+        console.log(`🗑️ [projects/${id}] 正在删除 Blob 文件...`)
         // 尝试批量删除项目文件夹
         const blobs = await list({ prefix: `projects/${id}/` })
         if (blobs.blobs.length > 0) {
@@ -119,16 +132,20 @@ export async function DELETE(
             }))
           )
         }
+        console.log(`✅ [projects/${id}] 已删除 ${deletedFileCount} 个 Blob 文件`)
       } catch (error) {
         console.warn('删除 Blob 文件时出错:', error)
         // 不阻塞主流程，继续返回成功
       }
     }
     
+    console.log(`✅ [projects/${id}] 项目删除完成`)
+    
     return NextResponse.json({
       success: true,
       deletedNodeCount: project.nodes.length,
       deletedEdgeCount: project.edges.length,
+      deletedGraphCount: project.graphs.length,
       deletedFileCount,
     })
   } catch (error) {

@@ -112,13 +112,32 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         const newNode = data.node
         set((state) => ({ nodes: [...state.nodes, newNode] }))
         
-        // 更新图谱的节点计数
-        set((state) => ({
-          currentGraph: state.currentGraph ? {
-            ...state.currentGraph,
-            nodeCount: state.currentGraph.nodeCount + 1
-          } : null
-        }))
+        // 更新图谱的节点计数（使用 API 返回的最新统计）
+        if (data.graph) {
+          set((state) => ({
+            currentGraph: state.currentGraph ? {
+              ...state.currentGraph,
+              nodeCount: data.graph.nodeCount,
+              edgeCount: data.graph.edgeCount,
+            } : null
+          }))
+          
+          // 同时更新 projects 列表中的统计信息
+          set((state) => ({
+            projects: state.projects.map(project => 
+              project.id === state.currentProject?.id
+                ? {
+                    ...project,
+                    graphs: project.graphs.map(graph =>
+                      graph.id === currentGraph.id
+                        ? { ...graph, nodeCount: data.graph.nodeCount, edgeCount: data.graph.edgeCount }
+                        : graph
+                    ),
+                  }
+                : project
+            ),
+          }))
+        }
       } else {
         const error = await response.json()
         console.error('创建节点失败:', error)
@@ -150,13 +169,32 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         const newEdge = data.edge
         set((state) => ({ edges: [...state.edges, newEdge] }))
         
-        // 更新图谱的边计数
-        set((state) => ({
-          currentGraph: state.currentGraph ? {
-            ...state.currentGraph,
-            edgeCount: state.currentGraph.edgeCount + 1
-          } : null
-        }))
+        // 更新图谱的边计数（使用 API 返回的最新统计）
+        if (data.graph) {
+          set((state) => ({
+            currentGraph: state.currentGraph ? {
+              ...state.currentGraph,
+              nodeCount: data.graph.nodeCount,
+              edgeCount: data.graph.edgeCount,
+            } : null
+          }))
+          
+          // 同时更新 projects 列表中的统计信息
+          set((state) => ({
+            projects: state.projects.map(project => 
+              project.id === state.currentProject?.id
+                ? {
+                    ...project,
+                    graphs: project.graphs.map(graph =>
+                      graph.id === currentGraph.id
+                        ? { ...graph, nodeCount: data.graph.nodeCount, edgeCount: data.graph.edgeCount }
+                        : graph
+                    ),
+                  }
+                : project
+            ),
+          }))
+        }
       } else {
         const error = await response.json()
         console.error('创建关系失败:', error)

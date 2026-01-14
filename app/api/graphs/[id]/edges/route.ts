@@ -116,7 +116,7 @@ export async function POST(
       })
       
       // 更新图谱的边计数
-      await tx.graph.update({
+      const updatedGraph = await tx.graph.update({
         where: { id: graphId },
         data: { edgeCount: { increment: 1 } },
       })
@@ -127,10 +127,19 @@ export async function POST(
         data: { edgeCount: { increment: 1 } },
       })
       
-      return edge
+      return { edge, updatedGraph }
     })
     
-    return NextResponse.json({ edge: result }, { status: 201 })
+    console.log(`✅ [graphs/${graphId}/edges] 边创建成功: ${result.edge.id}`)
+    console.log(`📊 [graphs/${graphId}/edges] 图谱边数: ${result.updatedGraph.edgeCount}`)
+    
+    return NextResponse.json({ 
+      edge: result.edge,
+      graph: {
+        nodeCount: result.updatedGraph.nodeCount,
+        edgeCount: result.updatedGraph.edgeCount,
+      },
+    }, { status: 201 })
   } catch (error) {
     console.error('创建边失败:', error)
     return NextResponse.json(
