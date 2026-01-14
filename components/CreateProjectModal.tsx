@@ -10,7 +10,7 @@ interface Project {
 interface CreateProjectModalProps {
   isOpen: boolean
   onClose: () => void
-  onCreate: (projectName: string, graphName: string, isNewProject: boolean) => void
+  onCreate: (projectName: string, graphName: string, isNewProject: boolean) => Promise<void>
   existingProjects: Project[]
 }
 
@@ -34,7 +34,7 @@ export default function CreateProjectModal({
 
   if (!isOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!graphName.trim()) {
@@ -55,13 +55,17 @@ export default function CreateProjectModal({
     const finalProjectName = isNewProject ? projectName : 
       existingProjects.find(p => p.id === selectedProjectId)?.name || ''
 
-    onCreate(finalProjectName, graphName, isNewProject)
-    
-    // 重置表单
-    setProjectName('')
-    setGraphName('')
-    setError('')
-    onClose()
+    try {
+      await onCreate(finalProjectName, graphName, isNewProject)
+      
+      // 重置表单
+      setProjectName('')
+      setGraphName('')
+      setError('')
+      onClose()
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '创建失败，请重试')
+    }
   }
 
   const handleBackdropClick = (e: React.MouseEvent) => {

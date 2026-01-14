@@ -166,15 +166,38 @@ export default function TopNavbar() {
     window.dispatchEvent(new Event('loginStateChange'))
   }
 
-  const handleCreateProject = (projectName: string, graphName: string, isNewProject: boolean) => {
-    if (isNewProject) {
-      createProject(projectName, graphName)
-    } else {
-      // 添加到现有项目
-      const project = projects.find(p => p.name === projectName)
-      if (project) {
-        addGraphToProject(project.id, graphName)
+  const handleCreateProject = async (projectName: string, graphName: string, isNewProject: boolean) => {
+    try {
+      if (isNewProject) {
+        await createProject(projectName, graphName)
+      } else {
+        // 添加到现有项目
+        const project = projects.find(p => p.name === projectName)
+        if (project) {
+          await addGraphToProject(project.id, graphName)
+        }
       }
+      
+      // 创建成功后，保持下拉框展开状态
+      setShowProjectMenu(true)
+      
+      // 如果是添加到现有项目，展开该项目
+      if (!isNewProject) {
+        const project = projects.find(p => p.name === projectName)
+        if (project) {
+          setHoveredProjectId(project.id)
+        }
+      } else {
+        // 如果是新建项目，展开新项目
+        // 由于 createProject 会更新 currentProject，我们可以使用它
+        const newProjectId = currentProject?.id
+        if (newProjectId) {
+          setHoveredProjectId(newProjectId)
+        }
+      }
+    } catch (error) {
+      console.error('创建失败:', error)
+      alert(`创建失败: ${error instanceof Error ? error.message : '未知错误'}`)
     }
   }
 

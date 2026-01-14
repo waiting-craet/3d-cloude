@@ -278,6 +278,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   createProject: async (projectName, graphName) => {
     try {
+      console.log('🔄 开始创建项目:', projectName, '图谱:', graphName)
+      
       // 1. 创建项目
       const projectRes = await fetch('/api/projects', {
         method: 'POST',
@@ -289,12 +291,13 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       })
       
       if (!projectRes.ok) {
-        console.error('创建项目失败')
-        return
+        const error = await projectRes.json()
+        throw new Error(error.error || '创建项目失败')
       }
       
       const projectData = await projectRes.json()
       const project = projectData.project
+      console.log('✅ 项目创建成功:', project.id)
       
       // 2. 在项目中创建图谱
       const graphRes = await fetch(`/api/projects/${project.id}/graphs`, {
@@ -307,50 +310,60 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       })
       
       if (!graphRes.ok) {
-        console.error('创建图谱失败')
-        return
+        const error = await graphRes.json()
+        throw new Error(error.error || '创建图谱失败')
       }
       
       const graphData = await graphRes.json()
       const graph = graphData.graph
+      console.log('✅ 图谱创建成功:', graph.id)
       
-      // 3. 更新本地状态
-      const newProject: Project = {
-        id: project.id,
-        name: project.name,
-        graphs: [{
-          id: graph.id,
-          name: graph.name,
-          projectId: project.id,
-          nodeCount: 0,
-          edgeCount: 0,
-          createdAt: graph.createdAt,
-        }],
+      // 3. 重新从数据库加载所有项目（关键修改：确保数据一致性）
+      console.log('🔄 重新加载项目列表...')
+      const projectsRes = await fetch('/api/projects/with-graphs')
+      if (!projectsRes.ok) {
+        throw new Error('重新加载项目列表失败')
       }
       
-      set((state) => ({
-        projects: [...state.projects, newProject],
+      const projectsData = await projectsRes.json()
+      const projects = projectsData.projects || []
+      console.log('✅ 项目列表加载成功，共', projects.length, '个项目')
+      
+      // 找到刚创建的项目和图谱
+      const newProject = projects.find((p: any) => p.id === project.id)
+      const newGraph = newProject?.graphs.find((g: any) => g.id === graph.id)
+      
+      if (!newProject || !newGraph) {
+        throw new Error('无法在重新加载的数据中找到新创建的项目或图谱')
+      }
+      
+      // 4. 更新 GraphStore 状态
+      set({
+        projects: projects,
         currentProject: newProject,
-        currentGraph: newProject.graphs[0],
+        currentGraph: newGraph,
         nodes: [],
         edges: [],
-      }))
+      })
 
-      // 保存到 localStorage
-      const projects = get().projects
-      localStorage.setItem('projects', JSON.stringify(projects))
+      // 5. 保存到 localStorage
       localStorage.setItem('currentProjectId', project.id)
       localStorage.setItem('currentGraphId', graph.id)
       
-      console.log('项目和图谱创建成功:', newProject)
+      console.log('✅ 项目和图谱创建成功，数据已刷新')
+      console.log('   项目:', newProject.name, '(', newProject.id, ')')
+      console.log('   图谱:', newGraph.name, '(', newGraph.id, ')')
     } catch (error) {
-      console.error('创建项目失败:', error)
+      console.error('❌ 创建项目失败:', error)
+      throw error
     }
   },
 
   addGraphToProject: async (projectId, graphName) => {
     try {
-      // 在项目中创建图谱
+      console.log('🔄 开始添加图谱:', graphName, '到项目:', projectId)
+      
+      // 1. 在项目中创建图谱
       const graphRes = await fetch(`/api/projects/${projectId}/graphs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -361,41 +374,52 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       })
       
       if (!graphRes.ok) {
-        console.error('创建图谱失败')
-        return
+        const error = await graphRes.json()
+        throw new Error(error.error || '创建图谱失败')
       }
       
       const graphData = await graphRes.json()
       const graph = graphData.graph
+      console.log('✅ 图谱创建成功:', graph.id)
       
-      const newGraph: KnowledgeGraph = {
-        id: graph.id,
-        name: graph.name,
-        projectId: projectId,
-        nodeCount: 0,
-        edgeCount: 0,
-        createdAt: graph.createdAt,
+      // 2. 重新从数据库加载所有项目（关键修改：确保数据一致性）
+      console.log('🔄 重新加载项目列表...')
+      const projectsRes = await fetch('/api/projects/with-graphs')
+      if (!projectsRes.ok) {
+        throw new Error('重新加载项目列表失败')
       }
       
-      set((state) => ({
-        projects: state.projects.map((project) =>
-          project.id === projectId
-            ? { ...project, graphs: [...project.graphs, newGraph] }
-            : project
-        ),
+      const projectsData = await projectsRes.json()
+      const projects = projectsData.projects || []
+      console.log('✅ 项目列表加载成功，共', projects.length, '个项目')
+      
+      // 找到对应的项目和新创建的图谱
+      const project = projects.find((p: any) => p.id === projectId)
+      const newGraph = project?.graphs.find((g: any) => g.id === graph.id)
+      
+      if (!project || !newGraph) {
+        throw new Error('无法在重新加载的数据中找到项目或新创建的图谱')
+      }
+      
+      // 3. 更新 GraphStore 状态
+      set({
+        projects: projects,
+        currentProject: project,
         currentGraph: newGraph,
         nodes: [],
         edges: [],
-      }))
+      })
 
-      // 保存到 localStorage
-      const projects = get().projects
-      localStorage.setItem('projects', JSON.stringify(projects))
+      // 4. 保存到 localStorage
+      localStorage.setItem('currentProjectId', projectId)
       localStorage.setItem('currentGraphId', graph.id)
       
-      console.log('图谱创建成功:', newGraph)
+      console.log('✅ 图谱添加成功，数据已刷新')
+      console.log('   项目:', project.name, '(', project.id, ')')
+      console.log('   图谱:', newGraph.name, '(', newGraph.id, ')')
     } catch (error) {
-      console.error('添加图谱失败:', error)
+      console.error('❌ 添加图谱失败:', error)
+      throw error
     }
   },
 
