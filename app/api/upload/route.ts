@@ -9,7 +9,10 @@ export const runtime = 'nodejs'
 export async function POST(request: NextRequest) {
   try {
     // 检查是否配置了 Blob token
+    console.log('🔍 检查 BLOB_READ_WRITE_TOKEN:', process.env.BLOB_READ_WRITE_TOKEN ? '已配置' : '未配置')
+    
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error('❌ BLOB_READ_WRITE_TOKEN 未配置')
       return NextResponse.json(
         { 
           error: '未配置 Vercel Blob 存储',
@@ -23,6 +26,14 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
     const nodeId = formData.get('nodeId') as string
     const type = formData.get('type') as string
+
+    console.log('📦 接收到上传请求:', { 
+      fileName: file?.name, 
+      fileSize: file?.size,
+      fileType: file?.type,
+      nodeId, 
+      type 
+    })
 
     if (!file) {
       return NextResponse.json(
@@ -64,9 +75,11 @@ export async function POST(request: NextRequest) {
     const filename = `nodes/${nodeId}/${type}-${timestamp}.${extension}`
 
     // 上传到 Vercel Blob
+    console.log('⬆️ 开始上传到 Vercel Blob:', filename)
     const blob = await put(filename, file, {
       access: 'public',
     })
+    console.log('✅ 上传成功:', blob.url)
 
     return NextResponse.json({
       url: blob.url,
@@ -77,7 +90,8 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('上传失败:', error)
+    console.error('❌ 上传失败:', error)
+    console.error('错误详情:', error instanceof Error ? error.stack : error)
     return NextResponse.json(
       { error: '上传失败', details: error instanceof Error ? error.message : '未知错误' },
       { status: 500 }
