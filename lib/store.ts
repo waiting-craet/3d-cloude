@@ -67,6 +67,7 @@ export interface GraphStore {
   createProject: (projectName: string, graphName: string) => void
   addGraphToProject: (projectId: string, graphName: string) => void
   switchGraph: (projectId: string, graphId: string) => void
+  refreshProjects: () => Promise<void>
 }
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
@@ -621,6 +622,80 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         console.error('加载图谱数据时出错:', error)
         set({ isLoading: false })
       }
+    }
+  },
+
+  refreshProjects: async () => {
+    try {
+      console.log('🔄 刷新项目列表...')
+      
+      const state = get()
+      const currentProjectId = state.currentProject?.id
+      const currentGraphId = state.currentGraph?.id
+      
+      let projects: any[] = []
+      let retryCount = 0
+      const maxRetries = 3
+      
+      // 重试逻辑：确保数据库写入已完成
+      while (retryCount < maxRetries) {
+        // 添加短暂延迟，让数据库有时间同步
+        if (retryCount > 0) {
+          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries})`)
+          await new Promise(resolve => setTimeout(resolve, 500 * retryCount))
+        }
+        
+        const projectsRes = await fetch('/api/projects/with-graphs', {
+          // 添加缓存控制，确保获取最新数据
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          },
+        })
+        
+        if (!projectsRes.ok) {
+          throw new Error('加载项目列表失败')
+        }
+        
+        const projectsData = await projectsRes.json()
+        projects = projectsData.projects || []
+        console.log('✅ 项目列表加载成功，共', projects.length, '个项目')
+        
+        // 如果有当前项目和图谱，验证它们是否存在
+        if (currentProjectId && currentGraphId) {
+          const project = projects.find((p: any) => p.id === currentProjectId)
+          const graph = project?.graphs.find((g: any) => g.id === currentGraphId)
+          
+          if (project && graph) {
+            console.log('✅ 找到当前项目和图谱')
+            console.log('   项目:', project.name, '(', project.id, ')')
+            console.log('   图谱:', graph.name, '(', graph.id, ')')
+            
+            // 更新状态，保持当前选中的项目和图谱
+            set({
+              projects: projects,
+              currentProject: project,
+              currentGraph: graph,
+            })
+            
+            return
+          }
+        }
+        
+        retryCount++
+        if (retryCount < maxRetries) {
+          console.log('⚠️ 未找到当前项目/图谱，准备重试...')
+        }
+      }
+      
+      // 如果没有当前项目或重试后仍未找到，只更新projects列表
+      console.log('⚠️ 更新项目列表，但未找到当前项目/图谱')
+      set({ projects: projects })
+      
+    } catch (error) {
+      console.error('❌ 刷新项目列表失败:', error)
+      throw error
     }
   },
 }))

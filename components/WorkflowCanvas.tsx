@@ -73,12 +73,13 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const [isConverting, setIsConverting] = useState(false)
   const [conversionError, setConversionError] = useState<string | null>(null)
   const [conversionSuccess, setConversionSuccess] = useState(false)
+  const [savingStatus, setSavingStatus] = useState<string>('')
 
   // 媒体上传状态
   const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)
 
   // 从store获取当前图谱
-  const { currentGraph, nodes: storeNodes, edges: storeEdges } = useGraphStore()
+  const { currentGraph, nodes: storeNodes, edges: storeEdges, refreshProjects } = useGraphStore()
 
   // 计算连接点位置
   const calculateConnectionPoint = (node: Node, side: 'left' | 'right'): ConnectionPointPosition => {
@@ -703,6 +704,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       }
 
       // 3. 调用同步API
+      setSavingStatus('正在保存到数据库...')
       setIsConverting(true)
       setConversionError(null)
       
@@ -725,7 +727,19 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       console.log('✅ 同步成功:', result)
       console.log('📊 统计:', result.stats)
       
-      // 4. 显示成功并跳转
+      // 4. 刷新项目列表（关键修改）
+      setSavingStatus('保存成功！正在刷新数据...')
+      console.log('🔄 刷新项目列表...')
+      try {
+        await refreshProjects()
+        console.log('✅ 项目列表刷新成功')
+      } catch (refreshError) {
+        console.error('⚠️ 刷新项目列表失败，但仍然继续跳转:', refreshError)
+        // 即使刷新失败，也继续跳转，因为数据已经保存到数据库
+      }
+      
+      // 5. 显示成功并跳转
+      setSavingStatus('即将跳转到3D视图...')
       setConversionSuccess(true)
       setTimeout(() => {
         window.location.href = '/'
@@ -733,6 +747,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       
     } catch (error) {
       console.error('❌ 同步失败:', error)
+      setSavingStatus('')
       setConversionError(error instanceof Error ? error.message : '同步失败')
       setTimeout(() => setConversionError(null), 5000)
     } finally {
@@ -2025,7 +2040,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       )}
 
       {/* 转换状态提示 */}
-      {isConverting && (
+      {(isConverting || savingStatus) && (
         <div style={{
           position: 'fixed',
           top: '50%',
@@ -2054,7 +2069,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
             fontWeight: '600',
             color: '#1f2937',
           }}>
-            正在转换为三维图谱...
+            {savingStatus || '正在转换为三维图谱...'}
           </div>
         </div>
       )}
