@@ -15,6 +15,12 @@ interface Node {
   imageUrl?: string  // 图片 URL
   videoUrl?: string  // 视频 URL
   mediaType?: 'image' | 'video' | null  // 媒体类型
+  // NEW: Store actual rendered dimensions
+  actualWidth?: number
+  actualHeight?: number
+  // NEW: Store media dimensions for aspect ratio preservation
+  mediaWidth?: number
+  mediaHeight?: number
 }
 
 interface Connection {
@@ -22,6 +28,15 @@ interface Connection {
   from: string
   to: string
   label?: string
+  // NEW: Cache connection point positions for performance
+  cachedFromPoint?: ConnectionPointPosition
+  cachedToPoint?: ConnectionPointPosition
+}
+
+interface ConnectionPointPosition {
+  x: number  // Absolute X coordinate in canvas space
+  y: number  // Absolute Y coordinate in canvas space
+  side: 'left' | 'right'  // Which side of the node
 }
 
 export interface WorkflowCanvasRef {
@@ -33,6 +48,9 @@ export interface WorkflowCanvasRef {
 
 const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null)
+  // NEW: Ref map to track node DOM elements
+  const nodeRefsMap = useRef<Map<string, HTMLDivElement>>(new Map())
+  
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 400, y: 200 })
   const [isDragging, setIsDragging] = useState(false)
@@ -61,6 +79,62 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
 
   // 从store获取当前图谱
   const { currentGraph, nodes: storeNodes, edges: storeEdges } = useGraphStore()
+
+  // 计算连接点位置
+  const calculateConnectionPoint = (node: Node, side: 'left' | 'right'): ConnectionPointPosition => {
+    // Use actual rendered dimensions if available, otherwise fall back to default dimensions
+    const actualHeight = node.actualHeight || node.height
+    const actualWidth = node.actualWidth || node.width
+    
+    if (side === 'right') {
+      return {
+        x: node.x + actualWidth,
+        y: node.y + actualHeight / 2,
+        side: 'right'
+      }
+    } else {
+      return {
+        x: node.x,
+        y: node.y + actualHeight / 2,
+        side: 'left'
+      }
+    }
+  }
+
+  // 计算节点尺寸
+  const calculateNodeDimensions = (node: Node): { width: number; height: number; mediaHeight: number } => {
+    const baseWidth = 320
+    const basePadding = 40  // 20px on each side
+    const contentPadding = 28  // Internal padding
+    
+    // Calculate media height while preserving aspect ratio
+    let mediaHeight = 0
+    if (node.mediaType && node.mediaWidth && node.mediaHeight) {
+      const maxMediaHeight = 200
+      const aspectRatio = node.mediaWidth / node.mediaHeight
+      const calculatedHeight = baseWidth / aspectRatio
+      mediaHeight = Math.min(calculatedHeight, maxMediaHeight)
+    }
+    
+    // Calculate total height
+    const titleHeight = 24  // Approximate title height
+    const descriptionHeight = node.description ? 80 : 0
+    const editHintHeight = 30
+    const spacing = 14  // Gap between elements
+    
+    const contentHeight = titleHeight + 
+                         (mediaHeight > 0 ? mediaHeight + spacing : 0) +
+                         (descriptionHeight > 0 ? descriptionHeight + spacing : 0) +
+                         editHintHeight
+    
+    const totalHeight = contentHeight + contentPadding * 2 + 4  // 4px for top bar
+    
+    return {
+      width: baseWidth,
+      height: totalHeight,
+      mediaHeight
+    }
+  }
 
   // 加载当前图谱的数据
   useEffect(() => {
@@ -99,6 +173,49 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     setNodes(converted2DNodes)
     setConnections(converted2DConnections)
   }, [currentGraph, storeNodes, storeEdges])
+
+  // NEW: ResizeObserver to track node dimension changes
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        const nodeElement = entry.target as HTMLDivElement
+        const nodeId = nodeElement.dataset.nodeId
+        
+        if (nodeId) {
+          const { width, height } = entry.contentRect
+          
+          // Update node state with actual dimensions
+          updateNodeDimensions(nodeId, {
+            actualWidth: width,
+            actualHeight: height
+          })
+        }
+      })
+    })
+
+    // Observe all node elements
+    nodeRefsMap.current.forEach((element, nodeId) => {
+      if (element) {
+        resizeObserver.observe(element)
+      }
+    })
+
+    // Cleanup observer on unmount
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [nodes]) // Re-run when nodes change
+
+  // NEW: Effect to update connections when node dimensions change (Task 9.1)
+  useEffect(() => {
+    // Force connection re-render by invalidating all connection caches
+    // This ensures connections update when node dimensions change
+    setConnections(prev => prev.map(conn => ({
+      ...conn,
+      cachedFromPoint: undefined,
+      cachedToPoint: undefined,
+    })))
+  }, [nodes.map(n => `${n.id}-${n.actualWidth}-${n.actualHeight}`).join(',')]) // Depend on node dimensions
 
   // 处理画布拖动
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -264,6 +381,27 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     ))
   }
 
+  // 更新节点尺寸
+  const updateNodeDimensions = (nodeId: string, dimensions: { actualWidth?: number; actualHeight?: number; mediaWidth?: number; mediaHeight?: number }) => {
+    setNodes(prev => prev.map(node =>
+      node.id === nodeId
+        ? { ...node, ...dimensions }
+        : node
+    ))
+    
+    // NEW: Invalidate connection cache when node dimensions change
+    setConnections(prev => prev.map(conn => {
+      if (conn.from === nodeId || conn.to === nodeId) {
+        return {
+          ...conn,
+          cachedFromPoint: undefined,
+          cachedToPoint: undefined
+        }
+      }
+      return conn
+    }))
+  }
+
   // 完成编辑
   const finishEditing = (id: string) => {
     const node = nodes.find(n => n.id === id)
@@ -310,6 +448,48 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
 
       setUploadingMedia(nodeId)
 
+      // NEW: Extract media dimensions before upload
+      let mediaWidth: number | undefined
+      let mediaHeight: number | undefined
+
+      if (file.type.startsWith('image/')) {
+        // Extract image dimensions
+        const img = new Image()
+        const imageUrl = URL.createObjectURL(file)
+        
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            mediaWidth = img.naturalWidth
+            mediaHeight = img.naturalHeight
+            URL.revokeObjectURL(imageUrl)
+            resolve()
+          }
+          img.onerror = () => {
+            URL.revokeObjectURL(imageUrl)
+            reject(new Error('Failed to load image'))
+          }
+          img.src = imageUrl
+        })
+      } else if (file.type.startsWith('video/')) {
+        // Extract video dimensions
+        const video = document.createElement('video')
+        const videoUrl = URL.createObjectURL(file)
+        
+        await new Promise<void>((resolve, reject) => {
+          video.onloadedmetadata = () => {
+            mediaWidth = video.videoWidth
+            mediaHeight = video.videoHeight
+            URL.revokeObjectURL(videoUrl)
+            resolve()
+          }
+          video.onerror = () => {
+            URL.revokeObjectURL(videoUrl)
+            reject(new Error('Failed to load video'))
+          }
+          video.src = videoUrl
+        })
+      }
+
       // 创建 FormData
       const formData = new FormData()
       formData.append('file', file)
@@ -330,12 +510,23 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         throw new Error(errorMsg)
       }
 
-      // 更新节点
+      // 更新节点 - NEW: Include media dimensions
       updateNode(nodeId, {
         imageUrl: data.mediaType === 'image' ? data.url : undefined,
         videoUrl: data.mediaType === 'video' ? data.url : undefined,
         mediaType: data.mediaType,
+        mediaWidth,
+        mediaHeight,
       })
+      
+      // NEW: Trigger dimension recalculation by clearing actual dimensions
+      // This allows ResizeObserver to measure the new dimensions
+      setTimeout(() => {
+        updateNodeDimensions(nodeId, {
+          actualWidth: undefined,
+          actualHeight: undefined,
+        })
+      }, 0)
 
     } catch (error) {
       console.error('上传失败:', error)
@@ -371,7 +562,18 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         imageUrl: undefined,
         videoUrl: undefined,
         mediaType: null,
+        mediaWidth: undefined,
+        mediaHeight: undefined,
       })
+      
+      // NEW: Trigger dimension recalculation by clearing actual dimensions
+      // This allows ResizeObserver to measure the new dimensions
+      setTimeout(() => {
+        updateNodeDimensions(nodeId, {
+          actualWidth: undefined,
+          actualHeight: undefined,
+        })
+      }, 0)
 
     } catch (error) {
       console.error('删除媒体失败:', error)
@@ -577,10 +779,20 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         return
       }
 
-      const x1 = fromNode.x + fromNode.width
-      const y1 = fromNode.y + fromNode.height / 2
-      const x2 = toNode.x
-      const y2 = toNode.y + toNode.height / 2
+      // NEW: Use cached connection points if available, otherwise calculate
+      const fromPoint = conn.cachedFromPoint || calculateConnectionPoint(fromNode, 'right')
+      const toPoint = conn.cachedToPoint || calculateConnectionPoint(toNode, 'left')
+      
+      // Cache the calculated points for next render
+      if (!conn.cachedFromPoint || !conn.cachedToPoint) {
+        conn.cachedFromPoint = fromPoint
+        conn.cachedToPoint = toPoint
+      }
+      
+      const x1 = fromPoint.x
+      const y1 = fromPoint.y
+      const x2 = toPoint.x
+      const y2 = toPoint.y
 
       const midX = (x1 + x2) / 2
       const midY = (y1 + y2) / 2
@@ -678,8 +890,10 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       const fromNode = nodes.find(n => n.id === connectingFrom)
       console.log('  - Preview line fromNode:', fromNode?.id)
       if (fromNode) {
-        const x1 = fromNode.x + fromNode.width
-        const y1 = fromNode.y + fromNode.height / 2
+        // NEW: Use calculateConnectionPoint for accurate positioning
+        const fromPoint = calculateConnectionPoint(fromNode, 'right')
+        const x1 = fromPoint.x
+        const y1 = fromPoint.y
         const x2 = dragLineEnd.x
         const y2 = dragLineEnd.y
         const midX = (x1 + x2) / 2
@@ -806,10 +1020,22 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         </svg>
 
         {/* 节点 */}
-        {nodes.map(node => (
+        {nodes.map(node => {
+          // NEW: Calculate dimensions for each node
+          const calculatedDimensions = calculateNodeDimensions(node)
+          
+          return (
           <div
             key={node.id}
             className="workflow-node"
+            data-node-id={node.id}
+            ref={(el) => {
+              if (el) {
+                nodeRefsMap.current.set(node.id, el)
+              } else {
+                nodeRefsMap.current.delete(node.id)
+              }
+            }}
             onMouseDown={(e) => {
               // 非编辑模式：整个卡片可拖动
               if (!node.isEditing) {
@@ -840,8 +1066,8 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
               position: 'absolute',
               left: `${node.x}px`,
               top: `${node.y}px`,
-              width: `${node.width}px`,
-              minHeight: `${node.height}px`,
+              width: `${calculatedDimensions.width}px`,
+              minHeight: `${calculatedDimensions.height}px`,
               background: selectedNode === node.id 
                 ? 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)'
                 : 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
@@ -1073,9 +1299,19 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                           <img
                             src={node.imageUrl}
                             alt="节点图片"
+                            onLoad={(e) => {
+                              // NEW: Track media dimensions on load
+                              const img = e.currentTarget
+                              if (!node.mediaWidth || !node.mediaHeight) {
+                                updateNode(node.id, {
+                                  mediaWidth: img.naturalWidth,
+                                  mediaHeight: img.naturalHeight,
+                                })
+                              }
+                            }}
                             style={{
                               width: '100%',
-                              height: 'auto',
+                              height: calculatedDimensions.mediaHeight > 0 ? `${calculatedDimensions.mediaHeight}px` : 'auto',
                               maxHeight: '200px',
                               objectFit: 'cover',
                               display: 'block',
@@ -1086,9 +1322,19 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                           <video
                             src={node.videoUrl}
                             controls
+                            onLoadedMetadata={(e) => {
+                              // NEW: Track media dimensions on load
+                              const video = e.currentTarget
+                              if (!node.mediaWidth || !node.mediaHeight) {
+                                updateNode(node.id, {
+                                  mediaWidth: video.videoWidth,
+                                  mediaHeight: video.videoHeight,
+                                })
+                              }
+                            }}
                             style={{
                               width: '100%',
-                              height: 'auto',
+                              height: calculatedDimensions.mediaHeight > 0 ? `${calculatedDimensions.mediaHeight}px` : 'auto',
                               maxHeight: '200px',
                               display: 'block',
                             }}
@@ -1291,9 +1537,19 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                         <img
                           src={node.imageUrl}
                           alt={node.label}
+                          onLoad={(e) => {
+                            // NEW: Track media dimensions on load
+                            const img = e.currentTarget
+                            if (!node.mediaWidth || !node.mediaHeight) {
+                              updateNode(node.id, {
+                                mediaWidth: img.naturalWidth,
+                                mediaHeight: img.naturalHeight,
+                              })
+                            }
+                          }}
                           style={{
                             width: '100%',
-                            height: 'auto',
+                            height: calculatedDimensions.mediaHeight > 0 ? `${calculatedDimensions.mediaHeight}px` : 'auto',
                             maxHeight: '180px',
                             objectFit: 'cover',
                             display: 'block',
@@ -1304,9 +1560,19 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                         <video
                           src={node.videoUrl}
                           controls
+                          onLoadedMetadata={(e) => {
+                            // NEW: Track media dimensions on load
+                            const video = e.currentTarget
+                            if (!node.mediaWidth || !node.mediaHeight) {
+                              updateNode(node.id, {
+                                mediaWidth: video.videoWidth,
+                                mediaHeight: video.videoHeight,
+                              })
+                            }
+                          }}
                           style={{
                             width: '100%',
-                            height: 'auto',
+                            height: calculatedDimensions.mediaHeight > 0 ? `${calculatedDimensions.mediaHeight}px` : 'auto',
                             maxHeight: '180px',
                             display: 'block',
                           }}
@@ -1362,7 +1628,12 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
             </div>
 
             {/* 连接点 - 只在非编辑模式显示 */}
-            {!node.isEditing && (
+            {!node.isEditing && (() => {
+              // Calculate connection point position using actual dimensions
+              const actualHeight = node.actualHeight || calculatedDimensions.height
+              const connectionPointY = actualHeight / 2
+              
+              return (
               <>
                 {/* 右侧连接按钮 */}
                 <div
@@ -1372,7 +1643,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                   style={{
                     position: 'absolute',
                     right: '-12px',
-                    top: '50%',
+                    top: `${connectionPointY}px`,
                     transform: hoveredNode === node.id && isDraggingConnection && connectingFrom !== node.id
                       ? 'translateY(-50%) scale(1.3)'
                       : 'translateY(-50%)',
@@ -1429,7 +1700,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                   style={{
                     position: 'absolute',
                     left: '-12px',
-                    top: '50%',
+                    top: `${connectionPointY}px`,
                     transform: hoveredNode === node.id && isDraggingConnection && connectingFrom !== node.id
                       ? 'translateY(-50%) scale(1.3)'
                       : 'translateY(-50%)',
@@ -1478,9 +1749,11 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                   ⊕
                 </div>
               </>
-            )}
+              )
+            })()}
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* 底部缩放控制 */}
