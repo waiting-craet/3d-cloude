@@ -79,7 +79,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)
 
   // 从store获取当前图谱
-  const { currentGraph, nodes: storeNodes, edges: storeEdges, refreshProjects } = useGraphStore()
+  const { currentGraph, currentProject, nodes: storeNodes, edges: storeEdges, refreshProjects } = useGraphStore()
 
   // 计算连接点位置
   const calculateConnectionPoint = (node: Node, side: 'left' | 'right'): ConnectionPointPosition => {
@@ -667,7 +667,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const saveAndConvert = async () => {
     try {
       // 0. 检查是否选择了图谱
-      if (!currentGraph) {
+      if (!currentGraph || !currentProject) {
         setConversionError('请先选择一个图谱')
         setTimeout(() => setConversionError(null), 3000)
         return
@@ -727,7 +727,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       console.log('✅ 同步成功:', result)
       console.log('📊 统计:', result.stats)
       
-      // 4. 刷新项目列表（关键修改）
+      // 4. 等待刷新项目列表完成（关键修改）
       setSavingStatus('保存成功！正在刷新数据...')
       console.log('🔄 刷新项目列表...')
       try {
@@ -738,11 +738,20 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         // 即使刷新失败，也继续跳转，因为数据已经保存到数据库
       }
       
-      // 5. 显示成功并跳转
+      // 5. 保存当前选择到 localStorage
+      localStorage.setItem('currentProjectId', currentProject.id)
+      localStorage.setItem('currentGraphId', currentGraph.id)
+      
+      // 6. 显示成功并跳转（使用查询参数）
       setSavingStatus('即将跳转到3D视图...')
       setConversionSuccess(true)
+      
+      // 使用查询参数确保状态能够恢复
+      const redirectUrl = `/?projectId=${currentProject.id}&graphId=${currentGraph.id}`
+      console.log('🔄 准备跳转到:', redirectUrl)
+      
       setTimeout(() => {
-        window.location.href = '/'
+        window.location.href = redirectUrl
       }, 1500)
       
     } catch (error) {

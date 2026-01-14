@@ -636,13 +636,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       let projects: any[] = []
       let retryCount = 0
       const maxRetries = 3
+      let verified = false
       
-      // 重试逻辑：确保数据库写入已完成
-      while (retryCount < maxRetries) {
-        // 添加短暂延迟，让数据库有时间同步
+      // 重试逻辑：确保数据库写入已完成（使用指数退避）
+      while (retryCount < maxRetries && !verified) {
+        // 添加短暂延迟，让数据库有时间同步（指数退避：500ms, 1000ms, 1500ms）
         if (retryCount > 0) {
-          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries})`)
-          await new Promise(resolve => setTimeout(resolve, 500 * retryCount))
+          const delay = 500 * retryCount
+          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries}, 延迟 ${delay}ms)`)
+          await new Promise(resolve => setTimeout(resolve, delay))
         }
         
         const projectsRes = await fetch('/api/projects/with-graphs', {
@@ -672,6 +674,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             console.log('   项目:', project.name, '(', project.id, ')')
             console.log('   图谱:', graph.name, '(', graph.id, ')')
             
+            // 验证数据完整性：确保所有图谱都有 nodeCount 和 edgeCount
+            const allGraphsHaveCounts = project.graphs.every((g: any) => 
+              typeof g.nodeCount === 'number' && typeof g.edgeCount === 'number'
+            )
+            
+            if (!allGraphsHaveCounts) {
+              console.warn('⚠️ 某些图谱缺少节点/边计数，继续重试...')
+              retryCount++
+              continue
+            }
+            
             // 更新状态，保持当前选中的项目和图谱
             set({
               projects: projects,
@@ -679,19 +692,27 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
               currentGraph: graph,
             })
             
+            verified = true
             return
+          } else {
+            console.log('⚠️ 未找到当前项目/图谱，继续重试...')
           }
+        } else {
+          // 没有当前选择，直接更新项目列表
+          console.log('✅ 无当前选择，直接更新项目列表')
+          set({ projects: projects })
+          verified = true
+          return
         }
         
         retryCount++
-        if (retryCount < maxRetries) {
-          console.log('⚠️ 未找到当前项目/图谱，准备重试...')
-        }
       }
       
-      // 如果没有当前项目或重试后仍未找到，只更新projects列表
-      console.log('⚠️ 更新项目列表，但未找到当前项目/图谱')
-      set({ projects: projects })
+      // 如果验证失败，仍然更新projects列表
+      if (!verified) {
+        console.log('⚠️ 验证失败，但仍更新项目列表')
+        set({ projects: projects })
+      }
       
     } catch (error) {
       console.error('❌ 刷新项目列表失败:', error)

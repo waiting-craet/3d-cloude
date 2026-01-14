@@ -15,6 +15,9 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:test": "tsx scripts/test-connection.ts",
     "db:test-blob": "tsx scripts/test-blob.ts",
+    "db:check": "tsx scripts/check-database.ts",
+    "db:quick-check": "tsx scripts/quick-db-check.ts",
+    "db:test-full": "tsx scripts/test-database-connection.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

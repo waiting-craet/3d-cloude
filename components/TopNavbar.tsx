@@ -94,36 +94,50 @@ export default function TopNavbar() {
           
           setProjects(projects)
           
-          // 检查localStorage中的ID是否有效
-          const currentProjectId = localStorage.getItem('currentProjectId')
-          const currentGraphId = localStorage.getItem('currentGraphId')
+          // 检查 URL 查询参数（优先级最高）
+          const urlParams = new URLSearchParams(window.location.search)
+          const projectIdFromUrl = urlParams.get('projectId')
+          const graphIdFromUrl = urlParams.get('graphId')
+          
+          // 优先级: URL 参数 > localStorage > 无
+          const projectId = projectIdFromUrl || localStorage.getItem('currentProjectId')
+          const graphId = graphIdFromUrl || localStorage.getItem('currentGraphId')
+          
+          console.log('🔍 状态恢复 - projectId:', projectId, 'graphId:', graphId)
+          console.log('  - 来源:', projectIdFromUrl ? 'URL参数' : 'localStorage')
           
           // 验证ID是否是真实的数据库ID（cuid格式）
           const isValidId = (id: string | null) => id && id.startsWith('cmk')
           
-          if (isValidId(currentProjectId) && isValidId(currentGraphId)) {
+          if (isValidId(projectId) && isValidId(graphId)) {
             // 验证项目和图谱是否存在
-            const project = projects.find((p: any) => p.id === currentProjectId)
-            const graph = project?.graphs.find((g: any) => g.id === currentGraphId)
+            const project = projects.find((p: any) => p.id === projectId)
+            const graph = project?.graphs.find((g: any) => g.id === graphId)
             
             if (project && graph) {
-              console.log('恢复上次选择的图谱:', graph.name)
-              switchGraph(currentProjectId!, currentGraphId!)
+              console.log('✅ 恢复选择的图谱:', graph.name)
+              switchGraph(projectId!, graphId!)
+              
+              // 如果是从 URL 参数恢复的，清理 URL（避免刷新时重复处理）
+              if (projectIdFromUrl || graphIdFromUrl) {
+                console.log('🧹 清理 URL 查询参数')
+                window.history.replaceState({}, '', window.location.pathname)
+              }
             } else {
-              console.log('上次选择的图谱不存在，清理localStorage')
+              console.log('⚠️ 上次选择的图谱不存在，清理localStorage')
               localStorage.removeItem('currentProjectId')
               localStorage.removeItem('currentGraphId')
             }
           } else {
             // 清理旧的本地ID
-            console.log('检测到旧的本地ID，清理localStorage')
+            console.log('⚠️ 检测到旧的本地ID，清理localStorage')
             localStorage.removeItem('currentProjectId')
             localStorage.removeItem('currentGraphId')
             localStorage.removeItem('projects')
           }
         }
       } catch (error) {
-        console.error('加载项目失败:', error)
+        console.error('❌ 加载项目失败:', error)
       }
     }
     
@@ -259,12 +273,29 @@ export default function TopNavbar() {
           ? `/api/projects/${deleteDialog.id}`
           : `/api/graphs/${deleteDialog.id}`
 
+      console.log(`🗑️ 开始删除 ${deleteDialog.type}:`, deleteDialog.name)
+      
       const res = await fetch(endpoint, { method: 'DELETE' })
-      const data = await res.json()
-
+      
+      // 处理不同的错误状态码
       if (!res.ok) {
-        throw new Error(data.error || '删除失败')
+        const data = await res.json()
+        
+        if (res.status === 404) {
+          // 404 错误：项目或图谱不存在
+          const entityName = deleteDialog.type === 'project' ? '项目' : '图谱'
+          throw new Error(`${entityName}不存在`)
+        } else if (res.status === 500) {
+          // 500 错误：服务器错误，显示 API 返回的错误消息
+          throw new Error(data.error || data.message || '服务器错误')
+        } else {
+          // 其他错误
+          throw new Error(data.error || '删除失败')
+        }
       }
+
+      const data = await res.json()
+      console.log('✅ 删除成功:', data)
 
       // 显示成功消息
       alert(
@@ -280,13 +311,14 @@ export default function TopNavbar() {
         stats: { nodeCount: 0, edgeCount: 0 },
       })
 
-      // 如果删除的是当前选中的项目或图谱，清理localStorage并刷新页面
-      if (deleteDialog.type === 'project' && currentProject?.id === deleteDialog.id) {
+      // 检查是否删除的是当前选中的项目或图谱
+      const isCurrentProject = deleteDialog.type === 'project' && currentProject?.id === deleteDialog.id
+      const isCurrentGraph = deleteDialog.type === 'graph' && currentGraph?.id === deleteDialog.id
+      
+      if (isCurrentProject || isCurrentGraph) {
+        // 清理选择并刷新页面
+        console.log('🔄 删除了当前选中的项目/图谱，清理状态并刷新页面')
         localStorage.removeItem('currentProjectId')
-        localStorage.removeItem('currentGraphId')
-        window.location.reload()
-        return
-      } else if (deleteDialog.type === 'graph' && currentGraph?.id === deleteDialog.id) {
         localStorage.removeItem('currentGraphId')
         window.location.reload()
         return
@@ -296,15 +328,17 @@ export default function TopNavbar() {
       const expandedProjectId = deleteDialog.type === 'graph' ? hoveredProjectId : null
 
       // 重新加载项目列表（使用重试机制确保获取最新数据）
+      console.log('🔄 开始刷新项目列表...')
       let retryCount = 0
       const maxRetries = 3
-      let projectsLoaded = false
+      let verified = false
 
-      while (retryCount < maxRetries && !projectsLoaded) {
-        // 添加短暂延迟，让数据库有时间同步
+      while (retryCount < maxRetries && !verified) {
+        // 添加短暂延迟，让数据库有时间同步（指数退避）
         if (retryCount > 0) {
-          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries})`)
-          await new Promise(resolve => setTimeout(resolve, 500 * retryCount))
+          const delay = 500 * retryCount
+          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries}, 延迟 ${delay}ms)`)
+          await new Promise(resolve => setTimeout(resolve, delay))
         }
 
         const projectsRes = await fetch('/api/projects/with-graphs', {
@@ -326,8 +360,10 @@ export default function TopNavbar() {
             if (!stillExists) {
               // 删除成功，更新状态
               setProjects(projects)
-              projectsLoaded = true
+              verified = true
               console.log('✅ 项目删除成功，列表已更新')
+            } else {
+              console.log('⚠️ 项目仍然存在，继续重试...')
             }
           } else if (deleteDialog.type === 'graph') {
             const project = projects.find((p: any) => 
@@ -336,13 +372,15 @@ export default function TopNavbar() {
             if (!project) {
               // 删除成功，更新状态
               setProjects(projects)
-              projectsLoaded = true
+              verified = true
               console.log('✅ 图谱删除成功，列表已更新')
               
               // 如果删除的是图谱，保持项目展开状态
               if (expandedProjectId) {
                 setHoveredProjectId(expandedProjectId)
               }
+            } else {
+              console.log('⚠️ 图谱仍然存在，继续重试...')
             }
           }
         }
@@ -350,14 +388,18 @@ export default function TopNavbar() {
         retryCount++
       }
 
-      // 如果重试后仍未成功，强制刷新页面
-      if (!projectsLoaded) {
-        console.log('⚠️ 重试后仍未获取最新数据，强制刷新页面')
+      // 如果重试后仍未验证成功，强制刷新页面
+      if (!verified) {
+        console.log('⚠️ 重试后仍未验证删除成功，强制刷新页面')
         window.location.reload()
       }
     } catch (error) {
-      console.error('删除失败:', error)
-      alert(`删除失败: ${error instanceof Error ? error.message : '未知错误'}`)
+      console.error('❌ 删除失败:', error)
+      const errorMessage = error instanceof Error ? error.message : '未知错误'
+      alert(`删除失败: ${errorMessage}`)
+      
+      // 删除失败时不关闭对话框，保持状态不变
+      // 用户可以重试或取消
     } finally {
       setIsDeleting(false)
     }
