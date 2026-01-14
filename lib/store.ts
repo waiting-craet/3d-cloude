@@ -627,11 +627,16 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   refreshProjects: async () => {
     try {
-      console.log('🔄 刷新项目列表...')
+      console.log('🔄 [refreshProjects] 开始刷新项目列表...')
       
       const state = get()
       const currentProjectId = state.currentProject?.id
       const currentGraphId = state.currentGraph?.id
+      
+      console.log('🔍 [refreshProjects] 当前选择:', {
+        projectId: currentProjectId,
+        graphId: currentGraphId,
+      })
       
       let projects: any[] = []
       let retryCount = 0
@@ -643,10 +648,11 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         // 添加短暂延迟，让数据库有时间同步（指数退避：500ms, 1000ms, 1500ms）
         if (retryCount > 0) {
           const delay = 500 * retryCount
-          console.log(`⏳ 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries}, 延迟 ${delay}ms)`)
+          console.log(`⏳ [refreshProjects] 等待数据库同步... (尝试 ${retryCount + 1}/${maxRetries}, 延迟 ${delay}ms)`)
           await new Promise(resolve => setTimeout(resolve, delay))
         }
         
+        console.log(`🌐 [refreshProjects] 尝试 ${retryCount + 1}/${maxRetries}: 获取项目列表...`)
         const projectsRes = await fetch('/api/projects/with-graphs', {
           // 添加缓存控制，确保获取最新数据
           cache: 'no-store',
@@ -657,33 +663,31 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         })
         
         if (!projectsRes.ok) {
+          console.error(`❌ [refreshProjects] API 请求失败: ${projectsRes.status}`)
           throw new Error('加载项目列表失败')
         }
         
         const projectsData = await projectsRes.json()
         projects = projectsData.projects || []
-        console.log('✅ 项目列表加载成功，共', projects.length, '个项目')
+        console.log(`✅ [refreshProjects] 项目列表加载成功，共 ${projects.length} 个项目`)
         
         // 如果有当前项目和图谱，验证它们是否存在
         if (currentProjectId && currentGraphId) {
           const project = projects.find((p: any) => p.id === currentProjectId)
           const graph = project?.graphs.find((g: any) => g.id === currentGraphId)
           
+          console.log(`🔍 [refreshProjects] 查找当前项目/图谱:`, {
+            projectFound: !!project,
+            graphFound: !!graph,
+            projectName: project?.name,
+            graphName: graph?.name,
+          })
+          
           if (project && graph) {
-            console.log('✅ 找到当前项目和图谱')
+            console.log('✅ [refreshProjects] 找到当前项目和图谱')
             console.log('   项目:', project.name, '(', project.id, ')')
             console.log('   图谱:', graph.name, '(', graph.id, ')')
-            
-            // 验证数据完整性：确保所有图谱都有 nodeCount 和 edgeCount
-            const allGraphsHaveCounts = project.graphs.every((g: any) => 
-              typeof g.nodeCount === 'number' && typeof g.edgeCount === 'number'
-            )
-            
-            if (!allGraphsHaveCounts) {
-              console.warn('⚠️ 某些图谱缺少节点/边计数，继续重试...')
-              retryCount++
-              continue
-            }
+            console.log('   节点数:', graph.nodeCount, '边数:', graph.edgeCount)
             
             // 更新状态，保持当前选中的项目和图谱
             set({
@@ -693,13 +697,14 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             })
             
             verified = true
+            console.log('✅ [refreshProjects] 验证成功，状态已更新')
             return
           } else {
-            console.log('⚠️ 未找到当前项目/图谱，继续重试...')
+            console.log(`⚠️ [refreshProjects] 未找到当前项目/图谱，继续重试...`)
           }
         } else {
           // 没有当前选择，直接更新项目列表
-          console.log('✅ 无当前选择，直接更新项目列表')
+          console.log('✅ [refreshProjects] 无当前选择，直接更新项目列表')
           set({ projects: projects })
           verified = true
           return
@@ -710,12 +715,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       
       // 如果验证失败，仍然更新projects列表
       if (!verified) {
-        console.log('⚠️ 验证失败，但仍更新项目列表')
+        console.warn('⚠️ [refreshProjects] 验证失败，但仍更新项目列表')
         set({ projects: projects })
       }
       
     } catch (error) {
-      console.error('❌ 刷新项目列表失败:', error)
+      console.error('❌ [refreshProjects] 刷新项目列表失败:', error)
       throw error
     }
   },

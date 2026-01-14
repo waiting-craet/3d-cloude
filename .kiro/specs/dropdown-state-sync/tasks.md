@@ -11,11 +11,12 @@ The approach involves coordinating state updates with navigation actions and ens
 ## Tasks
 
 - [x] 1. Fix WorkflowCanvas save and convert flow
-  - Modify saveAndConvert to wait for refreshProjects before redirecting
-  - Add query parameters to redirect URL for state restoration
-  - Ensure localStorage is updated before redirect
+  - Modify saveAndConvert to wait for refreshProjects before redirecting ✅
+  - Add query parameters to redirect URL for state restoration ✅
+  - Ensure localStorage is updated before redirect ✅
   - _Requirements: 1.1, 1.2, 1.3_
   - **Status**: ✅ IMPLEMENTED AND DEPLOYED
+  - **Bug Fix**: ✅ Fixed refreshProjects validation logic (2025-01-14)
 
 - [!] 1.1 Write unit tests for save and convert flow
   - Test that refreshProjects is called after successful sync
