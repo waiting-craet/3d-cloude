@@ -292,15 +292,17 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       <Text
         ref={textRef}
         position={[0, (node.size || 1.5) + 0.8, 0]}
-        fontSize={0.5}
+        fontSize={0.7}
         color="#FFFFFF"
         anchorX="center"
         anchorY="bottom"
-        outlineWidth={0.08}
+        outlineWidth={0.1}
         outlineColor="#000000"
-        outlineOpacity={0.8}
-        maxWidth={5}
+        outlineOpacity={0.9}
+        maxWidth={6}
         textAlign="center"
+        font="/fonts/bold-font.woff"
+        fontWeight={700}
       >
         {node.name || '未命名'}
       </Text>
