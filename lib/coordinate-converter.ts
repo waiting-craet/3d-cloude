@@ -61,8 +61,8 @@ export function calculateBounds(nodes: Node2D[]): Bounds {
  * 转换规则：
  * - 二维 x → 三维 x (保持水平位置)
  * - 二维 y → 三维 z (二维的垂直变为三维的深度)
- * - 三维 y 使用正弦波模式添加高度变化
- * - 应用缩放使图谱适应三维视图
+ * - 三维 y 使用多种模式添加高度变化，创造层次感
+ * - 应用大幅缩放使节点分散
  * - 居中显示
  * - 根据节点数量动态调整间距
  * 
@@ -76,13 +76,13 @@ export function convertTo3DCoordinates(
   allNodes: Node2D[],
   config: ConversionConfig = {}
 ): Node3D {
-  const { heightVariation = 5, minNodeDistance = 15 } = config
+  const { heightVariation = 8, minNodeDistance = 18 } = config
   
   // 1. 计算所有节点的边界框
   const bounds = calculateBounds(allNodes)
   
   // 2. 计算缩放因子（使图谱适应三维视图）
-  const targetSize = 40  // 目标显示范围
+  const targetSize = 60  // 增加目标显示范围从 40 到 60
   const scaleX = targetSize / (bounds.maxX - bounds.minX || 1)
   const scaleY = targetSize / (bounds.maxY - bounds.minY || 1)
   const scale = Math.min(scaleX, scaleY)
@@ -90,18 +90,18 @@ export function convertTo3DCoordinates(
   // 3. 根据节点数量动态调整间距因子
   // 节点越多，间距因子越大，确保不会太拥挤
   const nodeCount = allNodes.length
-  let spacingFactor = 1.0
+  let spacingFactor = 1.5  // 基础间距从 1.0 增加到 1.5
   
   if (nodeCount <= 10) {
-    spacingFactor = 1.0      // 10个节点以内：正常间距
+    spacingFactor = 1.5      // 10个节点以内：1.5倍间距
   } else if (nodeCount <= 20) {
-    spacingFactor = 1.5      // 11-20个节点：1.5倍间距
+    spacingFactor = 2.0      // 11-20个节点：2倍间距
   } else if (nodeCount <= 50) {
-    spacingFactor = 2.0      // 21-50个节点：2倍间距
+    spacingFactor = 2.5      // 21-50个节点：2.5倍间距
   } else if (nodeCount <= 100) {
-    spacingFactor = 2.5      // 51-100个节点：2.5倍间距
+    spacingFactor = 3.0      // 51-100个节点：3倍间距
   } else {
-    spacingFactor = 3.0      // 100+个节点：3倍间距
+    spacingFactor = 4.0      // 100+个节点：4倍间距
   }
   
   // 4. 计算中心点
@@ -114,16 +114,23 @@ export function convertTo3DCoordinates(
   // 6. 转换坐标
   // x2d → x3d (保持水平位置)
   // 应用动态间距因子，节点多时自动增加间距
-  const x3d = (node.x - centerX) * scale * 0.6 * spacingFactor
+  // 增加基础缩放从 0.6 到 1.2
+  const x3d = (node.x - centerX) * scale * 1.2 * spacingFactor
   
   // y2d → z3d (二维的垂直变为三维的深度)
   // 注意：y 轴反转，因为二维画布的 y 向下增长，而三维空间的 z 向前增长
-  const z3d = -(node.y - centerY) * scale * 0.6 * spacingFactor
+  const z3d = -(node.y - centerY) * scale * 1.2 * spacingFactor
   
-  // y3d 使用正弦波模式添加高度变化，创建视觉深度
-  // 节点多时增加高度变化，利用垂直空间
-  const heightFactor = nodeCount > 50 ? 1.5 : 1.0
-  const y3d = Math.sin(nodeIndex * 0.5) * heightVariation * heightFactor
+  // 7. y3d 使用多种模式创建丰富的高度变化，增加层次感
+  // 组合正弦波、余弦波和线性变化
+  const heightFactor = nodeCount > 50 ? 2.0 : 1.5  // 增加高度因子
+  
+  // 使用多个波形叠加创造更丰富的高度变化
+  const wave1 = Math.sin(nodeIndex * 0.5) * heightVariation
+  const wave2 = Math.cos(nodeIndex * 0.3) * heightVariation * 0.5
+  const linear = (nodeIndex % 5) * heightVariation * 0.3  // 添加阶梯式变化
+  
+  const y3d = (wave1 + wave2 + linear) * heightFactor
   
   return {
     label: node.label,
@@ -159,7 +166,7 @@ export function convertNodesToCoordinates(
 /**
  * 强制节点之间的最小距离
  * 
- * 使用迭代方法推开距离过近的节点对
+ * 使用增强的迭代方法推开距离过近的节点对
  * 
  * @param nodes 三维节点数组
  * @param minDistance 最小距离
@@ -169,9 +176,11 @@ export function convertNodesToCoordinates(
 export function enforceMinimumDistance(
   nodes: Node3D[],
   minDistance: number,
-  maxIterations: number = 20  // 增加迭代次数从 10 到 20
+  maxIterations: number = 50  // 增加迭代次数到 50
 ): Node3D[] {
   if (nodes.length <= 1) return nodes
+  
+  console.log(`🔧 开始强制最小距离: ${minDistance} 单位，最多 ${maxIterations} 次迭代`)
   
   // 创建可变的坐标数组
   const positions = nodes.map(n => ({ x: n.x3d, y: n.y3d, z: n.z3d }))
@@ -179,6 +188,8 @@ export function enforceMinimumDistance(
   // 迭代调整位置
   for (let iter = 0; iter < maxIterations; iter++) {
     let adjusted = false
+    let maxAdjustment = 0
+    let violationCount = 0
     
     // 检查所有节点对
     for (let i = 0; i < positions.length; i++) {
@@ -193,13 +204,16 @@ export function enforceMinimumDistance(
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
         
         // 如果距离太近，推开它们
-        if (distance < minDistance && distance > 0) {
+        if (distance < minDistance && distance > 0.01) {  // 避免除以零
           adjusted = true
+          violationCount++
           
           // 计算推开的方向和距离
-          // 增加推力因子，使节点推得更远
-          const pushDistance = (minDistance - distance) / 2 * 1.2  // 添加 1.2 倍推力
+          // 使用非常强的推力，确保节点真正分开
+          const pushDistance = (minDistance - distance) / 2 * 2.0  // 增加推力到 2.0
           const factor = pushDistance / distance
+          
+          maxAdjustment = Math.max(maxAdjustment, pushDistance)
           
           // 沿着连接向量推开两个节点
           pos1.x -= dx * factor
@@ -213,8 +227,15 @@ export function enforceMinimumDistance(
       }
     }
     
-    // 如果没有调整，提前退出
-    if (!adjusted) break
+    if (iter % 10 === 0 || !adjusted) {
+      console.log(`   迭代 ${iter}: ${violationCount} 个违规, 最大调整 ${maxAdjustment.toFixed(2)}`)
+    }
+    
+    // 如果调整很小或没有调整，提前退出
+    if (!adjusted || maxAdjustment < 0.01) {
+      console.log(`✅ 完成于迭代 ${iter}`)
+      break
+    }
   }
   
   // 返回更新后的节点

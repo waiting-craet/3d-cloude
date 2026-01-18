@@ -301,13 +301,13 @@ export default function KnowledgeGraph() {
       </div>
       
       <Canvas onPointerMissed={handleCanvasClick}>
-        <PerspectiveCamera makeDefault position={[-30, 15, 40]} fov={75} />
+        <PerspectiveCamera makeDefault position={[-40, 20, 50]} fov={80} />
         <OrbitControls 
           ref={controlsRef}
           enableDamping 
           dampingFactor={0.05}
-          minDistance={15}
-          maxDistance={150}
+          minDistance={20}
+          maxDistance={200}
           maxPolarAngle={Math.PI / 1.5}
           target={[0, 0, 0]}
         />
@@ -329,7 +329,7 @@ export default function KnowledgeGraph() {
         </Suspense>
         
         {/* 优化的雾效 - 适应更大的场景 */}
-        <fog attach="fog" args={['#1a1a1a', 60, 150]} />
+        <fog attach="fog" args={['#1a1a1a', 80, 200]} />
       </Canvas>
     </div>
   )

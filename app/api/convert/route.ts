@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { convertTo3DCoordinates, type Node2D } from '@/lib/coordinate-converter'
+import { convertTo3DCoordinates, enforceMinimumDistance, type Node2D } from '@/lib/coordinate-converter'
+import { applyForceLayout, centerLayout, type Node3DPosition, type Edge } from '@/lib/force-layout'
 import {
   validateWorkflowData,
   cleanWorkflowData,
@@ -130,23 +131,65 @@ export async function POST(request: Request) {
       )
     }
 
-    // 4. 坐标转换（使用增强的配置）
-    const convertedNodes = cleaned.nodes.map(node => {
-      const node2d: Node2D = {
-        id: node.id,
-        label: node.label,
-        description: node.description,
-        x: node.x,
-        y: node.y,
-      }
-      return {
-        ...convertTo3DCoordinates(node2d, cleaned.nodes as Node2D[], {
-          heightVariation: 5,
-          minNodeDistance: 15,  // 设置最小节点距离为 15
-        }),
-        originalId: node.id,
-      }
+    // 4. 坐标转换（使用增强的配置并应用最小距离强制）
+    const nodes2d = cleaned.nodes.map(node => ({
+      id: node.id,
+      label: node.label,
+      description: node.description,
+      x: node.x,
+      y: node.y,
+    })) as Node2D[]
+    
+    // 批量转换坐标
+    const convertedCoords = nodes2d.map(node2d => 
+      convertTo3DCoordinates(node2d, nodes2d, {
+        heightVariation: 8,
+        minNodeDistance: 18,
+      })
+    )
+    
+    // 应用最小距离强制
+    const enforcedCoords = enforceMinimumDistance(convertedCoords, 18, 50)
+    
+    // 准备节点位置和边数据用于力导向布局
+    const nodePositions: Node3DPosition[] = enforcedCoords.map((coord, index) => ({
+      id: nodes2d[index].id,
+      x: coord.x3d,
+      y: coord.y3d,
+      z: coord.z3d,
+    }))
+    
+    const layoutEdges: Edge[] = (cleaned.connections || []).map(conn => ({
+      from: conn.from,
+      to: conn.to,
+    }))
+    
+    console.log(`🎯 应用力导向布局: ${nodePositions.length} 个节点, ${layoutEdges.length} 条边`)
+    
+    // 应用力导向布局
+    const layoutedPositions = applyForceLayout(nodePositions, layoutEdges, {
+      iterations: 80,
+      springLength: 18,
+      springStrength: 0.08,
+      repulsionStrength: 900,
+      damping: 0.85,
+      minDistance: 18,
     })
+    
+    // 居中布局
+    const centeredPositions = centerLayout(layoutedPositions)
+    
+    // 组合原始ID和布局后的坐标
+    const convertedNodes = cleaned.nodes.map((node, index) => ({
+      label: node.label,
+      description: node.description || '',
+      x2d: node.x,
+      y2d: node.y,
+      x3d: centeredPositions[index].x,
+      y3d: centeredPositions[index].y,
+      z3d: centeredPositions[index].z,
+      originalId: node.id,
+    }))
 
     // 5. 直接使用数据库创建节点和边
     let createdNodes: any[] = []
@@ -167,7 +210,7 @@ export async function POST(request: Request) {
               y: node.y3d,
               z: node.z3d,
               color: '#3b82f6',
-              size: 1.5,
+              size: 2.0,
               projectId: graph.projectId,
               graphId: graphId,
             },

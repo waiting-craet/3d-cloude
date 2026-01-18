@@ -265,7 +265,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
           }
         }}
       >
-        <sphereGeometry args={[node.size || 1.5, 32, 32]} />
+        <sphereGeometry args={[node.size || 2.0, 32, 32]} />
         <meshStandardMaterial 
           color={node.color || '#6BB6FF'} 
           transparent
@@ -279,7 +279,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       
       {/* 外层光晕效果 - 悬停和选中时更明显 */}
       <mesh>
-        <sphereGeometry args={[(node.size || 1.5) * 1.15, 32, 32]} />
+        <sphereGeometry args={[(node.size || 2.0) * 1.15, 32, 32]} />
         <meshBasicMaterial 
           color={node.color || '#6BB6FF'}
           transparent
@@ -291,15 +291,15 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       {/* 节点名称 - Billboard效果 */}
       <Text
         ref={textRef}
-        position={[0, (node.size || 1.5) + 1.2, 0]}
-        fontSize={0.9}
+        position={[0, (node.size || 2.0) + 1.2, 0]}
+        fontSize={1.2}
         color="#FFFFFF"
         anchorX="center"
         anchorY="bottom"
-        outlineWidth={0.15}
+        outlineWidth={0.2}
         outlineColor="#000000"
         outlineOpacity={1}
-        maxWidth={8}
+        maxWidth={10}
         textAlign="center"
         depthOffset={-1}
       >
@@ -310,7 +310,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       {isSelected && (
         <group rotation={[Math.PI / 2, 0, Date.now() * 0.001]}>
           <mesh>
-            <ringGeometry args={[(node.size || 1.5) * 1.3, (node.size || 1.5) * 1.4, 32]} />
+            <ringGeometry args={[(node.size || 2.0) * 1.3, (node.size || 2.0) * 1.4, 32]} />
             <meshBasicMaterial 
               color={node.color || '#6BB6FF'}
               transparent
