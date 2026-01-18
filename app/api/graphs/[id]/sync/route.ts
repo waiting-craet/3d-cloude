@@ -284,8 +284,8 @@ export async function POST(
 
       return stats
     }, {
-      maxWait: 10000, // 最大等待时间 10秒
-      timeout: 15000, // 事务超时时间 15秒
+      maxWait: 30000, // 最大等待时间 30秒
+      timeout: 60000, // 事务超时时间 60秒
     })
 
     console.log('✅ 同步完成:', result)
