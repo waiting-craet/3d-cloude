@@ -86,7 +86,7 @@ for (const nodeCount of testCases) {
   const nodes3d = nodes2d.map(node => 
     convertTo3DCoordinates(node, nodes2d, {
       heightVariation: 5,
-      minNodeDistance: 6,
+      minNodeDistance: 15,
     })
   )
   
@@ -112,8 +112,8 @@ for (const nodeCount of testCases) {
   console.log(`   间距因子: ${spacingFactor}x`)
   console.log(`   平均距离: ${avgDistance.toFixed(2)} 单位`)
   console.log(`   最小距离: ${minDistance.toFixed(2)} 单位`)
-  console.log(`   最小距离要求: 6.00 单位`)
-  console.log(`   ✅ 符合要求: ${minDistance >= 6 ? '是' : '否'}`)
+  console.log(`   最小距离要求: 15.00 单位`)
+  console.log(`   ✅ 符合要求: ${minDistance >= 15 ? '是' : '否'}`)
 }
 
 console.log('\n' + '='.repeat(80))

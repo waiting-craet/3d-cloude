@@ -76,7 +76,7 @@ export function convertTo3DCoordinates(
   allNodes: Node2D[],
   config: ConversionConfig = {}
 ): Node3D {
-  const { heightVariation = 5, minNodeDistance = 4 } = config
+  const { heightVariation = 5, minNodeDistance = 15 } = config
   
   // 1. 计算所有节点的边界框
   const bounds = calculateBounds(allNodes)

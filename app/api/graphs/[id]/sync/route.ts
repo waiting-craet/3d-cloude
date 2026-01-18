@@ -162,7 +162,7 @@ export async function POST(
               })),
               {
                 heightVariation: 5,
-                minNodeDistance: 6,  // 增加最小节点距离从 4 到 6
+                minNodeDistance: 15,  // 设置最小节点距离为 15
               }
             )
 
