@@ -142,7 +142,7 @@ export async function POST(request: Request) {
       return {
         ...convertTo3DCoordinates(node2d, cleaned.nodes as Node2D[], {
           heightVariation: 5,
-          minNodeDistance: 4,  // 增加最小节点距离从 2 到 4
+          minNodeDistance: 6,  // 增加最小节点距离从 4 到 6
         }),
         originalId: node.id,
       }
