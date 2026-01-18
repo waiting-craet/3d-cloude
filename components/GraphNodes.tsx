@@ -291,16 +291,17 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       {/* 节点名称 - Billboard效果 */}
       <Text
         ref={textRef}
-        position={[0, (node.size || 1.5) + 0.8, 0]}
-        fontSize={0.7}
+        position={[0, (node.size || 1.5) + 1.2, 0]}
+        fontSize={0.9}
         color="#FFFFFF"
         anchorX="center"
         anchorY="bottom"
-        outlineWidth={0.1}
+        outlineWidth={0.15}
         outlineColor="#000000"
-        outlineOpacity={0.9}
-        maxWidth={6}
+        outlineOpacity={1}
+        maxWidth={8}
         textAlign="center"
+        depthOffset={-1}
       >
         {node.name || '未命名'}
       </Text>

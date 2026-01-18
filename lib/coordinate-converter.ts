@@ -95,12 +95,12 @@ export function convertTo3DCoordinates(
   
   // 5. 转换坐标
   // x2d → x3d (保持水平位置)
-  // 增加缩放因子从 0.05 到 0.3 以获得更好的节点分布
-  const x3d = (node.x - centerX) * scale * 0.3
+  // 增加缩放因子从 0.3 到 0.6 以获得更大的节点间距
+  const x3d = (node.x - centerX) * scale * 0.6
   
   // y2d → z3d (二维的垂直变为三维的深度)
   // 注意：y 轴反转，因为二维画布的 y 向下增长，而三维空间的 z 向前增长
-  const z3d = -(node.y - centerY) * scale * 0.3
+  const z3d = -(node.y - centerY) * scale * 0.6
   
   // y3d 使用正弦波模式添加高度变化，创建视觉深度
   const y3d = Math.sin(nodeIndex * 0.5) * heightVariation
