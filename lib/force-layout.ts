@@ -31,7 +31,7 @@ const DEFAULT_CONFIG: Required<ForceLayoutConfig> = {
   springStrength: 0.1,
   repulsionStrength: 900,
   damping: 0.9,
-  minDistance: 18,
+  minDistance: 10,
 }
 
 /**
