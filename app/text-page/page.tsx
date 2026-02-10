@@ -1,6 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import AIPreviewModal, { PreviewData } from '@/components/AIPreviewModal'
+import { MergeDecision } from '@/lib/services/merge-resolution'
+
+interface Project {
+  id: string
+  name: string
+}
+
+interface Graph {
+  id: string
+  name: string
+  projectId: string
+}
 
 export default function TextPage() {
   const [inputText, setInputText] = useState('')
@@ -21,18 +34,24 @@ export default function TextPage() {
   const [newProjectName, setNewProjectName] = useState('')
   const [newGraphName, setNewGraphName] = useState('')
   
-  // 模拟项目和图谱数据（实际应该从API获取）
-  const [projects] = useState([
-    { id: '1', name: '项目 A' },
-    { id: '2', name: '项目 B' },
-    { id: '3', name: '项目 C' },
-  ])
+  // 项目和图谱数据（从API获取）
+  const [projects, setProjects] = useState<Project[]>([])
+  const [graphs, setGraphs] = useState<Graph[]>([])
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true)
+  const [isLoadingGraphs, setIsLoadingGraphs] = useState(false)
   
-  const [graphs] = useState([
-    { id: '1', name: '图谱 1', projectId: '1' },
-    { id: '2', name: '图谱 2', projectId: '1' },
-    { id: '3', name: '图谱 3', projectId: '2' },
-  ])
+  // AI分析相关状态
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showAIPreview, setShowAIPreview] = useState(false)
+  const [aiGeneratedData, setAiGeneratedData] = useState<PreviewData | null>(null)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [isNetworkError, setIsNetworkError] = useState(false)
+  const [lastAnalysisParams, setLastAnalysisParams] = useState<{
+    documentText: string
+    projectId: string
+    graphId?: string
+    visualizationType: '2d' | '3d'
+  } | null>(null)
 
   // 修复页面滚动问题
   useEffect(() => {
@@ -51,20 +70,101 @@ export default function TextPage() {
     }
   }, [])
 
+  // 获取项目列表
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setIsLoadingProjects(true)
+      try {
+        const response = await fetch('/api/projects')
+        if (response.ok) {
+          const data = await response.json()
+          setProjects(data.projects || [])
+        } else {
+          console.error('Failed to fetch projects')
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error)
+      } finally {
+        setIsLoadingProjects(false)
+      }
+    }
+
+    fetchProjects()
+  }, [])
+
+  // 获取选中项目的图谱列表
+  useEffect(() => {
+    if (!selectedProject) {
+      setGraphs([])
+      return
+    }
+
+    const fetchGraphs = async () => {
+      setIsLoadingGraphs(true)
+      try {
+        const response = await fetch(`/api/projects/${selectedProject}/graphs`)
+        if (response.ok) {
+          const data = await response.json()
+          setGraphs(data.graphs || [])
+        } else {
+          console.error('Failed to fetch graphs')
+        }
+      } catch (error) {
+        console.error('Error fetching graphs:', error)
+      } finally {
+        setIsLoadingGraphs(false)
+      }
+    }
+
+    fetchGraphs()
+  }, [selectedProject])
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      console.log('File upload started:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      })
+      
       const reader = new FileReader()
       reader.onload = (event) => {
         const content = event.target?.result as string
+        console.log('File content loaded:', {
+          contentLength: content?.length,
+          contentPreview: content?.substring(0, 100),
+          contentType: typeof content,
+        })
+        
+        // 验证内容不为空
+        if (!content || content.trim().length === 0) {
+          console.error('File content is empty after reading')
+          alert('文件内容为空或无法读取，请检查文件格式')
+          return
+        }
+        
         setUploadedFile({
           name: file.name,
           size: file.size,
           type: file.type || getFileType(file.name),
           content: content
         })
+        
+        console.log('File state updated successfully')
       }
-      reader.readAsText(file)
+      reader.onerror = (error) => {
+        console.error('File read error:', error)
+        alert('文件读取失败，请重试')
+      }
+      
+      // 尝试使用UTF-8编码读取
+      try {
+        reader.readAsText(file, 'UTF-8')
+      } catch (error) {
+        console.error('Failed to read file:', error)
+        alert('文件读取失败，请检查文件格式')
+      }
     }
   }
 
@@ -104,21 +204,252 @@ export default function TextPage() {
     }
   }
 
-  const handleCreateProject = () => {
-    if (newProjectName.trim()) {
-      console.log('创建项目:', newProjectName)
-      // 实际应该调用API创建项目
-      setShowNewProjectModal(false)
-      setNewProjectName('')
+  // AI分析处理函数
+  const handleAIAnalysis = async () => {
+    // 验证项目选择
+    if (!selectedProject) {
+      setAnalysisError('请先选择一个项目')
+      setIsNetworkError(false)
+      return
+    }
+
+    // 获取文档文本
+    const documentText = uploadedFile ? uploadedFile.content : inputText
+    
+    // 调试日志
+    console.log('AI Analysis Debug:', {
+      hasUploadedFile: !!uploadedFile,
+      uploadedFileName: uploadedFile?.name,
+      uploadedFileSize: uploadedFile?.size,
+      uploadedFileContentLength: uploadedFile?.content?.length,
+      contentLength: documentText?.length,
+      contentPreview: documentText?.substring(0, 100),
+      hasInputText: !!inputText,
+      inputTextLength: inputText?.length,
+      documentTextType: typeof documentText,
+      documentTextTrimmed: documentText?.trim().length,
+    })
+    
+    if (!documentText) {
+      console.error('Document text is null or undefined')
+      setAnalysisError('请输入文本或上传文件')
+      setIsNetworkError(false)
+      return
+    }
+    
+    if (documentText.trim().length === 0) {
+      console.error('Document text is empty after trimming')
+      setAnalysisError('文档内容为空，请输入有效的文本或上传包含内容的文件')
+      setIsNetworkError(false)
+      return
+    }
+
+    setIsAnalyzing(true)
+    setAnalysisError(null)
+    setIsNetworkError(false)
+
+    const params = {
+      documentText,
+      projectId: selectedProject,
+      graphId: selectedGraph || undefined,
+      visualizationType: outputFormat,
+    }
+
+    // 保存参数以便重试
+    setLastAnalysisParams(params)
+
+    try {
+      // 调用AI分析API
+      const response = await fetch('/api/ai/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 设置AI生成的数据并显示预览模态框
+        setAiGeneratedData(result.data)
+        setShowAIPreview(true)
+        setLastAnalysisParams(null) // 清除保存的参数
+      } else {
+        // 显示错误消息
+        setAnalysisError(result.error || 'AI分析失败，请重试')
+        setIsNetworkError(false)
+      }
+    } catch (error) {
+      console.error('AI analysis error:', error)
+      setAnalysisError('网络错误，请检查连接后重试')
+      setIsNetworkError(true)
+    } finally {
+      setIsAnalyzing(false)
     }
   }
 
-  const handleCreateGraph = () => {
-    if (newGraphName.trim() && selectedProject) {
-      console.log('创建图谱:', newGraphName, '在项目:', selectedProject)
-      // 实际应该调用API创建图谱
-      setShowNewGraphModal(false)
-      setNewGraphName('')
+  // 重试AI分析
+  const handleRetryAnalysis = async () => {
+    if (!lastAnalysisParams) return
+
+    setIsAnalyzing(true)
+    setAnalysisError(null)
+    setIsNetworkError(false)
+
+    try {
+      const response = await fetch('/api/ai/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(lastAnalysisParams),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setAiGeneratedData(result.data)
+        setShowAIPreview(true)
+        setLastAnalysisParams(null)
+      } else {
+        setAnalysisError(result.error || 'AI分析失败，请重试')
+        setIsNetworkError(false)
+      }
+    } catch (error) {
+      console.error('AI analysis retry error:', error)
+      setAnalysisError('网络错误，请检查连接后重试')
+      setIsNetworkError(true)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  // AI预览保存处理函数
+  const handleAISave = async (editedData: PreviewData, mergeDecisions: MergeDecision[]) => {
+    try {
+      // 调用保存API
+      const response = await fetch('/api/ai/save-graph', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nodes: editedData.nodes,
+          edges: editedData.edges,
+          mergeDecisions,
+          projectId: selectedProject,
+          graphId: selectedGraph || undefined,
+          graphName: selectedGraph ? undefined : `AI图谱 ${new Date().toLocaleString('zh-CN')}`,
+          visualizationType: outputFormat,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        console.log('Graph saved successfully:', result.data)
+        
+        // 关闭模态框
+        setShowAIPreview(false)
+        setAiGeneratedData(null)
+        
+        // 刷新图谱列表
+        if (selectedProject) {
+          const graphsResponse = await fetch(`/api/projects/${selectedProject}/graphs`)
+          if (graphsResponse.ok) {
+            const graphsData = await graphsResponse.json()
+            setGraphs(graphsData.graphs || [])
+          }
+        }
+        
+        // 显示成功消息（可选）
+        alert(`图谱保存成功！\n创建节点: ${result.data.nodesCreated}\n更新节点: ${result.data.nodesUpdated}\n创建边: ${result.data.edgesCreated}`)
+      } else {
+        // 显示错误消息
+        alert(`保存失败: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      alert('保存失败，请重试')
+    }
+  }
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newProjectName.trim(),
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.project) {
+        // 关闭模态框
+        setShowNewProjectModal(false)
+        setNewProjectName('')
+        
+        // 刷新项目列表
+        const projectsResponse = await fetch('/api/projects')
+        if (projectsResponse.ok) {
+          const projectsData = await projectsResponse.json()
+          setProjects(projectsData.projects || [])
+          
+          // 自动选中新创建的项目
+          setSelectedProject(result.project.id)
+        }
+      } else {
+        alert(`创建项目失败: ${result.error || '未知错误'}`)
+      }
+    } catch (error) {
+      console.error('Create project error:', error)
+      alert('创建项目失败，请重试')
+    }
+  }
+
+  const handleCreateGraph = async () => {
+    if (!newGraphName.trim() || !selectedProject) return
+
+    try {
+      const response = await fetch(`/api/projects/${selectedProject}/graphs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newGraphName.trim(),
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.graph) {
+        // 关闭模态框
+        setShowNewGraphModal(false)
+        setNewGraphName('')
+        
+        // 刷新图谱列表
+        const graphsResponse = await fetch(`/api/projects/${selectedProject}/graphs`)
+        if (graphsResponse.ok) {
+          const graphsData = await graphsResponse.json()
+          setGraphs(graphsData.graphs || [])
+          
+          // 自动选中新创建的图谱
+          setSelectedGraph(result.graph.id)
+        }
+      } else {
+        alert(`创建图谱失败: ${result.error || '未知错误'}`)
+      }
+    } catch (error) {
+      console.error('Create graph error:', error)
+      alert('创建图谱失败，请重试')
     }
   }
 
@@ -261,6 +592,7 @@ export default function TextPage() {
                       setSelectedProject(e.target.value)
                       setSelectedGraph('')
                     }}
+                    disabled={isLoadingProjects}
                     style={{
                       flex: 1,
                       padding: '12px 16px',
@@ -269,10 +601,12 @@ export default function TextPage() {
                       borderRadius: '10px',
                       color: 'white',
                       fontSize: '14px',
-                      cursor: 'pointer',
+                      cursor: isLoadingProjects ? 'wait' : 'pointer',
                       transition: 'all 0.2s ease',
                     }}>
-                    <option value="">请选择项目</option>
+                    <option value="">
+                      {isLoadingProjects ? '加载中...' : '请选择项目'}
+                    </option>
                     {projects.map(project => (
                       <option key={project.id} value={project.id}>
                         {project.name}
@@ -324,19 +658,21 @@ export default function TextPage() {
                   <select
                     value={selectedGraph}
                     onChange={(e) => setSelectedGraph(e.target.value)}
-                    disabled={!selectedProject}
+                    disabled={!selectedProject || isLoadingGraphs}
                     style={{
                       flex: 1,
                       padding: '12px 16px',
-                      background: selectedProject ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.2)',
+                      background: (selectedProject && !isLoadingGraphs) ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.2)',
                       border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '10px',
-                      color: selectedProject ? 'white' : 'rgba(255, 255, 255, 0.4)',
+                      color: (selectedProject && !isLoadingGraphs) ? 'white' : 'rgba(255, 255, 255, 0.4)',
                       fontSize: '14px',
-                      cursor: selectedProject ? 'pointer' : 'not-allowed',
+                      cursor: (selectedProject && !isLoadingGraphs) ? 'pointer' : 'not-allowed',
                       transition: 'all 0.2s ease',
                     }}>
-                    <option value="">请选择图谱</option>
+                    <option value="">
+                      {isLoadingGraphs ? '加载中...' : '请选择图谱'}
+                    </option>
                     {filteredGraphs.map(graph => (
                       <option key={graph.id} value={graph.id}>
                         {graph.name}
@@ -927,43 +1263,162 @@ export default function TextPage() {
             </div>
 
             {/* 转换按钮 */}
-            <button
-              onClick={handleConvert}
-              disabled={!uploadedFile && !inputText.trim()}
-              style={{
-                width: '100%',
-                padding: '18px',
-                background: (uploadedFile || inputText.trim())
-                  ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                  : 'rgba(255, 255, 255, 0.08)',
-                border: 'none',
-                borderRadius: '14px',
-                color: 'white',
-                fontSize: '17px',
-                fontWeight: '700',
-                cursor: (uploadedFile || inputText.trim()) ? 'pointer' : 'not-allowed',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: (uploadedFile || inputText.trim())
-                  ? '0 8px 24px rgba(102, 126, 234, 0.4)'
-                  : 'none',
-                opacity: (uploadedFile || inputText.trim()) ? 1 : 0.4,
-                letterSpacing: '0.5px',
-              }}
-              onMouseEnter={(e) => {
-                if (uploadedFile || inputText.trim()) {
-                  e.currentTarget.style.transform = 'translateY(-3px)'
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(102, 126, 234, 0.5)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (uploadedFile || inputText.trim()) {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(102, 126, 234, 0.4)'
-                }
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              marginBottom: '16px',
+            }}>
+              <button
+                onClick={handleConvert}
+                disabled={!uploadedFile && !inputText.trim()}
+                style={{
+                  flex: 1,
+                  padding: '18px',
+                  background: (uploadedFile || inputText.trim())
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
+                  borderRadius: '14px',
+                  color: 'white',
+                  fontSize: '17px',
+                  fontWeight: '700',
+                  cursor: (uploadedFile || inputText.trim()) ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: (uploadedFile || inputText.trim())
+                    ? '0 8px 24px rgba(102, 126, 234, 0.4)'
+                    : 'none',
+                  opacity: (uploadedFile || inputText.trim()) ? 1 : 0.4,
+                  letterSpacing: '0.5px',
+                }}
+                onMouseEnter={(e) => {
+                  if (uploadedFile || inputText.trim()) {
+                    e.currentTarget.style.transform = 'translateY(-3px)'
+                    e.currentTarget.style.boxShadow = '0 12px 32px rgba(102, 126, 234, 0.5)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (uploadedFile || inputText.trim()) {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(102, 126, 234, 0.4)'
+                  }
+                }}>
+                <span style={{ fontSize: '20px', marginRight: '8px' }}>🚀</span>
+                生成知识图谱
+              </button>
+
+              <button
+                onClick={handleAIAnalysis}
+                disabled={!selectedProject || (!uploadedFile && !inputText.trim()) || isAnalyzing}
+                style={{
+                  flex: 1,
+                  padding: '18px',
+                  background: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing)
+                    ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)'
+                    : 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
+                  borderRadius: '14px',
+                  color: 'white',
+                  fontSize: '17px',
+                  fontWeight: '700',
+                  cursor: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing)
+                    ? '0 8px 24px rgba(168, 85, 247, 0.4)'
+                    : 'none',
+                  opacity: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) ? 1 : 0.4,
+                  letterSpacing: '0.5px',
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) {
+                    e.currentTarget.style.transform = 'translateY(-3px)'
+                    e.currentTarget.style.boxShadow = '0 12px 32px rgba(168, 85, 247, 0.5)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(168, 85, 247, 0.4)'
+                  }
+                }}>
+                <span style={{ fontSize: '20px', marginRight: '8px' }}>
+                  {isAnalyzing ? '⏳' : '🤖'}
+                </span>
+                {isAnalyzing ? 'AI分析中...' : 'AI智能分析'}
+              </button>
+            </div>
+
+            {/* 错误消息显示 */}
+            {analysisError && (
+              <div style={{
+                marginBottom: '16px',
+                padding: '14px 18px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '12px',
+                color: 'rgba(248, 113, 113, 1)',
+                fontSize: '14px',
               }}>
-              <span style={{ fontSize: '20px', marginRight: '8px' }}>🚀</span>
-              生成知识图谱
-            </button>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  marginBottom: isNetworkError ? '12px' : '0',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>⚠️</span>
+                    <span>{analysisError}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setAnalysisError(null)
+                      setIsNetworkError(false)
+                      setLastAnalysisParams(null)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'rgba(248, 113, 113, 1)',
+                      fontSize: '18px',
+                      cursor: 'pointer',
+                      padding: '0 4px',
+                    }}>
+                    ✕
+                  </button>
+                </div>
+                {isNetworkError && lastAnalysisParams && (
+                  <button
+                    onClick={handleRetryAnalysis}
+                    disabled={isAnalyzing}
+                    style={{
+                      width: '100%',
+                      padding: '10px 16px',
+                      background: isAnalyzing 
+                        ? 'rgba(255, 255, 255, 0.05)' 
+                        : 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      borderRadius: '8px',
+                      color: 'rgba(248, 113, 113, 1)',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isAnalyzing) {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isAnalyzing) {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
+                      }
+                    }}>
+                    {isAnalyzing ? '重试中...' : '🔄 重试'}
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* 提示信息 */}
             <div style={{
@@ -1235,6 +1690,20 @@ export default function TextPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* AI预览模态框 */}
+      {showAIPreview && aiGeneratedData && (
+        <AIPreviewModal
+          isOpen={showAIPreview}
+          onClose={() => {
+            setShowAIPreview(false)
+            setAiGeneratedData(null)
+          }}
+          data={aiGeneratedData}
+          onSave={handleAISave}
+          visualizationType={outputFormat}
+        />
       )}
     </main>
   )
