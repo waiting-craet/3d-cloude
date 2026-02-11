@@ -331,6 +331,17 @@ export function createAIIntegrationService(config?: Partial<AIServiceConfig>): A
 let defaultInstance: AIIntegrationService | null = null;
 
 export function getAIIntegrationService(): AIIntegrationService {
+  // Always check for valid API key on each call (don't cache)
+  const apiKey = process.env.AI_API_KEY;
+  const shouldUseMock = !apiKey || apiKey === 'sk-your-api-key-here' || apiKey.trim().length === 0;
+  
+  if (shouldUseMock) {
+    console.log('[AI Service] Using mock AI service (no valid API key configured)');
+    const { createMockAIIntegrationService } = require('./ai-integration-mock');
+    return createMockAIIntegrationService();
+  }
+  
+  // Use real service with valid API key
   if (!defaultInstance) {
     defaultInstance = createAIIntegrationService();
   }
