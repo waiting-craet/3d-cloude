@@ -7,6 +7,7 @@ import GraphNodes from './GraphNodes'
 import GraphEdges from './GraphEdges'
 import LoadingSpinner from './LoadingSpinner'
 import { useGraphStore } from '@/lib/store'
+import { getThemeConfig } from '@/lib/theme'
 import * as THREE from 'three'
 
 // ==================== 配置常量 ====================
@@ -237,8 +238,11 @@ function safeAnimateCameraToNode(
 // ==================== 组件 ====================
 
 export default function KnowledgeGraph() {
-  const { fetchGraph, setSelectedNode, setConnectingFromNode, isDragging, nodes, edges, currentGraph, selectedNode, isLoading } = useGraphStore()
+  const { fetchGraph, setSelectedNode, setConnectingFromNode, isDragging, nodes, edges, currentGraph, selectedNode, isLoading, theme } = useGraphStore()
   const controlsRef = useRef<any>(null)
+  
+  // 获取当前主题配置
+  const themeConfig = getThemeConfig(theme)
 
   // 监听当前图谱的变化，重新加载数据
   useEffect(() => {
@@ -274,7 +278,12 @@ export default function KnowledgeGraph() {
   }
 
   return (
-    <div id="canvas-container">
+    <div id="canvas-container" style={{
+      width: '100%',
+      height: '100%',
+      background: themeConfig.canvasBackground,
+      transition: 'background 0.3s ease',
+    }}>
       {/* 加载提示 */}
       {isLoading && (
         <LoadingSpinner 
@@ -308,7 +317,7 @@ export default function KnowledgeGraph() {
           dampingFactor={0.05}
           minDistance={20}
           maxDistance={200}
-          maxPolarAngle={Math.PI / 1.5}
+          // 移除 maxPolarAngle 限制，允许相机在垂直方向上完整旋转360度
           target={[0, 0, 0]}
         />
         

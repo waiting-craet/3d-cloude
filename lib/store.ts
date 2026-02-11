@@ -10,7 +10,10 @@ export interface Node {
   y: number
   z: number
   color: string
+  textColor?: string
   size?: number
+  shape?: string
+  isGlowing?: boolean
   imageUrl?: string
   videoUrl?: string
 }
@@ -48,6 +51,7 @@ export interface GraphStore {
   projects: Project[]
   currentProject: Project | null
   currentGraph: KnowledgeGraph | null
+  theme: 'light' | 'dark'
   setNodes: (nodes: Node[]) => void
   setEdges: (edges: Edge[]) => void
   setSelectedNode: (node: Node | null) => void
@@ -57,10 +61,13 @@ export interface GraphStore {
   setProjects: (projects: Project[]) => void
   setCurrentProject: (project: Project | null) => void
   setCurrentGraph: (graph: KnowledgeGraph | null) => void
+  setTheme: (theme: 'light' | 'dark') => void
+  toggleTheme: () => void
   addNode: (node: Partial<Node>) => Promise<void>
   addEdge: (edge: Partial<Edge>) => Promise<void>
   updateNodePosition: (id: string, x: number, y: number, z: number) => void
   updateNode: (id: string, updates: Partial<Node>) => Promise<void>
+  updateNodeLocal: (id: string, updates: Partial<Node>) => void
   updateNodeName: (id: string, name: string) => void
   deleteNode: (id: string) => Promise<void>
   fetchGraph: () => Promise<void>
@@ -80,6 +87,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   projects: [],
   currentProject: null,
   currentGraph: null,
+  theme: 'dark',
   
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -90,6 +98,29 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setProjects: (projects) => set({ projects }),
   setCurrentProject: (project) => set({ currentProject: project }),
   setCurrentGraph: (graph) => set({ currentGraph: graph }),
+  
+  setTheme: (theme: 'light' | 'dark') => {
+    set({ theme })
+    try {
+      localStorage.setItem('theme', theme)
+      console.log('✅ 主题已保存:', theme)
+    } catch (error) {
+      console.warn('⚠️ 无法保存主题到 localStorage:', error)
+    }
+  },
+  
+  toggleTheme: () => {
+    set((state) => {
+      const newTheme = state.theme === 'dark' ? 'light' : 'dark'
+      try {
+        localStorage.setItem('theme', newTheme)
+        console.log('✅ 主题已切换:', newTheme)
+      } catch (error) {
+        console.warn('⚠️ 无法保存主题到 localStorage:', error)
+      }
+      return { theme: newTheme }
+    })
+  },
   
   addNode: async (node) => {
     try {
@@ -239,6 +270,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     } catch (error) {
       console.error('更新节点失败:', error)
     }
+  },
+
+  updateNodeLocal: (id, updates) => {
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === id ? { ...node, ...updates } : node
+      ),
+      selectedNode: state.selectedNode?.id === id 
+        ? { ...state.selectedNode, ...updates }
+        : state.selectedNode,
+    }))
   },
 
   updateNodeName: (id, name) => {
@@ -725,3 +767,21 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     }
   },
 }))
+
+
+// 初始化主题：从 localStorage 恢复用户的主题选择
+if (typeof window !== 'undefined') {
+  try {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      useGraphStore.setState({ theme: savedTheme })
+      console.log('✅ 主题已从 localStorage 恢复:', savedTheme)
+    } else if (savedTheme !== null) {
+      // 如果保存的值无效，清理并使用默认值
+      console.warn('⚠️ 检测到无效的主题值:', savedTheme, '，使用默认主题')
+      localStorage.removeItem('theme')
+    }
+  } catch (error) {
+    console.warn('⚠️ 无法从 localStorage 读取主题:', error)
+  }
+}

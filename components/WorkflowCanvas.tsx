@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useGraphStore } from '@/lib/store'
+import { getWorkflowThemeConfig } from '@/lib/theme'
 
 interface Node {
   id: string
@@ -50,6 +51,10 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null)
   // NEW: Ref map to track node DOM elements
   const nodeRefsMap = useRef<Map<string, HTMLDivElement>>(new Map())
+  
+  // 从store获取主题
+  const { theme } = useGraphStore()
+  const workflowThemeConfig = getWorkflowThemeConfig(theme)
   
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 400, y: 200 })
@@ -956,9 +961,10 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         bottom: 0,
         overflow: 'hidden',
         cursor: isDragging ? 'grabbing' : 'grab',
-        background: '#fafafa',
+        background: workflowThemeConfig.canvasBackground,
         userSelect: 'none',
         WebkitUserSelect: 'none',
+        transition: 'background 0.3s ease',
       }}
     >
       {/* 左上角添加节点按钮 */}
@@ -1093,9 +1099,11 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
               width: `${calculatedDimensions.width}px`,
               minHeight: `${calculatedDimensions.height}px`,
               background: selectedNode === node.id 
-                ? 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)'
-                : 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
-              border: selectedNode === node.id ? '2px solid #3b82f6' : '2px solid #1f2937',
+                ? workflowThemeConfig.nodeBackgroundSelected
+                : workflowThemeConfig.nodeBackground,
+              border: selectedNode === node.id 
+                ? `2px solid ${workflowThemeConfig.nodeBorderSelected}` 
+                : `2px solid ${workflowThemeConfig.nodeBorder}`,
               borderRadius: '16px',
               cursor: node.isEditing ? 'default' : 'move',
               boxShadow: selectedNode === node.id 
@@ -1106,6 +1114,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
               overflow: 'visible',
               transition: draggedNode === node.id ? 'none' : 'all 0.3s cubic-bezier(0, 0, 0.2, 1)',
               transform: selectedNode === node.id ? 'translateY(-2px)' : 'translateY(0)',
+              color: workflowThemeConfig.nodeText,
             }}
           >
             {/* 顶部装饰条（非编辑）或拖动手柄（编辑） */}
@@ -1113,8 +1122,8 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
               <div style={{
                 height: '4px',
                 background: selectedNode === node.id 
-                  ? 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)'
-                  : 'linear-gradient(90deg, #6b7280 0%, #9ca3af 100%)',
+                  ? workflowThemeConfig.nodeTopBarSelected
+                  : workflowThemeConfig.nodeTopBar,
                 borderRadius: '16px 16px 0 0',
                 transition: 'all 0.3s ease',
               }} />
@@ -1123,13 +1132,13 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                 onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                 style={{
                   height: '32px',
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+                  background: workflowThemeConfig.dragHandleBackground,
                   borderRadius: '16px 16px 0 0',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'move',
-                  color: 'white',
+                  color: workflowThemeConfig.dragHandleText,
                   fontSize: '12px',
                   fontWeight: '600',
                   gap: '6px',

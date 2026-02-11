@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { useFrame, ThreeEvent, useThree } from '@react-three/fiber'
 import { Text } from '@react-three/drei'
 import { useGraphStore } from '@/lib/store'
@@ -101,12 +101,174 @@ function validateNodeData(node: any): boolean {
   return true
 }
 
+/**
+ * 根据形状类型计算文本Y位置
+ * @param shape - 形状类型
+ * @param size - 节点大小
+ * @returns 文本的Y位置
+ */
+function getTextYPosition(shape: string, size: number): number {
+  switch (shape) {
+    case 'box':
+    case 'rect':
+      return size * 0.7 + 1.2
+    case 'cylinder':
+    case 'prism':
+      return size * 0.9 + 1.2
+    case 'cone':
+    case 'pyramid':
+      return size * 1.1 + 1.2
+    case 'sphere':
+      return size + 1.2
+    case 'frustum':
+      return size * 0.8 + 1.2
+    case 'torus':
+      return size * 0.5 + 1.2
+    case 'arrow':
+      return size * 1.0 + 1.2
+    default:
+      return size + 1.2
+  }
+}
+
+/**
+ * 创建几何体组件
+ * @param shape - 形状类型
+ * @param size - 节点大小
+ * @returns JSX几何体元素
+ */
+function createGeometry(shape: string, size: number) {
+  switch (shape) {
+    case 'box':
+      return <boxGeometry args={[size, size, size]} />
+    case 'rect':
+      return <boxGeometry args={[size * 1.5, size, size * 0.8]} />
+    case 'cylinder':
+      return <cylinderGeometry args={[size * 0.8, size * 0.8, size * 1.5, 32]} />
+    case 'cone':
+      return <coneGeometry args={[size, size * 1.8, 32]} />
+    case 'sphere':
+      return <sphereGeometry args={[size, 32, 32]} />
+    case 'prism':
+      return <cylinderGeometry args={[size * 0.8, size * 0.8, size * 1.5, 6]} />
+    case 'pyramid':
+      return <coneGeometry args={[size, size * 1.8, 4]} />
+    case 'frustum':
+      return <cylinderGeometry args={[size * 0.6, size, size * 1.2, 32]} />
+    case 'torus':
+      return <torusGeometry args={[size * 0.8, size * 0.3, 16, 32]} />
+    case 'arrow':
+      // 箭头由圆柱和圆锥组合而成 - 返回圆柱作为主体，圆锥需要单独添加
+      return <cylinderGeometry args={[size * 0.3, size * 0.3, size * 1.2, 32]} />
+    default:
+      return <sphereGeometry args={[size, 32, 32]} />
+  }
+}
+
+
 // ==================== 组件 ====================
 
 interface NodeProps {
   node: any
   onClick: (node: any, event: ThreeEvent<MouseEvent>) => void
   onDrag: (node: any, newPosition: THREE.Vector3) => void
+}
+
+// 粒子特效组件
+function GlowParticles({ color, size }: { color: string; size: number }) {
+  const particlesRef = useRef<THREE.Points>(null)
+  const particleCount = 30
+  const velocitiesRef = useRef<Float32Array>(new Float32Array(particleCount * 3))
+  
+  // 初始化几何体和速度
+  useEffect(() => {
+    if (!particlesRef.current) return
+    
+    const positions = particlesRef.current.geometry.attributes.position.array as Float32Array
+    const velocities = velocitiesRef.current
+    
+    for (let i = 0; i < particleCount; i++) {
+      // 随机位置在球体周围
+      const angle = Math.random() * Math.PI * 2
+      const elevation = Math.random() * Math.PI
+      const radius = size * (1.2 + Math.random() * 0.5)
+      
+      positions[i * 3] = Math.sin(elevation) * Math.cos(angle) * radius
+      positions[i * 3 + 1] = Math.cos(elevation) * radius
+      positions[i * 3 + 2] = Math.sin(elevation) * Math.sin(angle) * radius
+      
+      // 随机速度
+      velocities[i * 3] = (Math.random() - 0.5) * 0.02
+      velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02
+    }
+    
+    particlesRef.current.geometry.attributes.position.needsUpdate = true
+  }, [size])
+  
+  useFrame(() => {
+    if (particlesRef.current) {
+      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array
+      const velocities = velocitiesRef.current
+      
+      for (let i = 0; i < particleCount; i++) {
+        // 更新位置
+        positions[i * 3] += velocities[i * 3]
+        positions[i * 3 + 1] += velocities[i * 3 + 1]
+        positions[i * 3 + 2] += velocities[i * 3 + 2]
+        
+        // 重置超出范围的粒子
+        const dist = Math.sqrt(
+          positions[i * 3] ** 2 + 
+          positions[i * 3 + 1] ** 2 + 
+          positions[i * 3 + 2] ** 2
+        )
+        
+        if (dist > size * 2) {
+          const angle = Math.random() * Math.PI * 2
+          const elevation = Math.random() * Math.PI
+          const radius = size * (1.2 + Math.random() * 0.5)
+          
+          positions[i * 3] = Math.sin(elevation) * Math.cos(angle) * radius
+          positions[i * 3 + 1] = Math.cos(elevation) * radius
+          positions[i * 3 + 2] = Math.sin(elevation) * Math.sin(angle) * radius
+        }
+      }
+      
+      particlesRef.current.geometry.attributes.position.needsUpdate = true
+    }
+  })
+  
+  // Create geometry with initial positions
+  const geometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const positions = new Float32Array(particleCount * 3)
+    
+    for (let i = 0; i < particleCount; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const elevation = Math.random() * Math.PI
+      const radius = size * (1.2 + Math.random() * 0.5)
+      
+      positions[i * 3] = Math.sin(elevation) * Math.cos(angle) * radius
+      positions[i * 3 + 1] = Math.cos(elevation) * radius
+      positions[i * 3 + 2] = Math.sin(elevation) * Math.sin(angle) * radius
+    }
+    
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    return geom
+  }, [size])
+  
+  return (
+    <points ref={particlesRef} geometry={geometry}>
+      <pointsMaterial
+        size={0.15}
+        color={color}
+        sizeAttenuation={true}
+        transparent={true}
+        opacity={0.8}
+      />
+    </points>
+  )
 }
 
 function Node({ node, onClick, onDrag }: NodeProps) {
@@ -244,9 +406,14 @@ function Node({ node, onClick, onDrag }: NodeProps) {
     hasMoved.current = false
   }
 
+  // 获取节点形状和大小
+  const shape = node.shape || 'sphere'
+  const sizeMultiplier = node.size || 1
+  const size = 2.5 * sizeMultiplier
+
   return (
     <group ref={groupRef} position={[node.x, node.y, node.z]}>
-      {/* 主球体 */}
+      {/* 主几何体 */}
       <mesh
         ref={meshRef}
         onPointerDown={handlePointerDown}
@@ -265,21 +432,39 @@ function Node({ node, onClick, onDrag }: NodeProps) {
           }
         }}
       >
-        <sphereGeometry args={[node.size || 2.5, 32, 32]} />
+        {createGeometry(shape, size)}
         <meshStandardMaterial 
           color={node.color || '#6BB6FF'} 
           transparent
           opacity={0.9}
-          emissive={isSelected ? node.color || '#6BB6FF' : hovered ? node.color || '#6BB6FF' : '#000000'}
-          emissiveIntensity={isSelected ? 0.5 : hovered ? 0.3 : 0}
-          roughness={0.3}
-          metalness={0.5}
+          emissive={node.isGlowing ? node.color || '#6BB6FF' : isSelected ? node.color || '#6BB6FF' : hovered ? node.color || '#6BB6FF' : '#000000'}
+          emissiveIntensity={node.isGlowing ? 2.0 : isSelected ? 0.5 : hovered ? 0.3 : 0}
+          roughness={node.isGlowing ? 0.2 : 0.3}
+          metalness={node.isGlowing ? 0.7 : 0.5}
+          toneMapped={true}
         />
       </mesh>
       
+      {/* 箭头的圆锥头部 */}
+      {shape === 'arrow' && (
+        <mesh position={[0, size * 0.6 + size * 0.5, 0]}>
+          <coneGeometry args={[size * 0.6, size * 1.0, 32]} />
+          <meshStandardMaterial 
+            color={node.color || '#6BB6FF'} 
+            transparent
+            opacity={0.9}
+            emissive={node.isGlowing ? node.color || '#6BB6FF' : isSelected ? node.color || '#6BB6FF' : hovered ? node.color || '#6BB6FF' : '#000000'}
+            emissiveIntensity={node.isGlowing ? 2.0 : isSelected ? 0.5 : hovered ? 0.3 : 0}
+            roughness={node.isGlowing ? 0.2 : 0.3}
+            metalness={node.isGlowing ? 0.7 : 0.5}
+            toneMapped={true}
+          />
+        </mesh>
+      )}
+      
       {/* 外层光晕效果 - 悬停和选中时更明显 */}
       <mesh>
-        <sphereGeometry args={[(node.size || 2.5) * 1.15, 32, 32]} />
+        {createGeometry(shape, size * 1.15)}
         <meshBasicMaterial 
           color={node.color || '#6BB6FF'}
           transparent
@@ -287,13 +472,16 @@ function Node({ node, onClick, onDrag }: NodeProps) {
           side={THREE.DoubleSide}
         />
       </mesh>
+
+      {/* 发光时的粒子特效 */}
+      {node.isGlowing && <GlowParticles color={node.color || '#6BB6FF'} size={size} />}
       
       {/* 节点名称 - Billboard效果 */}
       <Text
         ref={textRef}
-        position={[0, (node.size || 2.5) + 1.2, 0]}
+        position={[0, getTextYPosition(shape, size), 0]}
         fontSize={1.5}
-        color="#FFFFFF"
+        color={node.textColor || '#FFFFFF'}
         anchorX="center"
         anchorY="bottom"
         outlineWidth={0.2}
@@ -310,7 +498,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       {isSelected && (
         <group rotation={[Math.PI / 2, 0, Date.now() * 0.001]}>
           <mesh>
-            <ringGeometry args={[(node.size || 2.5) * 1.3, (node.size || 2.5) * 1.4, 32]} />
+            <ringGeometry args={[size * 1.3, size * 1.4, 32]} />
             <meshBasicMaterial 
               color={node.color || '#6BB6FF'}
               transparent

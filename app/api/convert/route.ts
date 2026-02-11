@@ -210,6 +210,7 @@ export async function POST(request: Request) {
               y: node.y3d,
               z: node.z3d,
               color: '#3b82f6',
+              shape: 'sphere',
               size: 2.0,
               projectId: graph.projectId,
               graphId: graphId,
