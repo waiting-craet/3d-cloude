@@ -99,6 +99,9 @@ export default function AIPreviewModal({
   
   // State for active tab
   const [activeTab, setActiveTab] = useState<'stats' | 'conflicts' | 'visualization' | 'editing'>('stats')
+  
+  // State for close confirmation
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
   // Reset state when data changes
   useEffect(() => {
@@ -162,10 +165,20 @@ export default function AIPreviewModal({
     }
   }
 
-  // Handle cancel
-  const handleCancel = () => {
-    // Discard all edits and close
+  // Handle cancel - show confirmation dialog
+  const handleCancelClick = () => {
+    setShowCloseConfirm(true)
+  }
+
+  // Confirm close - actually close the modal
+  const handleConfirmClose = () => {
+    setShowCloseConfirm(false)
     onClose()
+  }
+
+  // Cancel close - keep modal open
+  const handleCancelClose = () => {
+    setShowCloseConfirm(false)
   }
 
   // Handle merge decision change
@@ -234,8 +247,8 @@ export default function AIPreviewModal({
 
   if (!isOpen) return null
 
-  const selectedNode = selectedNodeId ? editedNodes.find(n => n.id === selectedNodeId) : null
-  const selectedEdge = selectedEdgeId ? editedEdges.find(e => e.id === selectedEdgeId) : null
+  const selectedNode = selectedNodeId ? (editedNodes.find(n => n.id === selectedNodeId) || null) : null
+  const selectedEdge = selectedEdgeId ? (editedEdges.find(e => e.id === selectedEdgeId) || null) : null
   const unresolvedConflicts = editedNodes.filter(n => n.isDuplicate && !mergeDecisions.has(n.id))
 
   return (
@@ -254,7 +267,7 @@ export default function AIPreviewModal({
         zIndex: 9999,
         padding: '20px',
       }}
-      onClick={handleCancel}
+      // 移除背景点击关闭功能
     >
       <div
         style={{
@@ -262,14 +275,14 @@ export default function AIPreviewModal({
           borderRadius: '24px',
           maxWidth: '1400px',
           width: '100%',
-          maxHeight: '90vh',
+          height: '90vh',
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
+          position: 'relative',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -304,7 +317,7 @@ export default function AIPreviewModal({
             </p>
           </div>
           <button
-            onClick={handleCancel}
+            onClick={handleCancelClick}
             style={{
               width: '40px',
               height: '40px',
@@ -401,48 +414,57 @@ export default function AIPreviewModal({
         <div
           style={{
             flex: 1,
-            overflow: 'auto',
-            padding: '32px',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {/* Stats Tab */}
           {activeTab === 'stats' && (
-            <StatsSection stats={data.stats} visualizationType={visualizationType} />
+            <div style={{ flex: 1, overflow: 'auto', padding: '32px' }}>
+              <StatsSection stats={data.stats} visualizationType={visualizationType} />
+            </div>
           )}
 
           {/* Conflicts Tab */}
           {activeTab === 'conflicts' && (
-            <ConflictsSection
-              nodes={editedNodes}
-              mergeDecisions={mergeDecisions}
-              onMergeDecisionChange={handleMergeDecisionChange}
-              onPropertyResolutionChange={handlePropertyResolutionChange}
-            />
+            <div style={{ flex: 1, overflow: 'auto', padding: '32px' }}>
+              <ConflictsSection
+                nodes={editedNodes}
+                mergeDecisions={mergeDecisions}
+                onMergeDecisionChange={handleMergeDecisionChange}
+                onPropertyResolutionChange={handlePropertyResolutionChange}
+              />
+            </div>
           )}
 
           {/* Visualization Tab */}
           {activeTab === 'visualization' && (
-            <VisualizationSection
-              nodes={editedNodes}
-              edges={editedEdges}
-              visualizationType={visualizationType}
-              onNodeSelect={setSelectedNodeId}
-              onEdgeSelect={setSelectedEdgeId}
-            />
+            <div style={{ flex: 1, overflow: 'hidden', padding: '16px' }}>
+              <VisualizationSection
+                nodes={editedNodes}
+                edges={editedEdges}
+                visualizationType={visualizationType}
+                onNodeSelect={setSelectedNodeId}
+                onEdgeSelect={setSelectedEdgeId}
+              />
+            </div>
           )}
 
           {/* Editing Tab */}
           {activeTab === 'editing' && (
-            <EditingSection
-              nodes={editedNodes}
-              edges={editedEdges}
-              selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
-              onNodeSelect={setSelectedNodeId}
-              onEdgeSelect={setSelectedEdgeId}
-              onNodeEdit={handleNodeEdit}
-              onEdgeEdit={handleEdgeEdit}
-            />
+            <div style={{ flex: 1, overflow: 'auto', padding: '32px' }}>
+              <EditingSection
+                nodes={editedNodes}
+                edges={editedEdges}
+                selectedNode={selectedNode}
+                selectedEdge={selectedEdge}
+                onNodeSelect={setSelectedNodeId}
+                onEdgeSelect={setSelectedEdgeId}
+                onNodeEdit={handleNodeEdit}
+                onEdgeEdit={handleEdgeEdit}
+              />
+            </div>
           )}
         </div>
 
@@ -502,7 +524,7 @@ export default function AIPreviewModal({
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
-              onClick={handleCancel}
+              onClick={handleCancelClick}
               disabled={isSaving}
               style={{
                 padding: '14px 28px',
@@ -566,6 +588,135 @@ export default function AIPreviewModal({
             </button>
           </div>
         </div>
+
+        {/* Close Confirmation Dialog */}
+        {showCloseConfirm && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              borderRadius: '24px',
+            }}
+          >
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #2a2a3e 0%, #1e1e2e 100%)',
+                borderRadius: '16px',
+                padding: '32px',
+                maxWidth: '400px',
+                width: '90%',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              {/* Icon */}
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '2px solid rgba(239, 68, 68, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '32px',
+                  margin: '0 auto 20px',
+                }}
+              >
+                ⚠️
+              </div>
+
+              {/* Title */}
+              <h3
+                style={{
+                  color: 'white',
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  margin: '0 0 12px 0',
+                  textAlign: 'center',
+                }}
+              >
+                确定要放弃吗？
+              </h3>
+
+              {/* Message */}
+              <p
+                style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '14px',
+                  margin: '0 0 24px 0',
+                  textAlign: 'center',
+                  lineHeight: '1.6',
+                }}
+              >
+                确定要放弃当前生成的图谱吗？所有未保存的更改将会丢失。
+              </p>
+
+              {/* Buttons */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={handleCancelClose}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                  }}
+                >
+                  继续编辑
+                </button>
+                <button
+                  onClick={handleConfirmClose}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.5)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.4)'
+                  }}
+                >
+                  确定放弃
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -682,7 +833,7 @@ function ConflictsSection({
   )
 }
 
-// Visualization Section Component (placeholder - will be implemented in next subtask)
+// Visualization Section Component
 function VisualizationSection({
   nodes,
   edges,
@@ -696,11 +847,197 @@ function VisualizationSection({
   onNodeSelect: (nodeId: string) => void
   onEdgeSelect: (edgeId: string) => void
 }) {
+  // 导入必要的组件
+  const Interactive2DGraph = require('./Interactive2DGraph').default
+  const Preview3DGraph = require('./Preview3DGraph').default
+  const { applyLayout } = require('@/lib/graph-layouts')
+  
+  // 转换预览数据为图谱格式，并应用AI推荐的布局
+  const graphData = (() => {
+    // 准备节点和边数据
+    const graphNodes = nodes.map((node: PreviewNode) => ({
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      x: 0,
+      y: 0,
+      color: node.isDuplicate ? '#f59e0b' : '#6366f1',
+      size: 2.5,
+      metadata: node.properties,
+    }))
+    
+    const graphEdges = edges.map(edge => ({
+      id: edge.id,
+      source: edge.fromNodeId,
+      target: edge.toNodeId,
+      label: edge.label,
+      color: edge.isRedundant ? '#ef4444' : '#8b5cf6',
+      metadata: edge.properties,
+    }))
+    
+    // 如果是3D模式，应用智能布局算法（AI自动选择）
+    let optimizedNodes = graphNodes
+    let recommendedLayout = 'force' // 默认布局
+    
+    if (visualizationType === '3d' && nodes.length > 1) {
+      try {
+        // AI自动分析并选择最佳布局
+        const { nodes: layoutNodes, analysis } = applyLayout(graphNodes, graphEdges)
+        recommendedLayout = analysis.recommendedLayout
+        
+        console.log('🤖 AI推荐布局:', recommendedLayout, '原因:', {
+          节点数: analysis.nodeCount,
+          边数: analysis.edgeCount,
+          密度: analysis.density.toFixed(2),
+          有层级: analysis.hasHierarchy,
+          有环: analysis.hasCycles,
+        })
+        
+        // 转换为3D坐标，缩小间距让节点更紧凑
+        optimizedNodes = layoutNodes.map((node: any) => ({
+          ...node,
+          x: node.x * 0.3, // 大幅缩小间距（0.8 → 0.3）
+          y: node.y * 0.3,
+          z: (Math.random() - 0.5) * 15, // 缩小Z轴范围（30 → 15）
+        }))
+      } catch (error) {
+        console.error('Layout error:', error)
+        // 降级到紧凑的圆形布局
+        const radius = Math.min(15 + nodes.length * 0.5, 25) // 更小的半径
+        optimizedNodes = graphNodes.map((node, index) => ({
+          ...node,
+          x: Math.cos((index / graphNodes.length) * 2 * Math.PI) * radius,
+          y: Math.sin((index / graphNodes.length) * 2 * Math.PI) * radius,
+          z: (Math.random() - 0.5) * 15,
+        }))
+      }
+    } else {
+      // 2D模式使用紧凑的圆形布局
+      const radius = Math.min(20 + nodes.length * 0.5, 30)
+      optimizedNodes = graphNodes.map((node, index) => ({
+        ...node,
+        x: Math.cos((index / graphNodes.length) * 2 * Math.PI) * radius,
+        y: Math.sin((index / graphNodes.length) * 2 * Math.PI) * radius,
+        z: 0,
+      }))
+    }
+    
+    return {
+      nodes: optimizedNodes,
+      edges: graphEdges,
+      recommendedLayout, // 传递AI推荐的布局
+    }
+  })()
+
+  if (visualizationType === '3d') {
+    // 3D 可视化 - 使用独立的预览组件
+    return (
+      <div style={{ 
+        width: '100%', 
+        height: '100%', 
+        background: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        position: 'relative',
+      }}>
+        <Preview3DGraph
+          nodes={graphData.nodes}
+          edges={graphData.edges}
+          onNodeClick={(nodeId: string) => onNodeSelect(nodeId)}
+        />
+        
+        {/* 图例 */}
+        <div style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(10px)',
+          padding: '12px 16px',
+          borderRadius: '10px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          zIndex: 10,
+        }}>
+          <div style={{ color: 'white', fontSize: '12px', fontWeight: '600', marginBottom: '8px' }}>
+            图例
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#6366f1' }} />
+              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>普通节点</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }} />
+              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>重复节点</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '20px', height: '2px', background: '#8b5cf6' }} />
+              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>普通边</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '20px', height: '2px', background: '#ef4444' }} />
+              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>冗余边</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 2D 可视化 - 使用交互式图谱组件
   return (
-    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255, 255, 255, 0.6)' }}>
-      <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌐</div>
-      <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>图谱可视化</div>
-      <div style={{ fontSize: '14px' }}>可视化预览将在下一个子任务中实现</div>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      <div style={{ 
+        width: '100%', 
+        height: '100%', 
+        background: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+      }}>
+        <Interactive2DGraph
+          nodes={graphData.nodes}
+          edges={graphData.edges}
+          onNodeClick={(nodeId: string) => onNodeSelect(nodeId)}
+          onEdgeClick={(edgeId: string) => onEdgeSelect(edgeId)}
+        />
+      </div>
+      
+      {/* 图例 */}
+      <div style={{
+        position: 'absolute',
+        top: '16px',
+        right: '16px',
+        background: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(10px)',
+        padding: '12px 16px',
+        borderRadius: '10px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        zIndex: 10,
+      }}>
+        <div style={{ color: 'white', fontSize: '12px', fontWeight: '600', marginBottom: '8px' }}>
+          图例
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#6366f1' }} />
+            <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>普通节点</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }} />
+            <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>重复节点</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '20px', height: '2px', background: '#8b5cf6' }} />
+            <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>普通边</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '20px', height: '2px', background: '#ef4444' }} />
+            <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>冗余边</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AIPreviewModal, { PreviewData } from '@/components/AIPreviewModal'
 import { MergeDecision } from '@/lib/services/merge-resolution'
 
@@ -52,6 +52,8 @@ export default function TextPage() {
     graphId?: string
     visualizationType: '2d' | '3d'
   } | null>(null)
+  const [showAILoadingModal, setShowAILoadingModal] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // 修复页面滚动问题
   useEffect(() => {
@@ -192,18 +194,6 @@ export default function TextPage() {
     setShowPreview(false)
   }
 
-  const handleConvert = () => {
-    // 功能实现将在后续添加
-    console.log('转换为', outputFormat === '2d' ? '二维图谱' : '三维图谱')
-    console.log('项目ID:', selectedProject)
-    console.log('图谱ID:', selectedGraph)
-    if (uploadedFile) {
-      console.log('文件内容:', uploadedFile.content)
-    } else {
-      console.log('文本内容:', inputText)
-    }
-  }
-
   // AI分析处理函数
   const handleAIAnalysis = async () => {
     // 验证项目选择
@@ -247,6 +237,7 @@ export default function TextPage() {
     setIsAnalyzing(true)
     setAnalysisError(null)
     setIsNetworkError(false)
+    setShowAILoadingModal(true) // 显示加载模态框
 
     const params = {
       documentText,
@@ -258,6 +249,10 @@ export default function TextPage() {
     // 保存参数以便重试
     setLastAnalysisParams(params)
 
+    // 创建新的 AbortController
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
     try {
       // 调用AI分析API
       const response = await fetch('/api/ai/analyze', {
@@ -266,6 +261,7 @@ export default function TextPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(params),
+        signal: abortController.signal, // 添加取消信号
       })
 
       const result = await response.json()
@@ -280,12 +276,31 @@ export default function TextPage() {
         setAnalysisError(result.error || 'AI分析失败，请重试')
         setIsNetworkError(false)
       }
-    } catch (error) {
-      console.error('AI analysis error:', error)
-      setAnalysisError('网络错误，请检查连接后重试')
-      setIsNetworkError(true)
+    } catch (error: any) {
+      // 检查是否是用户取消
+      if (error.name === 'AbortError') {
+        console.log('AI analysis cancelled by user')
+        setAnalysisError(null)
+        setIsNetworkError(false)
+      } else {
+        console.error('AI analysis error:', error)
+        setAnalysisError('网络错误，请检查连接后重试')
+        setIsNetworkError(true)
+      }
     } finally {
       setIsAnalyzing(false)
+      setShowAILoadingModal(false) // 隐藏加载模态框
+      abortControllerRef.current = null
+    }
+  }
+
+  // 取消AI分析
+  const handleCancelAIAnalysis = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      setShowAILoadingModal(false)
+      setIsAnalyzing(false)
+      abortControllerRef.current = null
     }
   }
 
@@ -296,6 +311,11 @@ export default function TextPage() {
     setIsAnalyzing(true)
     setAnalysisError(null)
     setIsNetworkError(false)
+    setShowAILoadingModal(true) // 显示加载模态框
+
+    // 创建新的 AbortController
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
 
     try {
       const response = await fetch('/api/ai/analyze', {
@@ -304,6 +324,7 @@ export default function TextPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(lastAnalysisParams),
+        signal: abortController.signal, // 添加取消信号
       })
 
       const result = await response.json()
@@ -316,12 +337,21 @@ export default function TextPage() {
         setAnalysisError(result.error || 'AI分析失败，请重试')
         setIsNetworkError(false)
       }
-    } catch (error) {
-      console.error('AI analysis retry error:', error)
-      setAnalysisError('网络错误，请检查连接后重试')
-      setIsNetworkError(true)
+    } catch (error: any) {
+      // 检查是否是用户取消
+      if (error.name === 'AbortError') {
+        console.log('AI analysis retry cancelled by user')
+        setAnalysisError(null)
+        setIsNetworkError(false)
+      } else {
+        console.error('AI analysis retry error:', error)
+        setAnalysisError('网络错误，请检查连接后重试')
+        setIsNetworkError(true)
+      }
     } finally {
       setIsAnalyzing(false)
+      setShowAILoadingModal(false) // 隐藏加载模态框
+      abortControllerRef.current = null
     }
   }
 
@@ -1262,63 +1292,23 @@ export default function TextPage() {
               </div>
             </div>
 
-            {/* 转换按钮 */}
+            {/* AI分析生成按钮 */}
             <div style={{
-              display: 'flex',
-              gap: '12px',
               marginBottom: '16px',
             }}>
-              <button
-                onClick={handleConvert}
-                disabled={!uploadedFile && !inputText.trim()}
-                style={{
-                  flex: 1,
-                  padding: '18px',
-                  background: (uploadedFile || inputText.trim())
-                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                    : 'rgba(255, 255, 255, 0.08)',
-                  border: 'none',
-                  borderRadius: '14px',
-                  color: 'white',
-                  fontSize: '17px',
-                  fontWeight: '700',
-                  cursor: (uploadedFile || inputText.trim()) ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: (uploadedFile || inputText.trim())
-                    ? '0 8px 24px rgba(102, 126, 234, 0.4)'
-                    : 'none',
-                  opacity: (uploadedFile || inputText.trim()) ? 1 : 0.4,
-                  letterSpacing: '0.5px',
-                }}
-                onMouseEnter={(e) => {
-                  if (uploadedFile || inputText.trim()) {
-                    e.currentTarget.style.transform = 'translateY(-3px)'
-                    e.currentTarget.style.boxShadow = '0 12px 32px rgba(102, 126, 234, 0.5)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (uploadedFile || inputText.trim()) {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(102, 126, 234, 0.4)'
-                  }
-                }}>
-                <span style={{ fontSize: '20px', marginRight: '8px' }}>🚀</span>
-                生成知识图谱
-              </button>
-
               <button
                 onClick={handleAIAnalysis}
                 disabled={!selectedProject || (!uploadedFile && !inputText.trim()) || isAnalyzing}
                 style={{
-                  flex: 1,
-                  padding: '18px',
+                  width: '100%',
+                  padding: '20px',
                   background: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing)
                     ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)'
                     : 'rgba(255, 255, 255, 0.08)',
                   border: 'none',
                   borderRadius: '14px',
                   color: 'white',
-                  fontSize: '17px',
+                  fontSize: '18px',
                   fontWeight: '700',
                   cursor: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1340,11 +1330,30 @@ export default function TextPage() {
                     e.currentTarget.style.boxShadow = '0 8px 24px rgba(168, 85, 247, 0.4)'
                   }
                 }}>
-                <span style={{ fontSize: '20px', marginRight: '8px' }}>
+                <span style={{ fontSize: '22px', marginRight: '10px' }}>
                   {isAnalyzing ? '⏳' : '🤖'}
                 </span>
-                {isAnalyzing ? 'AI分析中...' : 'AI智能分析'}
+                {isAnalyzing ? 'AI分析中...' : 'AI分析生成知识图谱'}
               </button>
+              
+              {/* 提示信息 */}
+              {!selectedProject && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px 16px',
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  borderRadius: '10px',
+                  color: 'rgba(252, 211, 77, 1)',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <span>💡</span>
+                  <span>请先选择一个项目，然后点击按钮进行AI分析</span>
+                </div>
+              )}
             </div>
 
             {/* 错误消息显示 */}
@@ -1688,6 +1697,114 @@ export default function TextPage() {
                 创建
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI生成加载模态框 */}
+      {showAILoadingModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+            borderRadius: '24px',
+            padding: '48px',
+            maxWidth: '480px',
+            width: '90%',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.6)',
+            textAlign: 'center',
+          }}>
+            {/* 加载动画 */}
+            <div style={{
+              width: '80px',
+              height: '80px',
+              margin: '0 auto 32px',
+              position: 'relative',
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                border: '4px solid rgba(168, 85, 247, 0.2)',
+                borderTop: '4px solid rgba(168, 85, 247, 1)',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+              }} />
+              <style jsx>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}</style>
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: '32px',
+              }}>
+                🤖
+              </div>
+            </div>
+
+            {/* 标题 */}
+            <h3 style={{
+              color: 'white',
+              fontSize: '24px',
+              fontWeight: '700',
+              marginBottom: '16px',
+              letterSpacing: '0.5px',
+            }}>
+              AI正在生成中
+            </h3>
+
+            {/* 描述 */}
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '15px',
+              lineHeight: '1.6',
+              marginBottom: '32px',
+            }}>
+              AI正在分析您的文档并生成知识图谱
+              <br />
+              这可能需要几秒钟时间，请稍候...
+            </p>
+
+            {/* 取消按钮 */}
+            <button
+              onClick={handleCancelAIAnalysis}
+              style={{
+                padding: '14px 32px',
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '12px',
+                color: 'rgba(248, 113, 113, 1)',
+                fontSize: '15px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'
+                e.currentTarget.style.transform = 'scale(1.05)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                e.currentTarget.style.transform = 'scale(1)'
+              }}>
+              取消生成
+            </button>
           </div>
         </div>
       )}
