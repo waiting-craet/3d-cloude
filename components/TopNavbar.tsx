@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/lib/store'
+import { getThemeConfig } from '@/lib/theme'
 import LoginModal from './LoginModal'
 import CreateProjectModal from './CreateProjectModal'
 import DeleteButton from './DeleteButton'
@@ -13,6 +14,8 @@ export default function TopNavbar() {
     projects, 
     currentProject, 
     currentGraph,
+    theme,
+    toggleTheme,
     setProjects,
     setSelectedNode,
     createProject,
@@ -179,6 +182,9 @@ export default function TopNavbar() {
     // 触发自定义事件通知其他组件
     window.dispatchEvent(new Event('loginStateChange'))
   }
+
+  // 获取当前主题配置
+  const themeConfig = getThemeConfig(theme)
 
   const handleCreateProject = async (projectName: string, graphName: string, isNewProject: boolean) => {
     try {
@@ -471,15 +477,16 @@ export default function TopNavbar() {
         left: 0,
         right: 0,
         height: '60px',
-        background: 'rgba(26, 26, 26, 0.95)',
+        background: themeConfig.navbarBackground,
         backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        borderBottom: `1px solid ${themeConfig.navbarBorder}`,
         display: 'flex',
         alignItems: 'center',
         padding: '0 30px',
         gap: '20px',
         zIndex: 1000,
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+        transition: 'all 0.3s ease',
       }}>
         {/* 左侧：现有图谱下拉菜单 */}
         <div ref={projectMenuRef} style={{ position: 'relative' }}>
@@ -729,10 +736,10 @@ export default function TopNavbar() {
             style={{
               width: '100%',
               padding: '10px 16px',
-              background: currentGraph ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: currentGraph ? themeConfig.inputBackground : 'rgba(255, 255, 255, 0.03)',
+              border: `1px solid ${themeConfig.inputBorder}`,
               borderRadius: '8px',
-              color: currentGraph ? 'white' : 'rgba(255, 255, 255, 0.4)',
+              color: currentGraph ? themeConfig.inputText : themeConfig.inputPlaceholder,
               fontSize: '14px',
               outline: 'none',
               transition: 'all 0.2s',
@@ -740,14 +747,16 @@ export default function TopNavbar() {
             }}
             onMouseOver={(e) => {
               if (currentGraph) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
+                e.currentTarget.style.background = theme === 'dark' 
+                  ? 'rgba(255, 255, 255, 0.12)' 
+                  : 'rgba(0, 0, 0, 0.08)'
                 e.currentTarget.style.borderColor = 'rgba(74, 158, 255, 0.5)'
               }
             }}
             onMouseOut={(e) => {
               if (currentGraph) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'
+                e.currentTarget.style.background = themeConfig.inputBackground
+                e.currentTarget.style.borderColor = themeConfig.inputBorder
               }
             }}
           />
@@ -760,13 +769,14 @@ export default function TopNavbar() {
               left: 0,
               right: 0,
               marginTop: '8px',
-              background: 'rgba(40, 40, 40, 0.98)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: theme === 'dark' ? 'rgba(40, 40, 40, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+              border: `1px solid ${themeConfig.panelBorder}`,
               borderRadius: '8px',
               maxHeight: '300px',
               overflowY: 'auto',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+              boxShadow: themeConfig.panelShadow,
               zIndex: 1001,
+              transition: 'all 0.3s ease',
             }}>
               {searchResults.length > 0 ? (
                 <>
@@ -848,6 +858,37 @@ export default function TopNavbar() {
 
         {/* 右侧按钮区域 */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* 主题切换按钮 */}
+          <button
+            onClick={() => toggleTheme()}
+            title={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
+            style={{
+              padding: '8px 12px',
+              background: 'transparent',
+              border: `1px solid ${themeConfig.buttonBorder}`,
+              borderRadius: '8px',
+              color: themeConfig.buttonText,
+              cursor: 'pointer',
+              fontSize: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              width: '36px',
+              height: '36px',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = themeConfig.buttonHoverBackground
+              e.currentTarget.style.borderColor = 'rgba(74, 158, 255, 0.5)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = themeConfig.buttonBorder
+            }}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+
           {/* 管理员专属：新建图谱按钮 */}
           {isAdmin && (
             <button

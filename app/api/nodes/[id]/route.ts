@@ -10,7 +10,12 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json()
-    const { name, description, color, tags } = body
+    const { name, description, color, shape, tags, imageUrl } = body
+    
+    console.log('📝 更新节点请求:', {
+      id: params.id,
+      body: { name, description, color, shape, tags, imageUrl }
+    })
     
     const node = await prisma.node.update({
       where: { id: params.id },
@@ -18,15 +23,19 @@ export async function PATCH(
         ...(name && { name }),
         ...(description !== undefined && { description }),
         ...(color && { color }),
+        ...(shape !== undefined && { shape }),
         ...(tags && { tags }),
+        ...(imageUrl !== undefined && { imageUrl }),
       },
     })
     
+    console.log('✅ 节点更新成功:', node.id)
     return NextResponse.json(node)
   } catch (error) {
-    console.error('更新节点失败:', error)
+    console.error('❌ 更新节点失败:', error)
+    console.error('错误详情:', error instanceof Error ? error.message : String(error))
     return NextResponse.json(
-      { error: '更新节点失败', details: String(error) },
+      { error: '更新节点失败', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
