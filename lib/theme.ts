@@ -162,3 +162,80 @@ export const THEME_CONFIGS: Record<'light' | 'dark', ThemeConfig> = {
 export function getThemeConfig(theme: 'light' | 'dark'): ThemeConfig {
   return THEME_CONFIGS[theme]
 }
+
+/**
+ * 工作流画布主题配置映射
+ */
+export const WORKFLOW_THEME_CONFIGS: Record<'light' | 'dark', WorkflowThemeConfig> = {
+  light: {
+    // 画布背景
+    canvasBackground: '#f5f5f5',
+    
+    // 节点卡片
+    nodeBackground: '#ffffff',
+    nodeBackgroundSelected: '#e3f2fd',
+    nodeBorder: '#e0e0e0',
+    nodeBorderSelected: '#2196f3',
+    nodeText: '#1a1a1a',
+    nodeTopBar: '#f5f5f5',
+    nodeTopBarSelected: '#e3f2fd',
+    
+    // 连接线
+    connectionLineColor: '#999999',
+    connectionLineHoverColor: '#2196f3',
+    connectionLabelBackground: '#ffffff',
+    connectionLabelText: '#1a1a1a',
+    
+    // 按钮和控件
+    buttonBackground: '#f0f0f0',
+    buttonHoverBackground: '#e0e0e0',
+    buttonText: '#1a1a1a',
+    inputBackground: '#ffffff',
+    inputBorder: '#e0e0e0',
+    inputText: '#1a1a1a',
+    
+    // 其他
+    dragHandleBackground: '#f5f5f5',
+    dragHandleText: '#1a1a1a',
+  },
+  dark: {
+    // 画布背景
+    canvasBackground: '#1a1a1a',
+    
+    // 节点卡片
+    nodeBackground: '#2a2a2a',
+    nodeBackgroundSelected: '#1e3a5f',
+    nodeBorder: '#404040',
+    nodeBorderSelected: '#4a9eff',
+    nodeText: '#ffffff',
+    nodeTopBar: '#1f1f1f',
+    nodeTopBarSelected: '#1e3a5f',
+    
+    // 连接线
+    connectionLineColor: '#666666',
+    connectionLineHoverColor: '#4a9eff',
+    connectionLabelBackground: '#2a2a2a',
+    connectionLabelText: '#ffffff',
+    
+    // 按钮和控件
+    buttonBackground: '#3a3a3a',
+    buttonHoverBackground: '#4a4a4a',
+    buttonText: '#ffffff',
+    inputBackground: '#2a2a2a',
+    inputBorder: '#404040',
+    inputText: '#ffffff',
+    
+    // 其他
+    dragHandleBackground: '#1f1f1f',
+    dragHandleText: '#ffffff',
+  },
+}
+
+/**
+ * 获取工作流画布主题配置
+ * @param theme - 主题名称 ('light' | 'dark')
+ * @returns 工作流主题配置对象
+ */
+export function getWorkflowThemeConfig(theme: 'light' | 'dark'): WorkflowThemeConfig {
+  return WORKFLOW_THEME_CONFIGS[theme]
+}
