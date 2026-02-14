@@ -13,10 +13,10 @@ export default function LandingPage() {
 
   const handleStartCreating = () => {
     try {
-      router.push('/graph')
+      router.push('/create')
     } catch (error) {
       console.error('Navigation failed:', error)
-      window.location.href = '/graph'
+      window.location.href = '/create'
     }
   }
 
