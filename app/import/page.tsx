@@ -20,10 +20,6 @@ export default function ImportPage() {
   const [selectedProject, setSelectedProject] = useState<string>('')
   const [selectedGraph, setSelectedGraph] = useState<string>('')
   const [graphType, setGraphType] = useState<'2D' | '3D'>('2D')
-  const [showCreateProject, setShowCreateProject] = useState(false)
-  const [showCreateGraph, setShowCreateGraph] = useState(false)
-  const [newProjectName, setNewProjectName] = useState('')
-  const [newGraphName, setNewGraphName] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileType, setFileType] = useState<'excel' | 'csv' | 'json' | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -68,46 +64,6 @@ export default function ImportPage() {
     }
   }
 
-  const handleCreateProject = async () => {
-    if (!newProjectName.trim()) return
-    try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newProjectName })
-      })
-      if (response.ok) {
-        const newProject = await response.json()
-        setProjects([...projects, newProject])
-        setSelectedProject(newProject.id)
-        setNewProjectName('')
-        setShowCreateProject(false)
-      }
-    } catch (error) {
-      console.error('Failed to create project:', error)
-    }
-  }
-
-  const handleCreateGraph = async () => {
-    if (!newGraphName.trim() || !selectedProject) return
-    try {
-      const response = await fetch(`/api/projects/${selectedProject}/graphs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newGraphName })
-      })
-      if (response.ok) {
-        const newGraph = await response.json()
-        setGraphs([...graphs, newGraph])
-        setSelectedGraph(newGraph.id)
-        setNewGraphName('')
-        setShowCreateGraph(false)
-      }
-    } catch (error) {
-      console.error('Failed to create graph:', error)
-    }
-  }
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -122,6 +78,31 @@ export default function ImportPage() {
     } else {
       setFileType(null)
       setUploadStatus('不支持的文件格式')
+    }
+  }
+
+  const handleDownloadTemplate = (templateType: 'csv' | 'json' | 'excel') => {
+    if (templateType === 'excel') {
+      // For Excel, use API endpoint
+      const type = graphType === '3D' ? '3d' : '2d'
+      const link = document.createElement('a')
+      link.href = `/api/templates?type=${type}&format=excel`
+      link.download = `${type}-graph-template.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } else {
+      // For CSV and JSON, use static files
+      const fileName = graphType === '3D' 
+        ? `3d-graph-template.${templateType}`
+        : `2d-graph-template.${templateType}`
+      
+      const link = document.createElement('a')
+      link.href = `/templates/${fileName}`
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
   }
 
@@ -411,24 +392,110 @@ export default function ImportPage() {
             }}>
               模板下载
             </h2>
+            <div style={{ 
+              padding: '12px',
+              background: '#f0f8ff',
+              borderRadius: '6px',
+              marginBottom: '15px',
+              fontSize: '12px',
+              color: '#1a3a52',
+              border: '1px solid #d0e8ff'
+            }}>
+              当前选择: {graphType} 图谱模板
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {['Excel模板', 'CSV模板', 'JSON模板'].map((template) => (
-                <button
-                  key={template}
-                  style={{
-                    padding: '12px 16px',
-                    background: 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {template}
-                </button>
-              ))}
+              <button
+                onClick={() => handleDownloadTemplate('excel')}
+                style={{
+                  padding: '12px 16px',
+                  background: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f5f5f5'
+                  e.currentTarget.style.borderColor = '#1a3a52'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white'
+                  e.currentTarget.style.borderColor = '#ddd'
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>📊</span>
+                <span>Excel模板 ({graphType})</span>
+              </button>
+              <button
+                onClick={() => handleDownloadTemplate('csv')}
+                style={{
+                  padding: '12px 16px',
+                  background: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f5f5f5'
+                  e.currentTarget.style.borderColor = '#1a3a52'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white'
+                  e.currentTarget.style.borderColor = '#ddd'
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>📄</span>
+                <span>CSV模板 ({graphType})</span>
+              </button>
+              <button
+                onClick={() => handleDownloadTemplate('json')}
+                style={{
+                  padding: '12px 16px',
+                  background: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f5f5f5'
+                  e.currentTarget.style.borderColor = '#1a3a52'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white'
+                  e.currentTarget.style.borderColor = '#ddd'
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>📋</span>
+                <span>JSON模板 ({graphType})</span>
+              </button>
+            </div>
+            <div style={{
+              marginTop: '15px',
+              padding: '10px',
+              background: '#fff9e6',
+              borderRadius: '6px',
+              fontSize: '11px',
+              color: '#856404',
+              border: '1px solid #ffeaa7'
+            }}>
+              💡 提示: 切换图谱类型会自动更新模板
             </div>
           </div>
         </div>

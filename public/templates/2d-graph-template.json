@@ -1,0 +1,42 @@
+{
+  "nodes": [
+    {
+      "id": "node1",
+      "label": "节点A",
+      "description": "这是节点A的描述",
+      "x": 100,
+      "y": 100
+    },
+    {
+      "id": "node2",
+      "label": "节点B",
+      "description": "这是节点B的描述",
+      "x": 300,
+      "y": 100
+    },
+    {
+      "id": "node3",
+      "label": "节点C",
+      "description": "这是节点C的描述",
+      "x": 200,
+      "y": 300
+    }
+  ],
+  "edges": [
+    {
+      "source": "node1",
+      "target": "node2",
+      "label": "关系1"
+    },
+    {
+      "source": "node2",
+      "target": "node3",
+      "label": "关系2"
+    },
+    {
+      "source": "node1",
+      "target": "node3",
+      "label": "关系3"
+    }
+  ]
+}

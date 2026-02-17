@@ -1,0 +1,58 @@
+{
+  "nodes": [
+    {
+      "id": "node1",
+      "label": "中心节点",
+      "description": "这是中心节点的描述",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "id": "node2",
+      "label": "技术节点",
+      "description": "这是技术节点的描述",
+      "x": 100,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "id": "node3",
+      "label": "业务节点",
+      "description": "这是业务节点的描述",
+      "x": 0,
+      "y": 100,
+      "z": 0
+    },
+    {
+      "id": "node4",
+      "label": "开发节点",
+      "description": "这是开发节点的描述",
+      "x": 0,
+      "y": 0,
+      "z": 100
+    }
+  ],
+  "edges": [
+    {
+      "source": "node1",
+      "target": "node2",
+      "label": "技术关系"
+    },
+    {
+      "source": "node1",
+      "target": "node3",
+      "label": "业务关系"
+    },
+    {
+      "source": "node1",
+      "target": "node4",
+      "label": "开发关系"
+    },
+    {
+      "source": "node2",
+      "target": "node4",
+      "label": "技术开发"
+    }
+  ]
+}
