@@ -6,7 +6,10 @@
       "description": "这是中心节点的描述",
       "x": 0,
       "y": 0,
-      "z": 0
+      "z": 0,
+      "color": "#00bfa5",
+      "size": 1.5,
+      "shape": "sphere"
     },
     {
       "id": "node2",
@@ -14,7 +17,10 @@
       "description": "这是技术节点的描述",
       "x": 100,
       "y": 0,
-      "z": 0
+      "z": 0,
+      "color": "#ff6b6b",
+      "size": 1,
+      "shape": "sphere"
     },
     {
       "id": "node3",
@@ -22,7 +28,10 @@
       "description": "这是业务节点的描述",
       "x": 0,
       "y": 100,
-      "z": 0
+      "z": 0,
+      "color": "#4ecdc4",
+      "size": 1,
+      "shape": "sphere"
     },
     {
       "id": "node4",
@@ -30,7 +39,21 @@
       "description": "这是开发节点的描述",
       "x": 0,
       "y": 0,
-      "z": 100
+      "z": 100,
+      "color": "#ffe66d",
+      "size": 1,
+      "shape": "sphere"
+    },
+    {
+      "id": "node5",
+      "label": "测试节点",
+      "description": "这是测试节点的描述",
+      "x": 50,
+      "y": 50,
+      "z": 50,
+      "color": "#a8e6cf",
+      "size": 0.8,
+      "shape": "sphere"
     }
   ],
   "edges": [
@@ -53,6 +76,11 @@
       "source": "node2",
       "target": "node4",
       "label": "技术开发"
+    },
+    {
+      "source": "node4",
+      "target": "node5",
+      "label": "开发测试"
     }
   ]
 }

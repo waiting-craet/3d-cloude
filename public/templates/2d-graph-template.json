@@ -5,21 +5,40 @@
       "label": "节点A",
       "description": "这是节点A的描述",
       "x": 100,
-      "y": 100
+      "y": 100,
+      "color": "#00bfa5",
+      "size": 1,
+      "shape": "sphere"
     },
     {
       "id": "node2",
       "label": "节点B",
       "description": "这是节点B的描述",
       "x": 300,
-      "y": 100
+      "y": 100,
+      "color": "#ff6b6b",
+      "size": 1.2,
+      "shape": "sphere"
     },
     {
       "id": "node3",
       "label": "节点C",
       "description": "这是节点C的描述",
       "x": 200,
-      "y": 300
+      "y": 300,
+      "color": "#4ecdc4",
+      "size": 1,
+      "shape": "sphere"
+    },
+    {
+      "id": "node4",
+      "label": "节点D",
+      "description": "这是节点D的描述",
+      "x": 400,
+      "y": 250,
+      "color": "#ffe66d",
+      "size": 0.8,
+      "shape": "sphere"
     }
   ],
   "edges": [
@@ -37,6 +56,11 @@
       "source": "node1",
       "target": "node3",
       "label": "关系3"
+    },
+    {
+      "source": "node3",
+      "target": "node4",
+      "label": "关系4"
     }
   ]
 }

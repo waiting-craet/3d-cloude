@@ -1,67 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
-// 解析 Excel 文件
-async function parseExcel(file: File) {
-  // 这里需要使用 xlsx 库来解析 Excel
-  // 暂时返回示例数据结构
-  return {
-    nodes: [],
-    edges: []
-  }
-}
-
-// 解析 CSV 文件
-async function parseCSV(file: File) {
-  const text = await file.text()
-  const lines = text.split('\n')
-  const headers = lines[0].split(',').map(h => h.trim())
-  
-  const nodes: any[] = []
-  const edges: any[] = []
-  
-  // 假设 CSV 格式: source,target,relationship
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim()
-    if (!line) continue
-    
-    const values = line.split(',').map(v => v.trim())
-    if (values.length >= 2) {
-      const source = values[0]
-      const target = values[1]
-      const relationship = values[2] || '关联'
-      
-      // 添加节点
-      if (!nodes.find(n => n.label === source)) {
-        nodes.push({ label: source })
-      }
-      if (!nodes.find(n => n.label === target)) {
-        nodes.push({ label: target })
-      }
-      
-      // 添加边
-      edges.push({
-        source,
-        target,
-        label: relationship
-      })
-    }
-  }
-  
-  return { nodes, edges }
-}
-
-// 解析 JSON 文件
-async function parseJSON(file: File) {
-  const text = await file.text()
-  const data = JSON.parse(text)
-  
-  // 假设 JSON 格式: { nodes: [...], edges: [...] }
-  return {
-    nodes: data.nodes || [],
-    edges: data.edges || []
-  }
-}
+import {
+  parseExcelFile,
+  parseCSVFile,
+  parseJSONFile,
+  generateLayout,
+  type ParsedGraphData
+} from '@/lib/services/graph-import'
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,8 +15,9 @@ export async function POST(request: NextRequest) {
     const projectId = formData.get('projectId') as string
     const graphId = formData.get('graphId') as string
     const fileType = formData.get('fileType') as string
+    const graphType = formData.get('graphType') as '2D' | '3D'
 
-    if (!file || !projectId || !graphId || !fileType) {
+    if (!file || !projectId || !graphId || !fileType || !graphType) {
       return NextResponse.json(
         { message: '缺少必要参数' },
         { status: 400 }
@@ -92,48 +38,63 @@ export async function POST(request: NextRequest) {
     }
 
     // 根据文件类型解析数据
-    let parsedData: { nodes: any[], edges: any[] }
+    let parsedData: ParsedGraphData
     
-    switch (fileType) {
-      case 'excel':
-        parsedData = await parseExcel(file)
-        break
-      case 'csv':
-        parsedData = await parseCSV(file)
-        break
-      case 'json':
-        parsedData = await parseJSON(file)
-        break
-      default:
-        return NextResponse.json(
-          { message: '不支持的文件类型' },
-          { status: 400 }
-        )
+    try {
+      switch (fileType) {
+        case 'excel':
+          parsedData = await parseExcelFile(file, graphType)
+          break
+        case 'csv':
+          parsedData = await parseCSVFile(file, graphType)
+          break
+        case 'json':
+          parsedData = await parseJSONFile(file, graphType)
+          break
+        default:
+          return NextResponse.json(
+            { message: '不支持的文件类型' },
+            { status: 400 }
+          )
+      }
+    } catch (parseError) {
+      console.error('Parse error:', parseError)
+      return NextResponse.json(
+        { message: '文件解析失败', error: String(parseError) },
+        { status: 400 }
+      )
     }
 
-    // 创建节点映射（label -> id）
+    // 为没有坐标的节点生成布局
+    const nodesWithLayout = generateLayout(parsedData.nodes, parsedData.edges, graphType)
+
+    // 创建节点映射（label/id -> database id）
     const nodeMap = new Map<string, string>()
 
     // 批量创建节点
-    for (const nodeData of parsedData.nodes) {
+    for (const nodeData of nodesWithLayout) {
       const node = await prisma.node.create({
         data: {
-          label: nodeData.label || nodeData.name || '未命名节点',
+          label: nodeData.label || '未命名节点',
           description: nodeData.description || '',
-          x: nodeData.x || Math.random() * 1000 - 500,
-          y: nodeData.y || Math.random() * 1000 - 500,
-          z: nodeData.z || Math.random() * 1000 - 500,
+          x: nodeData.x || 0,
+          y: nodeData.y || 0,
+          z: nodeData.z || 0,
           color: nodeData.color || '#00bfa5',
           size: nodeData.size || 1,
           shape: nodeData.shape || 'sphere',
+          projectId: projectId,
           graphId: graphId
         }
       })
       
-      nodeMap.set(nodeData.label || nodeData.name, node.id)
+      // 使用原始id或label作为映射键
+      const key = nodeData.id || nodeData.label
+      nodeMap.set(key, node.id)
     }
 
     // 批量创建边
+    let edgesCreated = 0
     for (const edgeData of parsedData.edges) {
       const sourceId = nodeMap.get(edgeData.source)
       const targetId = nodeMap.get(edgeData.target)
@@ -141,19 +102,33 @@ export async function POST(request: NextRequest) {
       if (sourceId && targetId) {
         await prisma.edge.create({
           data: {
-            label: edgeData.label || edgeData.relationship || '',
+            label: edgeData.label || '',
             sourceId: sourceId,
             targetId: targetId,
+            projectId: projectId,
             graphId: graphId
           }
         })
+        edgesCreated++
+      } else {
+        console.warn(`Edge skipped: ${edgeData.source} -> ${edgeData.target} (nodes not found)`)
       }
     }
 
+    // 更新图谱的节点和边计数
+    await prisma.graph.update({
+      where: { id: graphId },
+      data: {
+        nodeCount: { increment: nodesWithLayout.length },
+        edgeCount: { increment: edgesCreated }
+      }
+    })
+
     return NextResponse.json({
       message: '导入成功',
-      nodesCount: parsedData.nodes.length,
-      edgesCount: parsedData.edges.length
+      nodesCount: nodesWithLayout.length,
+      edgesCount: edgesCreated,
+      graphType: graphType
     })
 
   } catch (error) {
