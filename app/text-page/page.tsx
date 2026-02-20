@@ -203,7 +203,7 @@ export default function TextPage() {
       return
     }
 
-    // 获取文档文本
+    // 获取文档文本 - 优先使用文件内容,如果没有文件则使用输入框文本
     const documentText = uploadedFile ? uploadedFile.content : inputText
     
     // 调试日志
@@ -834,14 +834,21 @@ export default function TextPage() {
                 e.currentTarget.style.boxShadow = 'none'
               }}>
                 <span style={{ fontSize: '20px' }}>📁</span>
-                导入文件
+                导入文本文件
                 <input
                   type="file"
-                  accept=".txt,.md,.json,.csv,.xlsx,.xls"
+                  accept=".txt,.md,.markdown,.text"
                   onChange={handleFileUpload}
                   style={{ display: 'none' }}
                 />
               </label>
+              <div style={{
+                marginTop: '8px',
+                color: 'rgba(255, 255, 255, 0.5)',
+                fontSize: '12px',
+              }}>
+                支持格式：TXT, MD, Markdown
+              </div>
             </div>
 
             {/* 已导入文件信息卡片 */}
@@ -978,111 +985,44 @@ export default function TextPage() {
             {/* 数据类型说明 */}
             <div style={{
               marginBottom: '20px',
-              padding: '16px',
-              background: 'rgba(255, 255, 255, 0.02)',
+              padding: '20px',
+              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%)',
+              border: '1px solid rgba(168, 85, 247, 0.2)',
               borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.4)'
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(168, 85, 247, 0.15)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.2)'
+              e.currentTarget.style.boxShadow = 'none'
             }}>
               <div style={{
-                color: 'rgba(255, 255, 255, 0.8)',
-                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
                 marginBottom: '12px',
-                fontWeight: '600',
               }}>
-                支持的数据格式
+                <div style={{
+                  fontSize: '24px',
+                }}>🤖</div>
+                <div style={{
+                  fontSize: '16px',
+                  color: 'rgba(168, 85, 247, 1)',
+                  fontWeight: '700',
+                }}>
+                  AI 智能分析
+                </div>
               </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '10px',
+              <div style={{ 
+                fontSize: '13px', 
+                color: 'rgba(255, 255, 255, 0.7)', 
+                lineHeight: '1.8',
+                paddingLeft: '36px',
               }}>
-                <div style={{
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
-                  border: '1px solid rgba(34, 197, 94, 0.25)',
-                  borderRadius: '10px',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.2)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}>
-                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>📊</div>
-                  <div style={{
-                    fontSize: '13px',
-                    color: 'rgba(34, 197, 94, 1)',
-                    fontWeight: '600',
-                    marginBottom: '4px',
-                  }}>
-                    结构化
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                    Excel, CSV
-                  </div>
-                </div>
-                <div style={{
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%)',
-                  border: '1px solid rgba(59, 130, 246, 0.25)',
-                  borderRadius: '10px',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.2)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}>
-                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>🔗</div>
-                  <div style={{
-                    fontSize: '13px',
-                    color: 'rgba(59, 130, 246, 1)',
-                    fontWeight: '600',
-                    marginBottom: '4px',
-                  }}>
-                    半结构化
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                    JSON
-                  </div>
-                </div>
-                <div style={{
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)',
-                  border: '1px solid rgba(168, 85, 247, 0.25)',
-                  borderRadius: '10px',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(168, 85, 247, 0.2)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}>
-                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>📝</div>
-                  <div style={{
-                    fontSize: '13px',
-                    color: 'rgba(168, 85, 247, 1)',
-                    fontWeight: '600',
-                    marginBottom: '4px',
-                  }}>
-                    非结构化
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                    TXT, MD
-                  </div>
-                </div>
+                支持 TXT、MD 格式 · 自动提取实体和关系 · 生成可视化图谱
               </div>
             </div>
 
@@ -1090,16 +1030,13 @@ export default function TextPage() {
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              disabled={!!uploadedFile}
-              placeholder={uploadedFile 
-                ? "已导入文件，如需手动输入请先移除文件" 
-                : "在此输入或粘贴文本内容...&#10;&#10;支持的数据类型：&#10;• 结构化数据（Excel表格、CSV文件）&#10;• 半结构化数据（JSON格式）&#10;• 非结构化文本（文章、笔记、Markdown等）&#10;&#10;AI将自动识别数据格式并提取实体关系"}
+              placeholder="输入文本内容，AI 将自动提取实体和关系..."
               style={{
                 width: '100%',
                 minHeight: '250px',
                 maxHeight: '500px',
                 padding: '18px',
-                background: uploadedFile ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.4)',
+                background: 'rgba(0, 0, 0, 0.4)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '12px',
                 color: 'white',
@@ -1107,8 +1044,7 @@ export default function TextPage() {
                 lineHeight: '1.7',
                 resize: 'vertical',
                 fontFamily: 'monospace',
-                cursor: uploadedFile ? 'not-allowed' : 'text',
-                opacity: uploadedFile ? 0.5 : 1,
+                cursor: 'text',
                 transition: 'all 0.2s ease',
               }}
             />
@@ -1118,7 +1054,9 @@ export default function TextPage() {
               color: 'rgba(255, 255, 255, 0.5)',
               fontSize: '12px',
             }}>
-              {uploadedFile 
+              {uploadedFile && inputText.trim()
+                ? `文件大小: ${formatFileSize(uploadedFile.size)} | 字符数: ${inputText.length}`
+                : uploadedFile 
                 ? `文件大小: ${formatFileSize(uploadedFile.size)}`
                 : `字符数: ${inputText.length}`}
             </div>
@@ -1337,7 +1275,7 @@ export default function TextPage() {
               </button>
               
               {/* 提示信息 */}
-              {!selectedProject && (
+              {!selectedProject ? (
                 <div style={{
                   marginTop: '12px',
                   padding: '12px 16px',
@@ -1353,7 +1291,23 @@ export default function TextPage() {
                   <span>💡</span>
                   <span>请先选择一个项目，然后点击按钮进行AI分析</span>
                 </div>
-              )}
+              ) : !uploadedFile && !inputText.trim() ? (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px 16px',
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  borderRadius: '10px',
+                  color: 'rgba(252, 211, 77, 1)',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <span>💡</span>
+                  <span>请上传文件或在文本框中输入内容</span>
+                </div>
+              ) : null}
             </div>
 
             {/* 错误消息显示 */}
@@ -1450,18 +1404,18 @@ export default function TextPage() {
                   fontWeight: '700',
                 }}>
                   <span style={{ fontSize: '18px' }}>💡</span>
-                  功能说明
+                  AI智能分析说明
                 </div>
                 <ul style={{
                   margin: 0,
                   paddingLeft: '24px',
                   color: 'rgba(255, 255, 255, 0.7)',
                 }}>
-                  <li style={{ marginBottom: '6px' }}>结构化：Excel (.xlsx/.xls)、CSV 表格数据</li>
-                  <li style={{ marginBottom: '6px' }}>半结构化：JSON 格式数据</li>
-                  <li style={{ marginBottom: '6px' }}>非结构化：TXT、Markdown 文本内容</li>
-                  <li style={{ marginBottom: '6px' }}>AI将智能识别并提取实体和关系</li>
-                  <li>生成的图谱支持交互编辑和导出</li>
+                  <li style={{ marginBottom: '6px' }}>支持格式：TXT、Markdown (.md) 文本文件</li>
+                  <li style={{ marginBottom: '6px' }}>AI自动识别文本中的实体（人物、地点、概念等）</li>
+                  <li style={{ marginBottom: '6px' }}>智能提取实体之间的关系和联系</li>
+                  <li style={{ marginBottom: '6px' }}>生成可视化知识图谱，支持2D和3D展示</li>
+                  <li>生成的图谱支持交互编辑、合并冲突和导出</li>
                 </ul>
               </div>
             </div>
