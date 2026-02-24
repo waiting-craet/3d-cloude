@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/lib/store'
+import { useUserStore } from '@/lib/userStore'
 import { getThemeConfig } from '@/lib/theme'
 import LoginModal from './LoginModal'
 import CreateProjectModal from './CreateProjectModal'
@@ -23,13 +24,18 @@ export default function TopNavbar() {
     switchGraph,
   } = useGraphStore()
   
+  const { user, isLoggedIn, logout, initializeFromStorage } = useUserStore()
+  
+  // 调试：打印登录状态
+  useEffect(() => {
+    console.log('TopNavbar - isLoggedIn:', isLoggedIn, 'user:', user)
+  }, [isLoggedIn, user])
+  
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [adminUsername, setAdminUsername] = useState('')
   const [showProjectMenu, setShowProjectMenu] = useState(false)
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null)
   
@@ -71,18 +77,8 @@ export default function TopNavbar() {
 
   // 页面加载时恢复状态
   useEffect(() => {
-    const savedIsAdmin = localStorage.getItem('isAdmin')
-    const savedUsername = localStorage.getItem('adminUsername')
-    console.log('=== 管理员状态检查 ===')
-    console.log('savedIsAdmin:', savedIsAdmin)
-    console.log('savedUsername:', savedUsername)
-    if (savedIsAdmin === 'true' && savedUsername) {
-      setIsAdmin(true)
-      setAdminUsername(savedUsername)
-      console.log('✓ 管理员状态已恢复')
-    } else {
-      console.log('✗ 未检测到管理员状态')
-    }
+    // 从 localStorage 恢复登录状态
+    initializeFromStorage()
 
     // 从数据库加载项目数据（使用优化的 API）
     const loadProjects = async () => {
@@ -147,6 +143,11 @@ export default function TopNavbar() {
     loadProjects()
   }, [setProjects, switchGraph])
 
+  // 初始化用户状态
+  useEffect(() => {
+    initializeFromStorage()
+  }, [initializeFromStorage])
+
   // 点击外部关闭项目菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -165,22 +166,8 @@ export default function TopNavbar() {
     }
   }, [showProjectMenu])
 
-  const handleLogin = (username: string, password: string) => {
-    setIsAdmin(true)
-    setAdminUsername(username)
-    localStorage.setItem('isAdmin', 'true')
-    localStorage.setItem('adminUsername', username)
-    // 触发自定义事件通知其他组件
-    window.dispatchEvent(new Event('loginStateChange'))
-  }
-
   const handleLogout = () => {
-    setIsAdmin(false)
-    setAdminUsername('')
-    localStorage.removeItem('isAdmin')
-    localStorage.removeItem('adminUsername')
-    // 触发自定义事件通知其他组件
-    window.dispatchEvent(new Event('loginStateChange'))
+    logout()
   }
 
   // 获取当前主题配置
@@ -618,7 +605,7 @@ export default function TopNavbar() {
                           </div>
                         </div>
                       </div>
-                      {isAdmin && (
+                      {isLoggedIn && (
                         <DeleteButton
                           onDelete={(e) => handleDeleteProject(e, project)}
                           disabled={isDeleting}
@@ -692,7 +679,7 @@ export default function TopNavbar() {
                                 {graph.nodeCount} 节点 · {graph.edgeCount} 关系
                               </div>
                             </div>
-                            {isAdmin && (
+                            {isLoggedIn && (
                               <DeleteButton
                                 onDelete={(e) => handleDeleteGraph(e, project.id, graph)}
                                 disabled={isDeleting}
@@ -890,7 +877,7 @@ export default function TopNavbar() {
           </button>
 
           {/* 管理员专属：新建图谱按钮 */}
-          {isAdmin && (
+          {isLoggedIn && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               style={{
@@ -923,9 +910,12 @@ export default function TopNavbar() {
           )}
 
           {/* 登录/登出按钮 */}
-          {!isAdmin ? (
+          {!isLoggedIn ? (
             <button
-              onClick={() => setIsLoginModalOpen(true)}
+              onClick={() => {
+                console.log('登录按钮被点击');
+                setIsLoginModalOpen(true);
+              }}
               style={{
                 padding: '10px 24px',
                 background: 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)',
@@ -951,7 +941,7 @@ export default function TopNavbar() {
             </button>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {/* 管理员信息 */}
+              {/* 用户信息 */}
               <div style={{
                 padding: '8px 16px',
                 background: 'rgba(74, 158, 255, 0.15)',
@@ -961,7 +951,7 @@ export default function TopNavbar() {
                 fontSize: '14px',
                 fontWeight: '500',
               }}>
-                👤 {adminUsername}
+                👤 {user?.username}
               </div>
               
               {/* 登出按钮 */}
@@ -1000,7 +990,6 @@ export default function TopNavbar() {
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
-        onLogin={handleLogin}
       />
 
       {/* 新建项目弹窗 */}
