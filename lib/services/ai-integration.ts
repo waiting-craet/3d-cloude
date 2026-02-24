@@ -41,11 +41,10 @@ export interface AIIntegrationService {
   /**
    * Analyzes document text and extracts entities and relationships
    * @param text - The document text to analyze
-   * @param customPrompt - Optional custom prompt to append to system prompt
    * @returns Promise with extracted entities and relationships
    * @throws Error if AI API fails or returns invalid response
    */
-  analyzeDocument(text: string, customPrompt?: string): Promise<AIAnalysisResult>;
+  analyzeDocument(text: string): Promise<AIAnalysisResult>;
 }
 
 /**
@@ -83,7 +82,7 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
   /**
    * Analyzes document text using AI Model API
    */
-  async analyzeDocument(text: string, customPrompt?: string): Promise<AIAnalysisResult> {
+  async analyzeDocument(text: string): Promise<AIAnalysisResult> {
     if (!text || text.trim().length === 0) {
       throw new Error('Document text cannot be empty');
     }
@@ -100,7 +99,7 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.buildRequestPayload(text, customPrompt)),
+        body: JSON.stringify(this.buildRequestPayload(text)),
         signal: controller.signal,
       });
 
@@ -153,62 +152,63 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
 
   /**
    * Builds the request payload for the AI API
-   * This uses DeepSeek's chat completion format with optimized prompts
+   * This uses DeepSeek's chat completion format
    */
-  private buildRequestPayload(text: string, customPrompt?: string): any {
-    // 优化的系统提示词
-    const systemPrompt = `你是一位专业的知识图谱构建专家，擅长从文本中精准提取实体和关系。
+  private buildRequestPayload(text: string): any {
+    return {
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: `你是知识图谱构建专家，擅长从文本中提取实体和关系。请仔细分析文本，提取核心信息。
 
-## 核心任务
-分析提供的文本，提取结构化的知识图谱数据：
+## 提取规则
 
 ### 1. 实体提取（节点）
-识别文本中的关键实体，包括但不限于：
-- **人物**：人名、角色、职位
-- **组织**：公司、机构、团队、部门
-- **概念**：理论、方法、技术、产品
-- **地点**：国家、城市、地址、场所
-- **事件**：活动、会议、项目
-- **时间**：日期、时期、阶段
-- **物品**：设备、工具、资源
+识别文本中的关键实体，包括：
+- **人物 (person)**: 真实人物、虚构角色、历史人物
+- **组织 (organization)**: 公司、机构、团队、政府部门
+- **地点 (location)**: 国家、城市、建筑、地理位置
+- **概念 (concept)**: 理论、方法、技术、学科领域
+- **事件 (event)**: 重要事件、活动、会议
+- **产品 (product)**: 产品、服务、工具、系统
+- **时间 (time)**: 时间点、时期、年代
+- **其他 (other)**: 其他重要实体
 
-对每个实体提供：
-- **name**：实体名称（简洁明确）
-- **type**：实体类型（使用上述分类或更具体的类型）
-- **properties**：相关属性（如描述、状态、数值等）
+每个实体包含：
+- name: 实体名称（使用原文中的准确名称）
+- type: 实体类型（从上述类型中选择最合适的）
+- properties: 相关属性（如描述、特征、数值等）
 
 ### 2. 关系提取（边）
-识别实体之间的连接关系，常见关系类型：
-- **从属关系**：belongs_to, part_of, member_of
-- **关联关系**：related_to, associated_with, connected_to
-- **因果关系**：causes, leads_to, results_in
-- **时序关系**：before, after, during
-- **层级关系**：manages, reports_to, supervises
-- **功能关系**：uses, produces, provides
-- **位置关系**：located_in, near, contains
+识别实体间的语义关系，常见关系类型：
+- **属于 (belongs_to)**: A属于B、A是B的一部分
+- **位于 (located_in)**: A位于B、A在B
+- **工作于 (works_for)**: A在B工作、A任职于B
+- **创建 (created)**: A创建了B、A发明了B
+- **参与 (participates_in)**: A参与B、A参加B
+- **影响 (influences)**: A影响B、A导致B
+- **关联 (related_to)**: A与B相关、A和B有联系
+- **拥有 (owns)**: A拥有B、A持有B
+- **使用 (uses)**: A使用B、A应用B
+- **产生 (produces)**: A产生B、A生成B
 
-对每个关系提供：
-- **from**：源实体名称（必须与实体列表中的name完全匹配）
-- **to**：目标实体名称（必须与实体列表中的name完全匹配）
-- **type**：关系类型（使用上述分类或更具体的类型）
-- **properties**：关系属性（如强度、时间、描述等）
-
-## 提取原则
-1. **准确性优先**：只提取文本中明确提到的实体和关系
-2. **避免冗余**：相同实体只提取一次，合并重复信息
-3. **保持一致**：关系中的实体名称必须与实体列表完全匹配
-4. **语义完整**：确保提取的信息具有完整的语义
-5. **类型规范**：使用标准化的类型名称（小写+下划线）
+每个关系包含：
+- from: 源实体名称（必须与entities中的name完全匹配）
+- to: 目标实体名称（必须与entities中的name完全匹配）
+- type: 关系类型（使用上述类型或自定义更准确的类型）
+- properties: 关系属性（如时间、强度、描述等）
 
 ## 输出格式
-返回严格的JSON格式：
+严格按照以下JSON格式返回：
 {
   "entities": [
     {
       "name": "实体名称",
       "type": "实体类型",
       "properties": {
-        "属性名": "属性值"
+        "description": "简短描述",
+        "其他属性": "属性值"
       }
     }
   ],
@@ -218,23 +218,19 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
       "to": "目标实体名称",
       "type": "关系类型",
       "properties": {
-        "属性名": "属性值"
+        "description": "关系描述"
       }
     }
   ]
 }
 
-## 重要提醒
-- 所有关系中的实体名称必须在entities数组中存在
-- 使用简洁明确的命名，避免过长的描述性文字
-- 属性值应该是具体的信息，而非重复实体名称${customPrompt ? '\n\n## 用户特殊要求\n' + customPrompt : ''}`;
-
-    return {
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt
+## 重要提示
+1. 实体名称必须准确，使用文本中的原始表述
+2. 关系中的from和to必须与entities数组中的name完全一致
+3. 优先提取核心实体和主要关系，避免过度细化
+4. 为实体和关系添加有意义的properties，帮助理解上下文
+5. 关系类型应该语义明确，便于理解
+6. 如果文本是中文，实体名称和属性使用中文；如果是英文，使用英文`
         },
         {
           role: 'user',
