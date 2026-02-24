@@ -41,10 +41,11 @@ export interface AIIntegrationService {
   /**
    * Analyzes document text and extracts entities and relationships
    * @param text - The document text to analyze
+   * @param customPrompt - Optional custom prompt to append to system prompt
    * @returns Promise with extracted entities and relationships
    * @throws Error if AI API fails or returns invalid response
    */
-  analyzeDocument(text: string): Promise<AIAnalysisResult>;
+  analyzeDocument(text: string, customPrompt?: string): Promise<AIAnalysisResult>;
 }
 
 /**
@@ -82,7 +83,7 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
   /**
    * Analyzes document text using AI Model API
    */
-  async analyzeDocument(text: string): Promise<AIAnalysisResult> {
+  async analyzeDocument(text: string, customPrompt?: string): Promise<AIAnalysisResult> {
     if (!text || text.trim().length === 0) {
       throw new Error('Document text cannot be empty');
     }
@@ -99,7 +100,7 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.buildRequestPayload(text)),
+        body: JSON.stringify(this.buildRequestPayload(text, customPrompt)),
         signal: controller.signal,
       });
 
@@ -152,51 +153,88 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
 
   /**
    * Builds the request payload for the AI API
-   * This uses DeepSeek's chat completion format
+   * This uses DeepSeek's chat completion format with optimized prompts
    */
-  private buildRequestPayload(text: string): any {
-    return {
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: `You are an expert at extracting entities and relationships from text to build knowledge graphs. 
-Analyze the provided text and extract:
-1. Entities (nodes): Identify key concepts, people, places, organizations, or things. For each entity, provide:
-   - name: The entity name
-   - type: The entity type (person, organization, concept, location, etc.)
-   - properties: Any relevant attributes as key-value pairs
+  private buildRequestPayload(text: string, customPrompt?: string): any {
+    // 优化的系统提示词
+    const systemPrompt = `你是一位专业的知识图谱构建专家，擅长从文本中精准提取实体和关系。
 
-2. Relationships (edges): Identify connections between entities. For each relationship, provide:
-   - from: The source entity name (must match an entity name exactly)
-   - to: The target entity name (must match an entity name exactly)
-   - type: The relationship type (e.g., "works_for", "located_in", "related_to")
-   - properties: Any relevant attributes as key-value pairs
+## 核心任务
+分析提供的文本，提取结构化的知识图谱数据：
 
-Return your response as a JSON object with this exact structure:
+### 1. 实体提取（节点）
+识别文本中的关键实体，包括但不限于：
+- **人物**：人名、角色、职位
+- **组织**：公司、机构、团队、部门
+- **概念**：理论、方法、技术、产品
+- **地点**：国家、城市、地址、场所
+- **事件**：活动、会议、项目
+- **时间**：日期、时期、阶段
+- **物品**：设备、工具、资源
+
+对每个实体提供：
+- **name**：实体名称（简洁明确）
+- **type**：实体类型（使用上述分类或更具体的类型）
+- **properties**：相关属性（如描述、状态、数值等）
+
+### 2. 关系提取（边）
+识别实体之间的连接关系，常见关系类型：
+- **从属关系**：belongs_to, part_of, member_of
+- **关联关系**：related_to, associated_with, connected_to
+- **因果关系**：causes, leads_to, results_in
+- **时序关系**：before, after, during
+- **层级关系**：manages, reports_to, supervises
+- **功能关系**：uses, produces, provides
+- **位置关系**：located_in, near, contains
+
+对每个关系提供：
+- **from**：源实体名称（必须与实体列表中的name完全匹配）
+- **to**：目标实体名称（必须与实体列表中的name完全匹配）
+- **type**：关系类型（使用上述分类或更具体的类型）
+- **properties**：关系属性（如强度、时间、描述等）
+
+## 提取原则
+1. **准确性优先**：只提取文本中明确提到的实体和关系
+2. **避免冗余**：相同实体只提取一次，合并重复信息
+3. **保持一致**：关系中的实体名称必须与实体列表完全匹配
+4. **语义完整**：确保提取的信息具有完整的语义
+5. **类型规范**：使用标准化的类型名称（小写+下划线）
+
+## 输出格式
+返回严格的JSON格式：
 {
   "entities": [
     {
-      "name": "Entity Name",
-      "type": "entity_type",
+      "name": "实体名称",
+      "type": "实体类型",
       "properties": {
-        "key": "value"
+        "属性名": "属性值"
       }
     }
   ],
   "relationships": [
     {
-      "from": "Entity Name 1",
-      "to": "Entity Name 2",
-      "type": "relationship_type",
+      "from": "源实体名称",
+      "to": "目标实体名称",
+      "type": "关系类型",
       "properties": {
-        "key": "value"
+        "属性名": "属性值"
       }
     }
   ]
 }
 
-Important: All entity names in relationships must exactly match entity names in the entities array.`
+## 重要提醒
+- 所有关系中的实体名称必须在entities数组中存在
+- 使用简洁明确的命名，避免过长的描述性文字
+- 属性值应该是具体的信息，而非重复实体名称${customPrompt ? '\n\n## 用户特殊要求\n' + customPrompt : ''}`;
+
+    return {
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt
         },
         {
           role: 'user',

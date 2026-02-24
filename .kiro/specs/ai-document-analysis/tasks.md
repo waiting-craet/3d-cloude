@@ -106,7 +106,7 @@ This implementation plan breaks down the AI-powered document analysis feature in
     - Use visual indicators (badges, colors)
     - _Requirements: 4.7_
 
-  - [~] 6.3 Implement conflict resolution panel
+  - [ ] 6.3 Implement conflict resolution panel
     - Display list of duplicate nodes with conflicts
     - Show existing vs new property values side-by-side
     - Add radio buttons for merge decisions (merge, keep-both, skip)
@@ -114,13 +114,13 @@ This implementation plan breaks down the AI-powered document analysis feature in
     - Highlight unresolved conflicts
     - _Requirements: 7.3, 7.4, 8.2_
 
-  - [~] 6.4 Implement graph visualization preview
+  - [ ] 6.4 Implement graph visualization preview
     - Integrate with existing 2D/3D visualization components
     - Display nodes and edges from preview data
     - Highlight duplicate nodes and redundant edges visually
     - _Requirements: 4.2, 2.2, 2.3_
 
-  - [~] 6.5 Implement node and edge editing
+  - [ ] 6.5 Implement node and edge editing
     - Add click handlers for nodes and edges
     - Show editing panel when node/edge selected
     - Allow editing of labels, properties, relationship types
@@ -134,14 +134,14 @@ This implementation plan breaks down the AI-powered document analysis feature in
     - Close modal on cancel without saving
     - _Requirements: 4.5, 4.6_
 
-  - [~] 6.7 Write unit tests for preview modal
+  - [ ] 6.7 Write unit tests for preview modal
     - Test conflict display
     - Test editing functionality
     - Test save validation
     - Test cancel behavior
     - _Requirements: 4.3, 4.4, 4.6_
 
-  - [~] 6.8 Write property test for preview modal data immutability
+  - [ ] 6.8 Write property test for preview modal data immutability
     - **Property 8: Preview Modal Data Immutability**
     - **Validates: Requirements 4.6**
 
@@ -162,22 +162,22 @@ This implementation plan breaks down the AI-powered document analysis feature in
     - Return error message to client
     - _Requirements: 9.7_
 
-  - [~] 7.3 Write property test for data persistence atomicity
+  - [ ] 7.3 Write property test for data persistence atomicity
     - **Property 6: Data Persistence Atomicity**
     - **Validates: Requirements 9.7**
 
-  - [~] 7.4 Write property test for project-graph association consistency
+  - [ ] 7.4 Write property test for project-graph association consistency
     - **Property 7: Project-Graph Association Consistency**
     - **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
 
-  - [~] 7.5 Write integration tests for save endpoint
+  - [ ] 7.5 Write integration tests for save endpoint
     - Test new graph creation
     - Test adding to existing graph
     - Test merge operations
     - Test transaction rollback
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.7_
 
-- [~] 8. Checkpoint - Ensure all API and component tests pass
+- [ ] 8. Checkpoint - Ensure all API and component tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [-] 9. Integrate AI analysis into text page
@@ -215,42 +215,42 @@ This implementation plan breaks down the AI-powered document analysis feature in
     - Preserve user input during retry
     - _Requirements: 12.5_
 
-  - [~] 9.6 Write property test for loading state consistency
+  - [ ] 9.6 Write property test for loading state consistency
     - **Property 9: Loading State Consistency**
     - **Validates: Requirements 1.4, 10.4**
 
-  - [~] 9.7 Write integration tests for text page AI flow
+  - [ ] 9.7 Write integration tests for text page AI flow
     - Test full flow from button click to save
     - Test validation errors
     - Test network error handling
     - _Requirements: 10.2, 10.3, 12.3, 12.4, 12.5_
 
 - [ ] 10. Add error handling and user feedback
-  - [~] 10.1 Implement error message display component
+  - [ ] 10.1 Implement error message display component
     - Create reusable error banner component
     - Support different error types (API, network, validation)
     - Add dismiss functionality
     - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-  - [~] 10.2 Add validation for required fields
+  - [ ] 10.2 Add validation for required fields
     - Validate project selection before analysis
     - Validate graph selection or "create new" before save
     - Display inline validation messages
     - Disable buttons until validation passes
     - _Requirements: 12.3, 12.4_
 
-  - [~] 10.3 Write property test for error message clarity
+  - [ ] 10.3 Write property test for error message clarity
     - **Property 10: Error Message Clarity**
     - **Validates: Requirements 12.1, 12.2, 12.3, 12.4, 12.6**
 
-  - [~] 10.4 Write unit tests for error handling
+  - [ ] 10.4 Write unit tests for error handling
     - Test error message display
     - Test validation logic
     - Test sensitive data filtering
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.6_
 
 - [ ] 11. Final integration and testing
-  - [~] 11.1 Test end-to-end flow
+  - [ ] 11.1 Test end-to-end flow
     - Test with various document types (text, JSON, CSV)
     - Test creating new graph
     - Test adding to existing graph
@@ -258,19 +258,19 @@ This implementation plan breaks down the AI-powered document analysis feature in
     - Test error scenarios
     - _Requirements: All_
 
-  - [~] 11.2 Add environment variable configuration
+  - [ ] 11.2 Add environment variable configuration
     - Document required environment variables (AI_API_KEY, DATABASE_URL)
     - Add validation for missing environment variables
     - Add helpful error messages for configuration issues
     - _Requirements: 1.6, 9.5_
 
-  - [~] 11.3 Update documentation
+  - [ ] 11.3 Update documentation
     - Add API endpoint documentation
     - Add component usage examples
     - Document AI API integration requirements
     - _Requirements: All_
 
-- [~] 12. Final checkpoint - Ensure all tests pass and feature is complete
+- [ ] 12. Final checkpoint - Ensure all tests pass and feature is complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

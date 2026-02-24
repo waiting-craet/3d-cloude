@@ -54,6 +54,10 @@ export default function TextPage() {
   } | null>(null)
   const [showAILoadingModal, setShowAILoadingModal] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
+  
+  // 自定义提示词状态
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [showCustomPrompt, setShowCustomPrompt] = useState(false)
 
   // 修复页面滚动问题
   useEffect(() => {
@@ -244,6 +248,7 @@ export default function TextPage() {
       projectId: selectedProject,
       graphId: selectedGraph || undefined,
       visualizationType: outputFormat,
+      customPrompt: customPrompt.trim() || undefined, // 添加自定义提示词
     }
 
     // 保存参数以便重试
@@ -1290,6 +1295,165 @@ export default function TextPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* 自定义提示词模块 */}
+            <div style={{
+              marginBottom: '28px',
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '16px',
+              }}>
+                <label style={{
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <span>自定义提示词</span>
+                  <span style={{
+                    fontSize: '11px',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    fontWeight: '400',
+                    padding: '2px 8px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '4px',
+                  }}>
+                    选填
+                  </span>
+                </label>
+                <button
+                  onClick={() => setShowCustomPrompt(!showCustomPrompt)}
+                  style={{
+                    padding: '6px 12px',
+                    background: 'rgba(99, 102, 241, 0.15)',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    borderRadius: '8px',
+                    color: 'rgba(167, 139, 250, 1)',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)'
+                  }}>
+                  {showCustomPrompt ? '收起 ▲' : '展开 ▼'}
+                </button>
+              </div>
+
+              {showCustomPrompt && (
+                <div style={{
+                  padding: '20px',
+                  background: 'rgba(99, 102, 241, 0.05)',
+                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  borderRadius: '12px',
+                  animation: 'slideDown 0.3s ease',
+                }}>
+                  <style jsx>{`
+                    @keyframes slideDown {
+                      from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                      }
+                      to {
+                        opacity: 1;
+                        transform: translateY(0);
+                      }
+                    }
+                  `}</style>
+                  
+                  <div style={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '13px',
+                    marginBottom: '12px',
+                    lineHeight: '1.6',
+                  }}>
+                    💡 在默认提示词基础上添加您的特殊要求，例如：
+                    <ul style={{
+                      margin: '8px 0 0 0',
+                      paddingLeft: '20px',
+                    }}>
+                      <li>重点关注某类实体（如"重点提取人物和组织"）</li>
+                      <li>特定领域要求（如"按照医学术语标准提取"）</li>
+                      <li>关系类型偏好（如"优先识别因果关系"）</li>
+                    </ul>
+                  </div>
+
+                  <textarea
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                    placeholder="例如：请重点提取人物、组织和地点实体，并识别它们之间的从属关系和合作关系..."
+                    style={{
+                      width: '100%',
+                      minHeight: '120px',
+                      padding: '14px',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                      borderRadius: '10px',
+                      color: 'white',
+                      fontSize: '13px',
+                      lineHeight: '1.6',
+                      resize: 'vertical',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)'
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)'
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'
+                    }}
+                  />
+
+                  <div style={{
+                    marginTop: '10px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <div style={{
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: '12px',
+                    }}>
+                      字符数: {customPrompt.length}
+                    </div>
+                    {customPrompt.trim() && (
+                      <button
+                        onClick={() => setCustomPrompt('')}
+                        style={{
+                          padding: '6px 12px',
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '6px',
+                          color: 'rgba(248, 113, 113, 1)',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                        }}>
+                        清空
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* AI分析生成按钮 */}

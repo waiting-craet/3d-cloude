@@ -23,6 +23,7 @@ interface AnalyzeRequest {
   projectId?: string;
   graphId?: string;
   visualizationType: '2d' | '3d';
+  customPrompt?: string; // 用户自定义提示词
 }
 
 /**
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
     let aiResult;
     
     try {
-      aiResult = await aiService.analyzeDocument(body.documentText);
+      aiResult = await aiService.analyzeDocument(body.documentText, body.customPrompt);
     } catch (error) {
       console.error('[AI Analysis] AI service error:', error);
       

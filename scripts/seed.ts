@@ -1,6 +1,6 @@
 /**
- * 数据库种子脚本 - 树状结构知识图谱（8个节点）
- * 运行: npx tsx scripts/seed.ts
+ * 数据库种子脚本 - 创建 3D 和 2D 测试图谱
+ * 运行: npm run db:seed
  */
 
 import { PrismaClient } from '@prisma/client'
@@ -8,7 +8,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 开始填充树状知识图谱数据（8个节点）...')
+  console.log('🌱 开始生成测试数据...')
 
   // 清空现有数据
   await prisma.edge.deleteMany()
@@ -20,276 +20,295 @@ async function main() {
   // 创建项目
   const project = await prisma.project.create({
     data: {
-      name: 'RAG 知识图谱项目',
-      description: 'Retrieval-Augmented Generation 系统演示',
+      name: '知识图谱示例项目',
+      description: '用于展示的示例项目',
+      settings: JSON.stringify({
+        theme: 'dark',
+        layout: 'force',
+      }),
     },
   })
 
-  console.log('✓ 创建项目')
+  console.log('✓ 项目创建成功')
 
-  // 创建图谱记录
-  const graph = await prisma.graph.create({
+  // ============ 创建 3D 图谱 ============
+  const graph3d = await prisma.graph.create({
     data: {
-      name: 'RAG 树状知识图谱',
-      description: 'RAG 系统的树状结构展示',
-      nodeCount: 8,
-      edgeCount: 7,
-      isPublic: true,
+      name: '人工智能知识体系',
+      description: '展示人工智能领域的核心概念和关系',
       projectId: project.id,
+      isPublic: true,
+      settings: JSON.stringify({
+        graphType: '3d',
+        isTemplate: false,
+        thumbnail: 'https://images.unsplash.com/photo-1677442d019cecf8d5a32b9c94d39be18c6b1d8c?w=400&h=300&fit=crop',
+      }),
+      nodeCount: 5,
+      edgeCount: 4,
     },
   })
 
-  console.log('✓ 创建图谱记录')
+  console.log('✓ 3D 图谱创建成功')
 
-  // 创建根节点（最左边）
-  const root = await prisma.node.create({
-    data: {
-      name: '文本',
-      type: 'document',
-      description: 'Retrieval-Augmented Generation 核心系统',
-      content: 'RAG 是一种结合检索和生成的 AI 技术',
-      color: '#6BB6FF',
-      size: 2.0,
-      x: -15,
-      y: 0,
-      z: 0,
-      tags: JSON.stringify(['AI', 'RAG', '核心']),
-      category: '根节点',
-      graphId: graph.id,
-    },
-  })
-
-  console.log('✓ 创建根节点')
-
-  // 分支 1（上方）- 检索路径
-  const branch1_mid = await prisma.node.create({
-    data: {
-      name: '文本',
-      type: 'chunk',
-      description: '负责从知识库检索相关信息',
-      content: '使用向量相似度搜索',
-      color: '#6BB6FF',
-      size: 1.5,
-      x: -5,
-      y: 6,
-      z: 0,
-      tags: JSON.stringify(['检索', '向量']),
-      category: '检索',
-      graphId: graph.id,
-    },
-  })
-
-  const branch1_end = await prisma.node.create({
-    data: {
-      name: '文本',
-      type: 'entity',
-      description: '存储和检索向量嵌入',
-      content: 'Pinecone, Weaviate, Milvus',
-      color: '#6BB6FF',
-      size: 1.2,
-      x: 5,
-      y: 8,
-      z: 0,
-      tags: JSON.stringify(['数据库', '向量']),
-      category: '检索',
-      graphId: graph.id,
-    },
-  })
-
-  console.log('✓ 创建分支 1（检索路径）')
-
-  // 分支 2（中间）- 知识库路径
-  const branch2_mid = await prisma.node.create({
-    data: {
-      name: '文本',
-      type: 'chunk',
-      description: '存储向量化的文档数据',
-      content: '包含所有文档的向量表示',
-      color: '#6BB6FF',
-      size: 1.5,
-      x: -5,
-      y: 0,
-      z: 0,
-      tags: JSON.stringify(['存储', '知识']),
-      category: '知识',
-      graphId: graph.id,
-    },
-  })
-
-  const branch2_mid2 = await prisma.node.create({
-    data: {
-      name: '文本',
-      type: 'entity',
-      description: '将文本转换为向量',
-      content: 'OpenAI, Cohere, Sentence-BERT',
-      color: '#6BB6FF',
-      size: 1.2,
-      x: 0,
-      y: 0,
-      z: 0,
-      tags: JSON.stringify(['嵌入', '模型']),
-      category: '知识',
-      graphId: graph.id,
-    },
-  })
-
-  const branch2_end = await prisma.node.create({
-    data: {
-      name: '文本',
-      type: 'entity',
-      description: '文档分块和预处理',
-      content: '文本清洗、分块、向量化',
-      color: '#6BB6FF',
-      size: 1.2,
-      x: 5,
-      y: 0,
-      z: 0,
-      tags: JSON.stringify(['处理', '文档']),
-      category: '知识',
-      graphId: graph.id,
-    },
-  })
-
-  console.log('✓ 创建分支 2（知识库路径）')
-
-  // 分支 3（下方）- 生成路径
-  const branch3_mid = await prisma.node.create({
-    data: {
-      name: '文本',
-      type: 'chunk',
-      description: '基于检索结果生成回答',
-      content: '使用大语言模型生成',
-      color: '#6BB6FF',
-      size: 1.5,
-      x: -5,
-      y: -6,
-      z: 0,
-      tags: JSON.stringify(['生成', 'LLM']),
-      category: '生成',
-      graphId: graph.id,
-    },
-  })
-
-  const branch3_end = await prisma.node.create({
-    data: {
-      name: '文本',
-      type: 'entity',
-      description: '大语言模型',
-      content: 'GPT-4, Claude, Llama',
-      color: '#6BB6FF',
-      size: 1.2,
-      x: 5,
-      y: -8,
-      z: 0,
-      tags: JSON.stringify(['LLM', '模型']),
-      category: '生成',
-      graphId: graph.id,
-    },
-  })
-
-  console.log('✓ 创建分支 3（生成路径）')
-
-  // 创建边（树状连接）
-  await Promise.all([
-    // 根节点到三个分支的中间节点
-    prisma.edge.create({
+  // 为 3D 图谱添加节点
+  const nodes3d = await Promise.all([
+    prisma.node.create({
       data: {
-        fromNodeId: root.id,
-        toNodeId: branch1_mid.id,
-        label: 'CONNECTS_TO',
-        weight: 1.0,
-        color: '#888888',
-        graphId: graph.id,
+        name: '机器学习',
+        type: 'concept',
+        description: '机器学习是人工智能的核心分支',
+        graphId: graph3d.id,
+        projectId: project.id,
+        color: '#3b82f6',
+        imageUrl: 'https://images.unsplash.com/photo-1677442d019cecf8d5a32b9c94d39be18c6b1d8c?w=200&h=200&fit=crop',
+        x: 0,
+        y: 0,
+        z: 0,
       },
     }),
-    prisma.edge.create({
+    prisma.node.create({
       data: {
-        fromNodeId: root.id,
-        toNodeId: branch2_mid.id,
-        label: 'CONNECTS_TO',
-        weight: 1.0,
-        color: '#888888',
-        graphId: graph.id,
+        name: '深度学习',
+        type: 'concept',
+        description: '深度学习是机器学习的重要方向',
+        graphId: graph3d.id,
+        projectId: project.id,
+        color: '#8b5cf6',
+        imageUrl: 'https://images.unsplash.com/photo-1677442d019cecf8d5a32b9c94d39be18c6b1d8c?w=200&h=200&fit=crop',
+        x: 100,
+        y: 0,
+        z: 0,
       },
     }),
-    prisma.edge.create({
+    prisma.node.create({
       data: {
-        fromNodeId: root.id,
-        toNodeId: branch3_mid.id,
-        label: 'CONNECTS_TO',
-        weight: 1.0,
-        color: '#888888',
-        graphId: graph.id,
+        name: '神经网络',
+        type: 'concept',
+        description: '神经网络是深度学习的基础',
+        graphId: graph3d.id,
+        projectId: project.id,
+        color: '#ec4899',
+        imageUrl: 'https://images.unsplash.com/photo-1677442d019cecf8d5a32b9c94d39be18c6b1d8c?w=200&h=200&fit=crop',
+        x: 50,
+        y: 100,
+        z: 0,
       },
     }),
-    
-    // 分支 1 内部连接
-    prisma.edge.create({
+    prisma.node.create({
       data: {
-        fromNodeId: branch1_mid.id,
-        toNodeId: branch1_end.id,
-        label: 'LEADS_TO',
-        weight: 0.9,
-        color: '#888888',
-        graphId: graph.id,
+        name: '自然语言处理',
+        type: 'concept',
+        description: '自然语言处理是深度学习的应用领域',
+        graphId: graph3d.id,
+        projectId: project.id,
+        color: '#f59e0b',
+        imageUrl: 'https://images.unsplash.com/photo-1677442d019cecf8d5a32b9c94d39be18c6b1d8c?w=200&h=200&fit=crop',
+        x: 150,
+        y: 100,
+        z: 0,
       },
     }),
-    
-    // 分支 2 内部连接（3个节点）
-    prisma.edge.create({
+    prisma.node.create({
       data: {
-        fromNodeId: branch2_mid.id,
-        toNodeId: branch2_mid2.id,
-        label: 'LEADS_TO',
-        weight: 0.9,
-        color: '#888888',
-        graphId: graph.id,
-      },
-    }),
-    prisma.edge.create({
-      data: {
-        fromNodeId: branch2_mid2.id,
-        toNodeId: branch2_end.id,
-        label: 'LEADS_TO',
-        weight: 0.9,
-        color: '#888888',
-        graphId: graph.id,
-      },
-    }),
-    
-    // 分支 3 内部连接
-    prisma.edge.create({
-      data: {
-        fromNodeId: branch3_mid.id,
-        toNodeId: branch3_end.id,
-        label: 'LEADS_TO',
-        weight: 0.9,
-        color: '#888888',
-        graphId: graph.id,
+        name: '计算机视觉',
+        type: 'concept',
+        description: '计算机视觉是深度学习的重要应用',
+        graphId: graph3d.id,
+        projectId: project.id,
+        color: '#10b981',
+        imageUrl: 'https://images.unsplash.com/photo-1677442d019cecf8d5a32b9c94d39be18c6b1d8c?w=200&h=200&fit=crop',
+        x: 200,
+        y: 50,
+        z: 0,
       },
     }),
   ])
 
-  console.log('✓ 创建边（树状连接）')
+  console.log('✓ 3D 图谱节点创建成功')
 
-  // 统计信息
-  const nodeCount = await prisma.node.count()
-  const edgeCount = await prisma.edge.count()
+  // 为 3D 图谱添加边
+  await Promise.all([
+    prisma.edge.create({
+      data: {
+        fromNodeId: nodes3d[0].id,
+        toNodeId: nodes3d[1].id,
+        label: 'INCLUDES',
+        graphId: graph3d.id,
+        projectId: project.id,
+      },
+    }),
+    prisma.edge.create({
+      data: {
+        fromNodeId: nodes3d[1].id,
+        toNodeId: nodes3d[2].id,
+        label: 'BASED_ON',
+        graphId: graph3d.id,
+        projectId: project.id,
+      },
+    }),
+    prisma.edge.create({
+      data: {
+        fromNodeId: nodes3d[1].id,
+        toNodeId: nodes3d[3].id,
+        label: 'APPLIED_TO',
+        graphId: graph3d.id,
+        projectId: project.id,
+      },
+    }),
+    prisma.edge.create({
+      data: {
+        fromNodeId: nodes3d[1].id,
+        toNodeId: nodes3d[4].id,
+        label: 'APPLIED_TO',
+        graphId: graph3d.id,
+        projectId: project.id,
+      },
+    }),
+  ])
 
-  console.log('\n📊 树状知识图谱填充完成！')
-  console.log(`   节点数: ${nodeCount}`)
-  console.log(`   关系数: ${edgeCount}`)
-  console.log('\n🎯 树状结构:')
-  console.log('   - 1 个根节点（RAG 系统）在左侧 x=-15')
-  console.log('   - 分支 1（上方）: 检索模块 → 向量数据库')
-  console.log('   - 分支 2（中间）: 知识库 → 嵌入模型 → 文档处理')
-  console.log('   - 分支 3（下方）: 生成模块 → LLM')
-  console.log('   - 所有分支从左向右延伸，呈现放射状树形')
+  console.log('✓ 3D 图谱边创建成功')
+
+  // ============ 创建 2D 图谱 ============
+  const graph2d = await prisma.graph.create({
+    data: {
+      name: '数据科学工具链',
+      description: '数据科学领域常用的工具和库',
+      projectId: project.id,
+      isPublic: true,
+      settings: JSON.stringify({
+        graphType: '2d',
+        isTemplate: false,
+        thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop',
+      }),
+      nodeCount: 5,
+      edgeCount: 4,
+    },
+  })
+
+  console.log('✓ 2D 图谱创建成功')
+
+  // 为 2D 图谱添加节点
+  const nodes2d = await Promise.all([
+    prisma.node.create({
+      data: {
+        name: 'Python',
+        type: 'tool',
+        description: '数据科学的主要编程语言',
+        graphId: graph2d.id,
+        projectId: project.id,
+        color: '#3776ab',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop',
+        x: 0,
+        y: 0,
+      },
+    }),
+    prisma.node.create({
+      data: {
+        name: 'Pandas',
+        type: 'library',
+        description: '数据处理和分析库',
+        graphId: graph2d.id,
+        projectId: project.id,
+        color: '#150458',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop',
+        x: 100,
+        y: 0,
+      },
+    }),
+    prisma.node.create({
+      data: {
+        name: 'NumPy',
+        type: 'library',
+        description: '数值计算库',
+        graphId: graph2d.id,
+        projectId: project.id,
+        color: '#013243',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop',
+        x: 100,
+        y: 100,
+      },
+    }),
+    prisma.node.create({
+      data: {
+        name: 'Scikit-learn',
+        type: 'library',
+        description: '机器学习库',
+        graphId: graph2d.id,
+        projectId: project.id,
+        color: '#f7931e',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop',
+        x: 200,
+        y: 50,
+      },
+    }),
+    prisma.node.create({
+      data: {
+        name: 'Matplotlib',
+        type: 'library',
+        description: '数据可视化库',
+        graphId: graph2d.id,
+        projectId: project.id,
+        color: '#11557c',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop',
+        x: 0,
+        y: 100,
+      },
+    }),
+  ])
+
+  console.log('✓ 2D 图谱节点创建成功')
+
+  // 为 2D 图谱添加边
+  await Promise.all([
+    prisma.edge.create({
+      data: {
+        fromNodeId: nodes2d[0].id,
+        toNodeId: nodes2d[1].id,
+        label: 'USES',
+        graphId: graph2d.id,
+        projectId: project.id,
+      },
+    }),
+    prisma.edge.create({
+      data: {
+        fromNodeId: nodes2d[0].id,
+        toNodeId: nodes2d[2].id,
+        label: 'USES',
+        graphId: graph2d.id,
+        projectId: project.id,
+      },
+    }),
+    prisma.edge.create({
+      data: {
+        fromNodeId: nodes2d[0].id,
+        toNodeId: nodes2d[3].id,
+        label: 'USES',
+        graphId: graph2d.id,
+        projectId: project.id,
+      },
+    }),
+    prisma.edge.create({
+      data: {
+        fromNodeId: nodes2d[0].id,
+        toNodeId: nodes2d[4].id,
+        label: 'USES',
+        graphId: graph2d.id,
+        projectId: project.id,
+      },
+    }),
+  ])
+
+  console.log('✓ 2D 图谱边创建成功')
+
+  console.log('\n✅ 测试数据生成完成！')
+  console.log(`   项目: ${project.name}`)
+  console.log(`   3D 图谱: ${graph3d.name}`)
+  console.log(`   2D 图谱: ${graph2d.name}`)
 }
 
 main()
   .catch((e) => {
-    console.error('❌ 填充数据失败:', e)
+    console.error('❌ 生成测试数据失败:', e)
     process.exit(1)
   })
   .finally(async () => {
