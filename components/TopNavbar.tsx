@@ -26,11 +26,6 @@ export default function TopNavbar() {
   
   const { user, isLoggedIn, logout, initializeFromStorage } = useUserStore()
   
-  // 调试：打印登录状态
-  useEffect(() => {
-    console.log('TopNavbar - isLoggedIn:', isLoggedIn, 'user:', user)
-  }, [isLoggedIn, user])
-  
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
@@ -83,13 +78,10 @@ export default function TopNavbar() {
     // 从数据库加载项目数据（使用优化的 API）
     const loadProjects = async () => {
       try {
-        console.log('正在从数据库加载项目...')
         const res = await fetch('/api/projects/with-graphs')
         if (res.ok) {
           const data = await res.json()
           const projects = data.projects || []
-          
-          console.log('加载到的项目数:', projects.length)
           
           setProjects(projects)
           
@@ -102,9 +94,6 @@ export default function TopNavbar() {
           const projectId = projectIdFromUrl || localStorage.getItem('currentProjectId')
           const graphId = graphIdFromUrl || localStorage.getItem('currentGraphId')
           
-          console.log('🔍 状态恢复 - projectId:', projectId, 'graphId:', graphId)
-          console.log('  - 来源:', projectIdFromUrl ? 'URL参数' : 'localStorage')
-          
           // 验证ID是否是真实的数据库ID（cuid格式）
           const isValidId = (id: string | null) => id && id.startsWith('cmk')
           
@@ -114,22 +103,18 @@ export default function TopNavbar() {
             const graph = project?.graphs.find((g: any) => g.id === graphId)
             
             if (project && graph) {
-              console.log('✅ 恢复选择的图谱:', graph.name)
               switchGraph(projectId!, graphId!)
               
               // 如果是从 URL 参数恢复的，清理 URL（避免刷新时重复处理）
               if (projectIdFromUrl || graphIdFromUrl) {
-                console.log('🧹 清理 URL 查询参数')
                 window.history.replaceState({}, '', window.location.pathname)
               }
             } else {
-              console.log('⚠️ 上次选择的图谱不存在，清理localStorage')
               localStorage.removeItem('currentProjectId')
               localStorage.removeItem('currentGraphId')
             }
           } else {
             // 清理旧的本地ID
-            console.log('⚠️ 检测到旧的本地ID，清理localStorage')
             localStorage.removeItem('currentProjectId')
             localStorage.removeItem('currentGraphId')
             localStorage.removeItem('projects')
@@ -913,7 +898,6 @@ export default function TopNavbar() {
           {!isLoggedIn ? (
             <button
               onClick={() => {
-                console.log('登录按钮被点击');
                 setIsLoginModalOpen(true);
               }}
               style={{

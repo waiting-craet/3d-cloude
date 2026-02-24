@@ -17,9 +17,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   const login = useUserStore((state) => state.login);
 
-  // 调试：打印 modal 状态
-  console.log('LoginModal - isOpen:', isOpen);
-
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
