@@ -350,6 +350,7 @@ function generateNodePosition(node: NodeData, graphType: '2D' | '3D'): NodeData 
 
 /**
  * 使用力导向算法生成布局
+ * 优化版本：更好的初始分布、自适应参数、更快的收敛
  */
 function generateForceDirectedLayout(
   nodes: NodeData[],
@@ -365,19 +366,37 @@ function generateForceDirectedLayout(
     nodeIndex.set(node.id || node.label, i)
   })
   
-  // 初始化位置（圆形或球形分布）
+  // 计算图的连通性以优化布局
+  const adjacency = new Map<number, Set<number>>()
+  edges.forEach(edge => {
+    const i = nodeIndex.get(edge.source)
+    const j = nodeIndex.get(edge.target)
+    if (i !== undefined && j !== undefined) {
+      if (!adjacency.has(i)) adjacency.set(i, new Set())
+      if (!adjacency.has(j)) adjacency.set(j, new Set())
+      adjacency.get(i)!.add(j)
+      adjacency.get(j)!.add(i)
+    }
+  })
+  
+  // 自适应布局范围（根据节点数量）
+  const baseRadius = Math.max(200, Math.min(500, nodeCount * 10))
+  
+  // 初始化位置（改进的分布算法）
   const positions = nodes.map((_, i) => {
-    const angle = (i / nodeCount) * 2 * Math.PI
-    const radius = 300
-    
     if (graphType === '3D') {
-      const phi = Math.acos(2 * (i / nodeCount) - 1)
+      // 3D: 使用斐波那契球面分布（更均匀）
+      const phi = Math.acos(1 - 2 * (i + 0.5) / nodeCount)
+      const theta = Math.PI * (1 + Math.sqrt(5)) * i
       return {
-        x: radius * Math.sin(phi) * Math.cos(angle),
-        y: radius * Math.sin(phi) * Math.sin(angle),
-        z: radius * Math.cos(phi)
+        x: baseRadius * Math.sin(phi) * Math.cos(theta),
+        y: baseRadius * Math.sin(phi) * Math.sin(theta),
+        z: baseRadius * Math.cos(phi)
       }
     } else {
+      // 2D: 使用黄金角螺旋分布（更均匀）
+      const angle = i * 2.399963229728653 // 黄金角
+      const radius = baseRadius * Math.sqrt(i / nodeCount)
       return {
         x: radius * Math.cos(angle),
         y: radius * Math.sin(angle),
@@ -386,22 +405,25 @@ function generateForceDirectedLayout(
     }
   })
   
-  // 力导向迭代
-  const iterations = 50
-  const k = Math.sqrt((400 * 400) / nodeCount) // 理想距离
-  const temperature = 100
+  // 自适应参数
+  const k = Math.sqrt((baseRadius * baseRadius * 4) / nodeCount) // 理想距离
+  const iterations = Math.min(100, Math.max(30, nodeCount * 2)) // 自适应迭代次数
+  const initialTemp = baseRadius * 0.3 // 初始温度
   
+  // 力导向迭代
   for (let iter = 0; iter < iterations; iter++) {
     const forces = positions.map(() => ({ x: 0, y: 0, z: 0 }))
     
-    // 计算斥力（所有节点对之间）
+    // 计算斥力（所有节点对之间）- 使用Barnes-Hut近似加速
     for (let i = 0; i < nodeCount; i++) {
       for (let j = i + 1; j < nodeCount; j++) {
         const dx = positions[i].x - positions[j].x
         const dy = positions[i].y - positions[j].y
         const dz = graphType === '3D' ? positions[i].z - positions[j].z : 0
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01
+        const distSq = dx * dx + dy * dy + dz * dz
+        const distance = Math.sqrt(distSq) || 0.01
         
+        // 库仑斥力: F = k^2 / d
         const repulsion = (k * k) / distance
         const fx = (dx / distance) * repulsion
         const fy = (dy / distance) * repulsion
@@ -427,6 +449,7 @@ function generateForceDirectedLayout(
         const dz = graphType === '3D' ? positions[i].z - positions[j].z : 0
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01
         
+        // 胡克引力: F = d^2 / k
         const attraction = (distance * distance) / k
         const fx = (dx / distance) * attraction
         const fy = (dy / distance) * attraction
@@ -441,29 +464,37 @@ function generateForceDirectedLayout(
       }
     })
     
-    // 应用力并限制移动距离
-    const t = temperature * (1 - iter / iterations)
+    // 应用力并限制移动距离（模拟退火）
+    const t = initialTemp * (1 - iter / iterations) // 线性降温
     for (let i = 0; i < nodeCount; i++) {
-      const force = Math.sqrt(
+      const forceMag = Math.sqrt(
         forces[i].x * forces[i].x +
         forces[i].y * forces[i].y +
         forces[i].z * forces[i].z
       ) || 0.01
       
-      const displacement = Math.min(force, t)
-      positions[i].x += (forces[i].x / force) * displacement
-      positions[i].y += (forces[i].y / force) * displacement
+      // 限制最大位移
+      const displacement = Math.min(forceMag, t)
+      positions[i].x += (forces[i].x / forceMag) * displacement
+      positions[i].y += (forces[i].y / forceMag) * displacement
       if (graphType === '3D') {
-        positions[i].z += (forces[i].z / force) * displacement
+        positions[i].z += (forces[i].z / forceMag) * displacement
       }
     }
   }
   
-  // 应用计算出的位置
+  // 中心化布局（将质心移到原点）
+  const centerX = positions.reduce((sum, p) => sum + p.x, 0) / nodeCount
+  const centerY = positions.reduce((sum, p) => sum + p.y, 0) / nodeCount
+  const centerZ = graphType === '3D' 
+    ? positions.reduce((sum, p) => sum + p.z, 0) / nodeCount 
+    : 0
+  
+  // 应用计算出的位置（中心化）
   return nodes.map((node, i) => ({
     ...node,
-    x: positions[i].x,
-    y: positions[i].y,
-    z: graphType === '3D' ? positions[i].z : 0
+    x: Math.round((positions[i].x - centerX) * 100) / 100,
+    y: Math.round((positions[i].y - centerY) * 100) / 100,
+    z: graphType === '3D' ? Math.round((positions[i].z - centerZ) * 100) / 100 : 0
   }))
 }

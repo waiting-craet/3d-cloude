@@ -24,6 +24,12 @@ export default function ImportPage() {
   const [fileType, setFileType] = useState<'excel' | 'csv' | 'json' | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<string>('')
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false)
+  const [showNewGraphModal, setShowNewGraphModal] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [newProjectName, setNewProjectName] = useState('')
+  const [newGraphName, setNewGraphName] = useState('')
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     fetchProjects()
@@ -61,6 +67,73 @@ export default function ImportPage() {
     } catch (error) {
       console.error('Failed to fetch graphs:', error)
       setGraphs([])
+    }
+  }
+
+
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) {
+      alert('请输入项目名称')
+      return
+    }
+    setCreating(true)
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newProjectName.trim() })
+      })
+      if (response.ok) {
+        const newProject = await response.json()
+        await fetchProjects()
+        setSelectedProject(newProject.id)
+        setShowNewProjectModal(false)
+        setNewProjectName('')
+      } else {
+        alert('创建项目失败')
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error)
+      alert('创建项目失败')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleCreateGraph = async () => {
+    if (!newGraphName.trim()) {
+      alert('请输入图谱名称')
+      return
+    }
+    if (!selectedProject) {
+      alert('请先选择项目')
+      return
+    }
+    setCreating(true)
+    try {
+      const response = await fetch(`/api/projects/${selectedProject}/graphs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: newGraphName.trim(),
+          type: graphType
+        })
+      })
+      if (response.ok) {
+        const newGraph = await response.json()
+        await fetchGraphs(selectedProject)
+        setSelectedGraph(newGraph.id)
+        setShowNewGraphModal(false)
+        setNewGraphName('')
+      } else {
+        alert('创建图谱失败')
+      }
+    } catch (error) {
+      console.error('Failed to create graph:', error)
+      alert('创建图谱失败')
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -104,6 +177,19 @@ export default function ImportPage() {
       link.click()
       document.body.removeChild(link)
     }
+  }
+
+  const handleGenerateClick = () => {
+    if (!selectedFile || !selectedProject || !selectedGraph) {
+      setUploadStatus('请选择项目、图谱和文件')
+      return
+    }
+    setShowConfirmModal(true)
+  }
+
+  const handleConfirmUpload = async () => {
+    setShowConfirmModal(false)
+    await handleUpload()
   }
 
   const handleUpload = async () => {
@@ -193,13 +279,16 @@ export default function ImportPage() {
             background: 'white',
             borderRadius: '8px',
             padding: '12px 16px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center'
           }}>
             <select
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
               style={{
-                width: '100%',
+                flex: 1,
                 padding: '8px',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
@@ -213,6 +302,29 @@ export default function ImportPage() {
                 <option key={project.id} value={project.id}>{project.name}</option>
               ))}
             </select>
+            <button
+              onClick={() => setShowNewProjectModal(true)}
+              style={{
+                padding: '8px 16px',
+                background: '#1a3a52',
+                border: 'none',
+                borderRadius: '4px',
+                color: 'white',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#2a4a62'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#1a3a52'
+              }}
+            >
+              + 新建
+            </button>
           </div>
 
           {/* 图谱类型切换 */}
@@ -353,26 +465,60 @@ export default function ImportPage() {
               }}>
                 选择图谱
               </label>
-              <select
-                value={selectedGraph}
-                onChange={(e) => setSelectedGraph(e.target.value)}
-                disabled={!selectedProject}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  cursor: selectedProject ? 'pointer' : 'not-allowed',
-                  opacity: selectedProject ? 1 : 0.5
-                }}
-              >
-                <option value="">请选择图谱</option>
-                {Array.isArray(graphs) && graphs.map((graph) => (
-                  <option key={graph.id} value={graph.id}>{graph.name}</option>
-                ))}
-              </select>
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'center'
+              }}>
+                <select
+                  value={selectedGraph}
+                  onChange={(e) => setSelectedGraph(e.target.value)}
+                  disabled={!selectedProject}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    cursor: selectedProject ? 'pointer' : 'not-allowed',
+                    opacity: selectedProject ? 1 : 0.5
+                  }}
+                >
+                  <option value="">请选择图谱</option>
+                  {Array.isArray(graphs) && graphs.map((graph) => (
+                    <option key={graph.id} value={graph.id}>{graph.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowNewGraphModal(true)}
+                  disabled={!selectedProject}
+                  style={{
+                    padding: '10px 16px',
+                    background: !selectedProject ? '#ccc' : '#1a3a52',
+                    border: 'none',
+                    borderRadius: '4px',
+                    color: 'white',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: !selectedProject ? 'not-allowed' : 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedProject) {
+                      e.currentTarget.style.background = '#2a4a62'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedProject) {
+                      e.currentTarget.style.background = '#1a3a52'
+                    }
+                  }}
+                >
+                  + 新建
+                </button>
+              </div>
             </div>
           </div>
 
@@ -509,7 +655,7 @@ export default function ImportPage() {
           textAlign: 'center'
         }}>
           <button
-            onClick={handleUpload}
+            onClick={handleGenerateClick}
             disabled={!selectedFile || !selectedProject || !selectedGraph || uploading}
             style={{
               padding: '14px 60px',
@@ -559,6 +705,330 @@ export default function ImportPage() {
           </button>
         </div>
       </div>
+
+      {/* 新建项目模态框 */}
+      {showNewProjectModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '400px',
+            maxWidth: '90%',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '20px'
+            }}>
+              新建项目
+            </h3>
+            <input
+              type="text"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              placeholder="请输入项目名称"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '14px',
+                outline: 'none',
+                marginBottom: '20px'
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') handleCreateProject()
+              }}
+            />
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => {
+                  setShowNewProjectModal(false)
+                  setNewProjectName('')
+                }}
+                disabled={creating}
+                style={{
+                  padding: '10px 20px',
+                  background: '#f5f5f5',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  cursor: creating ? 'not-allowed' : 'pointer',
+                  opacity: creating ? 0.5 : 1
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleCreateProject}
+                disabled={creating || !newProjectName.trim()}
+                style={{
+                  padding: '10px 20px',
+                  background: creating || !newProjectName.trim() ? '#ccc' : '#1a3a52',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: 'white',
+                  fontSize: '14px',
+                  cursor: creating || !newProjectName.trim() ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {creating ? '创建中...' : '确定'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 新建图谱模态框 */}
+      {showNewGraphModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '400px',
+            maxWidth: '90%',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '20px'
+            }}>
+              新建图谱
+            </h3>
+            <input
+              type="text"
+              value={newGraphName}
+              onChange={(e) => setNewGraphName(e.target.value)}
+              placeholder="请输入图谱名称"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '14px',
+                outline: 'none',
+                marginBottom: '15px'
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') handleCreateGraph()
+              }}
+            />
+            <div style={{
+              padding: '10px',
+              background: '#f0f8ff',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              fontSize: '13px',
+              color: '#1a3a52'
+            }}>
+              图谱类型: {graphType}
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => {
+                  setShowNewGraphModal(false)
+                  setNewGraphName('')
+                }}
+                disabled={creating}
+                style={{
+                  padding: '10px 20px',
+                  background: '#f5f5f5',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  cursor: creating ? 'not-allowed' : 'pointer',
+                  opacity: creating ? 0.5 : 1
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleCreateGraph}
+                disabled={creating || !newGraphName.trim()}
+                style={{
+                  padding: '10px 20px',
+                  background: creating || !newGraphName.trim() ? '#ccc' : '#1a3a52',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: 'white',
+                  fontSize: '14px',
+                  cursor: creating || !newGraphName.trim() ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {creating ? '创建中...' : '确定'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 确认导入模态框 */}
+      {showConfirmModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '450px',
+            maxWidth: '90%',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '24px' }}>📊</span>
+              确认生成图谱
+            </h3>
+            
+            <div style={{
+              background: '#f8f9fa',
+              borderRadius: '8px',
+              padding: '20px',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                fontSize: '14px',
+                color: '#555'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>项目:</span>
+                  <span style={{ fontWeight: '600', color: '#333' }}>
+                    {projects.find(p => p.id === selectedProject)?.name || ''}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>图谱:</span>
+                  <span style={{ fontWeight: '600', color: '#333' }}>
+                    {graphs.find(g => g.id === selectedGraph)?.name || ''}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>类型:</span>
+                  <span style={{ fontWeight: '600', color: '#1a3a52' }}>{graphType}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>文件:</span>
+                  <span style={{ fontWeight: '600', color: '#333', fontSize: '13px' }}>
+                    {selectedFile?.name}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#666' }}>格式:</span>
+                  <span style={{ fontWeight: '600', color: '#333' }}>
+                    {fileType?.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              padding: '12px',
+              background: '#fff3cd',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              fontSize: '13px',
+              color: '#856404',
+              border: '1px solid #ffeaa7'
+            }}>
+              ⚠️ 数据将被导入到选定的图谱中，此操作不可撤销
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                style={{
+                  padding: '10px 24px',
+                  background: '#f5f5f5',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmUpload}
+                style={{
+                  padding: '10px 24px',
+                  background: '#1a3a52',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: 'white',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                确认生成
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

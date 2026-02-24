@@ -60,7 +60,15 @@ export async function POST(request: NextRequest) {
     } catch (parseError) {
       console.error('Parse error:', parseError)
       return NextResponse.json(
-        { message: '文件解析失败', error: String(parseError) },
+        { message: `文件解析失败: ${parseError instanceof Error ? parseError.message : String(parseError)}` },
+        { status: 400 }
+      )
+    }
+
+    // 验证数据
+    if (!parsedData.nodes || parsedData.nodes.length === 0) {
+      return NextResponse.json(
+        { message: '文件中没有找到有效的节点数据' },
         { status: 400 }
       )
     }
@@ -71,70 +79,89 @@ export async function POST(request: NextRequest) {
     // 创建节点映射（label/id -> database id）
     const nodeMap = new Map<string, string>()
 
-    // 批量创建节点
-    for (const nodeData of nodesWithLayout) {
-      const node = await prisma.node.create({
-        data: {
-          label: nodeData.label || '未命名节点',
-          description: nodeData.description || '',
-          x: nodeData.x || 0,
-          y: nodeData.y || 0,
-          z: nodeData.z || 0,
-          color: nodeData.color || '#00bfa5',
-          size: nodeData.size || 1,
-          shape: nodeData.shape || 'sphere',
-          projectId: projectId,
-          graphId: graphId
-        }
-      })
-      
-      // 使用原始id或label作为映射键
-      const key = nodeData.id || nodeData.label
-      nodeMap.set(key, node.id)
-    }
-
-    // 批量创建边
-    let edgesCreated = 0
-    for (const edgeData of parsedData.edges) {
-      const sourceId = nodeMap.get(edgeData.source)
-      const targetId = nodeMap.get(edgeData.target)
-      
-      if (sourceId && targetId) {
-        await prisma.edge.create({
+    // 批量创建节点 - 使用事务提高性能
+    const createdNodes = await prisma.$transaction(
+      nodesWithLayout.map(nodeData => 
+        prisma.node.create({
           data: {
-            label: edgeData.label || '',
-            sourceId: sourceId,
-            targetId: targetId,
+            label: nodeData.label || '未命名节点',
+            description: nodeData.description || '',
+            x: nodeData.x || 0,
+            y: nodeData.y || 0,
+            z: nodeData.z || 0,
+            color: nodeData.color || '#00bfa5',
+            size: nodeData.size || 1,
+            shape: nodeData.shape || 'sphere',
             projectId: projectId,
             graphId: graphId
           }
         })
-        edgesCreated++
-      } else {
+      )
+    )
+
+    // 建立节点映射
+    createdNodes.forEach((node, index) => {
+      const originalNode = nodesWithLayout[index]
+      const key = originalNode.id || originalNode.label
+      nodeMap.set(key, node.id)
+    })
+
+    // 批量创建边 - 过滤无效边并使用事务
+    const validEdges = parsedData.edges.filter(edgeData => {
+      const sourceId = nodeMap.get(edgeData.source)
+      const targetId = nodeMap.get(edgeData.target)
+      
+      if (!sourceId || !targetId) {
         console.warn(`Edge skipped: ${edgeData.source} -> ${edgeData.target} (nodes not found)`)
+        return false
       }
-    }
+      return true
+    })
+
+    const createdEdges = validEdges.length > 0 ? await prisma.$transaction(
+      validEdges.map(edgeData => 
+        prisma.edge.create({
+          data: {
+            label: edgeData.label || '',
+            sourceId: nodeMap.get(edgeData.source)!,
+            targetId: nodeMap.get(edgeData.target)!,
+            projectId: projectId,
+            graphId: graphId
+          }
+        })
+      )
+    ) : []
 
     // 更新图谱的节点和边计数
     await prisma.graph.update({
       where: { id: graphId },
       data: {
-        nodeCount: { increment: nodesWithLayout.length },
-        edgeCount: { increment: edgesCreated }
+        nodeCount: { increment: createdNodes.length },
+        edgeCount: { increment: createdEdges.length }
+      }
+    })
+
+    // 更新项目的节点和边计数
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        nodeCount: { increment: createdNodes.length },
+        edgeCount: { increment: createdEdges.length }
       }
     })
 
     return NextResponse.json({
       message: '导入成功',
-      nodesCount: nodesWithLayout.length,
-      edgesCount: edgesCreated,
-      graphType: graphType
+      nodesCount: createdNodes.length,
+      edgesCount: createdEdges.length,
+      graphType: graphType,
+      skippedEdges: parsedData.edges.length - createdEdges.length
     })
 
   } catch (error) {
     console.error('Import error:', error)
     return NextResponse.json(
-      { message: '导入失败', error: String(error) },
+      { message: `导入失败: ${error instanceof Error ? error.message : String(error)}` },
       { status: 500 }
     )
   }
