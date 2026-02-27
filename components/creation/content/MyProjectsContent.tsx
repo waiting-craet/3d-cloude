@@ -9,7 +9,7 @@ import styles from '../styles.module.css';
 interface Project {
   id: string;
   name: string;
-  description: string;
+  description: string | null | undefined;
   thumbnail?: string;
   createdAt: Date;
   status: 'active' | 'archived';
@@ -40,8 +40,9 @@ export default function MyProjectsContent({
         }
         const data = await response.json();
         
-        // 转换数据格式
-        const formattedProjects: Project[] = data.map((project: any) => ({
+        // 转换数据格式 - API返回 { projects: [...] }
+        const projectsArray = data.projects || [];
+        const formattedProjects: Project[] = projectsArray.map((project: any) => ({
           id: project.id,
           name: project.name,
           description: project.description || '暂无介绍',

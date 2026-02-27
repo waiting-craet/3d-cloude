@@ -1,0 +1,494 @@
+/* 创建工作流页面样式 - 新设计 */
+
+/* 页面容器 */
+.pageContainer {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* 左侧导航栏 - 1/6 宽度 */
+.sideNavigation {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 16.67%;
+  height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
+}
+
+/* 标题区域 */
+.titleSection {
+  padding: 28px 20px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+}
+
+.titleText {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 按钮容器 */
+.buttonContainer {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 新建按钮 - 蓝色渐变 */
+.newButton {
+  width: 100%;
+  height: 40px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.newButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 500ms ease;
+}
+
+.newButton:hover {
+  background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(24, 144, 255, 0.35);
+}
+
+.newButton:hover::before {
+  left: 100%;
+}
+
+.newButton:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.25);
+}
+
+/* 导入按钮 - 白色带边框 */
+.importButton {
+  width: 100%;
+  height: 40px;
+  padding: 10px 16px;
+  background: #ffffff;
+  color: #595959;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.importButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.02), transparent);
+  transition: left 500ms ease;
+}
+
+.importButton:hover {
+  background: #fafafa;
+  border-color: #1890ff;
+  color: #1890ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.importButton:hover::before {
+  left: 100%;
+}
+
+.importButton:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* AI创建按钮 - 紫色渐变 */
+.aiCreateButton {
+  width: 100%;
+  height: 40px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #722ed1 0%, #531dab 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(114, 46, 209, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.aiCreateButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 500ms ease;
+}
+
+.aiCreateButton:hover {
+  background: linear-gradient(135deg, #9254de 0%, #722ed1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(114, 46, 209, 0.35);
+}
+
+.aiCreateButton:hover::before {
+  left: 100%;
+}
+
+.aiCreateButton:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(114, 46, 209, 0.25);
+}
+
+/* 右侧主内容区 - 5/6 宽度 */
+.mainContent {
+  margin-left: 16.67%;
+  width: 83.33%;
+  height: 100vh;
+  background: #fafafa;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 搜索框容器 */
+.searchContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+/* 搜索框 */
+.searchBar {
+  width: 300px;
+  height: 40px;
+  padding: 10px 16px 10px 40px;
+  background: #ffffff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #262626;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.searchBar:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.searchBar::placeholder {
+  color: #bfbfbf;
+}
+
+/* 搜索图标 */
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bfbfbf;
+  font-size: 16px;
+  pointer-events: none;
+}
+
+/* 功能卡片容器 */
+.actionCards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* 功能卡片 */
+.actionCard {
+  width: 200px;
+  height: 120px;
+  padding: 20px;
+  border-radius: 16px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.actionCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.actionCard::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 600ms ease, height 600ms ease;
+}
+
+.actionCard:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+.actionCard:hover::before {
+  opacity: 1;
+}
+
+.actionCard:active {
+  transform: translateY(-2px) scale(0.98);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.actionCard:active::after {
+  width: 300px;
+  height: 300px;
+  opacity: 0;
+}
+
+/* AI创建卡片 - 鲜艳红色渐变 */
+.aiCreateCard {
+  background: linear-gradient(135deg, #ff4d4f 0%, #f5222d 100%);
+}
+
+/* 导入数据卡片 - 鲜艳绿色渐变 */
+.importDataCard {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+}
+
+/* 项目筛选栏 */
+.filterBar {
+  width: 100%;
+  height: 60px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: none;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 250ms ease;
+}
+
+.filterBar:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 我的项目文本 */
+.myProjectsText {
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0;
+}
+
+/* 下拉框容器 */
+.filterControls {
+  display: flex;
+  gap: 12px;
+}
+
+/* 下拉框 */
+.filterSelect {
+  width: 140px;
+  height: 36px;
+  padding: 8px 32px 8px 12px;
+  background: #ffffff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #262626;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23595959' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.filterSelect:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+}
+
+/* 项目列表区域 */
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  flex: 1;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .sideNavigation {
+    width: 20%;
+  }
+
+  .mainContent {
+    margin-left: 20%;
+    width: 80%;
+  }
+}
+
+@media (max-width: 768px) {
+  .sideNavigation {
+    width: 25%;
+  }
+
+  .mainContent {
+    margin-left: 25%;
+    width: 75%;
+  }
+
+  .searchBar {
+    width: 250px;
+  }
+
+  .actionCards {
+    flex-direction: column;
+  }
+
+  .actionCard {
+    width: 100%;
+  }
+
+  .filterBar {
+    flex-direction: column;
+    height: auto;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .filterControls {
+    width: 100%;
+  }
+
+  .filterSelect {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .sideNavigation {
+    width: 30%;
+  }
+
+  .mainContent {
+    margin-left: 30%;
+    width: 70%;
+    padding: 12px;
+  }
+
+  .titleText {
+    font-size: 18px;
+  }
+
+  .buttonContainer {
+    padding: 12px;
+  }
+
+  .newButton,
+  .importButton,
+  .aiCreateButton {
+    font-size: 12px;
+    height: 36px;
+  }
+
+  .searchBar {
+    width: 100%;
+  }
+
+  .myProjectsText {
+    font-size: 16px;
+  }
+
+  .projectGrid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+}

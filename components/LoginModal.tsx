@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUserStore } from '@/lib/userStore';
 
 interface LoginModalProps {
@@ -14,8 +14,33 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const firstInputRef = useRef<HTMLInputElement>(null);
 
   const login = useUserStore((state) => state.login);
+
+  // 焦点管理: 弹窗打开时自动聚焦到第一个输入框
+  useEffect(() => {
+    if (isOpen && firstInputRef.current) {
+      firstInputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  // ESC 键关闭弹窗
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -63,6 +88,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="login-modal-title"
       style={{
         position: 'fixed',
         top: 0,
@@ -96,6 +124,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           borderBottom: '2px solid #f3f4f6',
         }}>
           <button
+            id="login-modal-title"
             style={{
               flex: 1,
               padding: '12px 0',
@@ -154,6 +183,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               用户名
             </label>
             <input
+              ref={firstInputRef}
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}

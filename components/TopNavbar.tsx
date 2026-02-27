@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/lib/store'
 import { useUserStore } from '@/lib/userStore'
 import { getThemeConfig } from '@/lib/theme'
-import LoginModal from './LoginModal'
 import CreateProjectModal from './CreateProjectModal'
 import DeleteButton from './DeleteButton'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
@@ -29,7 +28,6 @@ export default function TopNavbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [showProjectMenu, setShowProjectMenu] = useState(false)
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null)
@@ -460,16 +458,48 @@ export default function TopNavbar() {
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
         transition: 'all 0.3s ease',
       }}>
-        {/* 左侧：现有图谱下拉菜单 */}
+        {/* 返回按钮 */}
+        <button
+          onClick={() => window.history.back()}
+          style={{
+            padding: '8px 12px',
+            background: 'transparent',
+            border: `1px solid ${themeConfig.buttonBorder}`,
+            borderRadius: '8px',
+            color: themeConfig.navbarText,
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.background = themeConfig.buttonHoverBackground
+            e.currentTarget.style.borderColor = 'rgba(74, 158, 255, 0.5)'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.borderColor = themeConfig.buttonBorder
+          }}
+          title="返回上一页"
+        >
+          <span style={{ fontSize: '16px' }}>←</span>
+          <span>返回</span>
+        </button>
+
+        {/* 左侧:现有图谱下拉菜单 */}
         <div ref={projectMenuRef} style={{ position: 'relative' }}>
           <button
             onClick={() => setShowProjectMenu(!showProjectMenu)}
             style={{
               padding: '8px 16px',
-              background: showProjectMenu ? 'rgba(74, 158, 255, 0.15)' : 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: showProjectMenu ? themeConfig.buttonBackground : 'transparent',
+              border: `1px solid ${themeConfig.buttonBorder}`,
               borderRadius: '8px',
-              color: '#ffffff',
+              color: themeConfig.navbarText,
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: '600',
@@ -481,7 +511,7 @@ export default function TopNavbar() {
             }}
             onMouseOver={(e) => {
               if (!showProjectMenu) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                e.currentTarget.style.background = themeConfig.buttonHoverBackground
               }
             }}
             onMouseOut={(e) => {
@@ -493,7 +523,7 @@ export default function TopNavbar() {
             <span>现有图谱</span>
             {currentGraph && (
               <span style={{ 
-                color: 'rgba(255, 255, 255, 0.6)', 
+                color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)', 
                 fontSize: '12px',
                 maxWidth: '150px',
                 overflow: 'hidden',
@@ -520,10 +550,10 @@ export default function TopNavbar() {
               marginTop: '8px',
               minWidth: '320px',
               maxWidth: '450px',
-              background: 'rgba(30, 30, 30, 0.98)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: theme === 'dark' ? 'rgba(30, 30, 30, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+              border: `1px solid ${themeConfig.panelBorder}`,
               borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              boxShadow: themeConfig.panelShadow,
               maxHeight: '500px',
               overflowY: 'auto',
               zIndex: 1001,
@@ -535,9 +565,9 @@ export default function TopNavbar() {
                     <div
                       style={{
                         padding: '14px 16px',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        borderBottom: `1px solid ${themeConfig.dividerColor}`,
                         background: hoveredProjectId === project.id 
-                          ? 'rgba(74, 158, 255, 0.1)' 
+                          ? themeConfig.buttonBackground
                           : 'transparent',
                         transition: 'background 0.2s',
                         display: 'flex',
@@ -546,7 +576,7 @@ export default function TopNavbar() {
                       }}
                       onMouseOver={(e) => {
                         if (hoveredProjectId !== project.id) {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                          e.currentTarget.style.background = themeConfig.hoverBackground
                         }
                       }}
                       onMouseOut={(e) => {
@@ -567,7 +597,7 @@ export default function TopNavbar() {
                       >
                         <span style={{ 
                           fontSize: '12px', 
-                          color: 'rgba(255, 255, 255, 0.6)',
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                           transform: hoveredProjectId === project.id ? 'rotate(90deg)' : 'rotate(0)',
                           transition: 'transform 0.2s',
                         }}>
@@ -575,7 +605,7 @@ export default function TopNavbar() {
                         </span>
                         <div>
                           <div style={{ 
-                            color: 'white', 
+                            color: themeConfig.panelText, 
                             fontSize: '15px', 
                             fontWeight: '600',
                             marginBottom: '2px',
@@ -583,7 +613,7 @@ export default function TopNavbar() {
                             📁 {project.name}
                           </div>
                           <div style={{ 
-                            color: 'rgba(255, 255, 255, 0.5)', 
+                            color: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)', 
                             fontSize: '12px',
                           }}>
                             {project.graphs.length} 个图谱
@@ -602,8 +632,8 @@ export default function TopNavbar() {
                     {/* 图谱列表 - 展开显示 */}
                     {hoveredProjectId === project.id && (
                       <div style={{
-                        background: 'rgba(0, 0, 0, 0.3)',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        background: theme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.03)',
+                        borderBottom: `1px solid ${themeConfig.dividerColor}`,
                       }}>
                         {project.graphs.map((graph) => (
                           <div
@@ -611,7 +641,7 @@ export default function TopNavbar() {
                             style={{
                               padding: '12px 16px 12px 48px',
                               background: currentGraph?.id === graph.id 
-                                ? 'rgba(74, 158, 255, 0.2)' 
+                                ? (theme === 'dark' ? 'rgba(74, 158, 255, 0.2)' : 'rgba(74, 158, 255, 0.15)')
                                 : 'transparent',
                               transition: 'background 0.2s',
                               borderLeft: currentGraph?.id === graph.id 
@@ -623,7 +653,9 @@ export default function TopNavbar() {
                             }}
                             onMouseOver={(e) => {
                               if (currentGraph?.id !== graph.id) {
-                                e.currentTarget.style.background = 'rgba(74, 158, 255, 0.1)'
+                                e.currentTarget.style.background = theme === 'dark' 
+                                  ? 'rgba(74, 158, 255, 0.1)' 
+                                  : 'rgba(74, 158, 255, 0.08)'
                               }
                             }}
                             onMouseOut={(e) => {
@@ -643,7 +675,7 @@ export default function TopNavbar() {
                               }}
                             >
                               <div style={{ 
-                                color: 'white', 
+                                color: themeConfig.panelText, 
                                 fontSize: '14px', 
                                 fontWeight: '500',
                                 marginBottom: '4px',
@@ -657,7 +689,7 @@ export default function TopNavbar() {
                                 <span>{graph.name}</span>
                               </div>
                               <div style={{ 
-                                color: 'rgba(255, 255, 255, 0.5)', 
+                                color: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)', 
                                 fontSize: '12px',
                                 paddingLeft: currentGraph?.id === graph.id ? '24px' : '0',
                               }}>
@@ -681,7 +713,7 @@ export default function TopNavbar() {
                 <div style={{
                   padding: '30px 20px',
                   textAlign: 'center',
-                  color: 'rgba(255, 255, 255, 0.5)',
+                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
                   fontSize: '14px',
                 }}>
                   <div style={{ fontSize: '32px', marginBottom: '12px' }}>📂</div>
@@ -755,8 +787,8 @@ export default function TopNavbar() {
                   {/* 搜索结果头部 */}
                   <div style={{
                     padding: '10px 16px',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    borderBottom: `1px solid ${themeConfig.dividerColor}`,
+                    color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                     fontSize: '12px',
                     fontWeight: '600',
                   }}>
@@ -775,14 +807,16 @@ export default function TopNavbar() {
                       style={{
                         padding: '12px 16px',
                         cursor: 'pointer',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        borderBottom: `1px solid ${themeConfig.dividerColor}`,
                         transition: 'background 0.2s',
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(74, 158, 255, 0.15)'}
+                      onMouseOver={(e) => e.currentTarget.style.background = theme === 'dark' 
+                        ? 'rgba(74, 158, 255, 0.15)' 
+                        : 'rgba(74, 158, 255, 0.1)'}
                       onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                     >
                       <div style={{ 
-                        color: 'white', 
+                        color: themeConfig.panelText, 
                         fontSize: '14px', 
                         fontWeight: '500',
                         marginBottom: '4px',
@@ -790,7 +824,7 @@ export default function TopNavbar() {
                         {node.name}
                       </div>
                       <div style={{ 
-                        color: 'rgba(255, 255, 255, 0.5)', 
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)', 
                         fontSize: '12px',
                         display: 'flex',
                         gap: '12px',
@@ -814,7 +848,7 @@ export default function TopNavbar() {
                 <div style={{
                   padding: '30px 20px',
                   textAlign: 'center',
-                  color: 'rgba(255, 255, 255, 0.5)',
+                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
                   fontSize: '14px',
                 }}>
                   <div style={{ fontSize: '32px', marginBottom: '12px' }}>🔍</div>
@@ -893,88 +927,8 @@ export default function TopNavbar() {
               新建图谱
             </button>
           )}
-
-          {/* 登录/登出按钮 */}
-          {!isLoggedIn ? (
-            <button
-              onClick={() => {
-                setIsLoginModalOpen(true);
-              }}
-              style={{
-                padding: '10px 24px',
-                background: 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(74, 158, 255, 0.3)',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 158, 255, 0.4)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(74, 158, 255, 0.3)'
-              }}
-            >
-              登录
-            </button>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {/* 用户信息 */}
-              <div style={{
-                padding: '8px 16px',
-                background: 'rgba(74, 158, 255, 0.15)',
-                border: '1px solid rgba(74, 158, 255, 0.3)',
-                borderRadius: '8px',
-                color: '#4A9EFF',
-                fontSize: '14px',
-                fontWeight: '500',
-              }}>
-                👤 {user?.username}
-              </div>
-              
-              {/* 登出按钮 */}
-              <button
-                onClick={handleLogout}
-                style={{
-                  padding: '10px 20px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
-                  e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)'
-                  e.currentTarget.style.color = '#ef4444'
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'
-                  e.currentTarget.style.color = 'white'
-                }}
-              >
-                登出
-              </button>
-            </div>
-          )}
         </div>
       </nav>
-
-      {/* 登录弹窗 */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
 
       {/* 新建项目弹窗 */}
       <CreateProjectModal

@@ -1224,3 +1224,99 @@
 .importDialogButtonPrimary:active {
   transform: scale(0.98);
 }
+
+
+/* 简化的项目卡片样式 - 白色主题 */
+.projectCardSimple {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  min-height: 80px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+}
+
+.projectCardSimple:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  border-color: #5B8DEE;
+}
+
+.projectCardSimple:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(91, 141, 238, 0.2);
+  border-color: #5B8DEE;
+}
+
+.projectCardSimple:active {
+  transform: translateY(-1px);
+}
+
+/* 项目文本样式 */
+.projectTextSimple {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #262626;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* 项目名称样式 */
+.projectName {
+  font-weight: 500;
+  color: #262626;
+}
+
+/* 分隔符样式 */
+.projectSeparator {
+  font-weight: 400;
+  color: #262626;
+}
+
+/* 项目描述样式 */
+.projectDescription {
+  font-weight: 400;
+  color: #262626;
+}
+
+/* 空描述样式 */
+.projectDescriptionEmpty {
+  font-weight: 400;
+  color: #999999;
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .projectCardSimple {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .projectCardSimple {
+    padding: 16px;
+  }
+  
+  .projectTextSimple {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .projectCardSimple {
+    padding: 14px;
+    min-height: 70px;
+  }
+  
+  .projectTextSimple {
+    font-size: 12px;
+  }
+}

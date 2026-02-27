@@ -21,6 +21,8 @@ export const useUserStore = create<UserState>((set) => ({
     // 保存到 localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('currentUser', JSON.stringify(user));
+      // 触发登录状态变化事件
+      window.dispatchEvent(new Event('loginStateChange'));
     }
     set({ user, isLoggedIn: true });
   },
@@ -29,6 +31,8 @@ export const useUserStore = create<UserState>((set) => ({
     // 清除 localStorage
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
+      // 触发登录状态变化事件
+      window.dispatchEvent(new Event('loginStateChange'));
     }
     set({ user: null, isLoggedIn: false });
   },

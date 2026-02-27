@@ -1,22 +1,58 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import LoginModal from '@/components/LoginModal'
+import { useUserStore } from '@/lib/userStore'
 
 export default function LandingPage() {
   const router = useRouter()
   const [loginHovered, setLoginHovered] = useState(false)
   const [createHovered, setCreateHovered] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('全部')
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [userMenuHovered, setUserMenuHovered] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  const { user, isLoggedIn, logout, initializeFromStorage } = useUserStore()
+
+  // 页面加载时恢复登录状态
+  useEffect(() => {
+    initializeFromStorage()
+  }, [initializeFromStorage])
+
+  // 监听登录状态变化
+  useEffect(() => {
+    const handleLoginStateChange = () => {
+      initializeFromStorage()
+    }
+
+    window.addEventListener('loginStateChange', handleLoginStateChange)
+    return () => {
+      window.removeEventListener('loginStateChange', handleLoginStateChange)
+    }
+  }, [initializeFromStorage])
+
+  const handleLogout = () => {
+    logout()
+    setShowUserMenu(false)
+  }
 
   const categories = ['全部', '科技', '教育', '商业', '艺术', '医疗', '其他']
 
   const handleStartCreating = () => {
+    if (!isLoggedIn) {
+      // 未登录时提示用户先登录
+      alert('请先登录后再开始创作')
+      setIsLoginModalOpen(true)
+      return
+    }
+    
     try {
-      router.push('/create')
+      router.push('/creation')
     } catch (error) {
       console.error('Navigation failed:', error)
-      window.location.href = '/create'
+      window.location.href = '/creation'
     }
   }
 
@@ -82,38 +118,184 @@ export default function LandingPage() {
           gap: '12px',
           alignItems: 'center'
         }}>
-          <button
-            onMouseEnter={() => setLoginHovered(true)}
-            onMouseLeave={() => setLoginHovered(false)}
-            style={{
-              padding: '10px 24px',
-              background: 'transparent',
-              border: `2px solid ${loginHovered ? '#00bfa5' : '#e5e5e5'}`,
-              borderRadius: '24px',
-              color: loginHovered ? '#00bfa5' : '#666',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            登录
-          </button>
+          {!isLoggedIn ? (
+            <button
+              onClick={() => setIsLoginModalOpen(true)}
+              onMouseEnter={() => setLoginHovered(true)}
+              onMouseLeave={() => setLoginHovered(false)}
+              style={{
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                whiteSpace: 'nowrap',
+                transform: loginHovered ? 'translateY(-1px)' : 'translateY(0)',
+              }}
+            >
+              登录
+            </button>
+          ) : (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                onMouseEnter={() => setUserMenuHovered(true)}
+                onMouseLeave={() => setUserMenuHovered(false)}
+                style={{
+                  padding: '10px 20px',
+                  background: userMenuHovered ? 'rgba(102, 126, 234, 0.1)' : 'transparent',
+                  border: '1px solid rgba(102, 126, 234, 0.3)',
+                  borderRadius: '8px',
+                  color: '#667eea',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span>👤</span>
+                <span>{user?.username || '用户'}</span>
+              </button>
+
+              {/* 用户菜单下拉框 */}
+              {showUserMenu && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '8px',
+                    minWidth: '180px',
+                    background: 'white',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+                    zIndex: 1001,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* 用户信息 */}
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      borderBottom: '1px solid #e5e5e5',
+                      background: 'rgba(102, 126, 234, 0.05)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: '#2c2c2c',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      {user?.username || '用户'}
+                    </div>
+                    <div
+                      style={{
+                        color: '#999',
+                        fontSize: '12px',
+                      }}
+                    >
+                      已登录
+                    </div>
+                  </div>
+
+                  {/* 菜单项 */}
+                  <div
+                    onClick={() => {
+                      router.push('/my-works')
+                      setShowUserMenu(false)
+                    }}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #e5e5e5',
+                      transition: 'background 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(102, 126, 234, 0.05)'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <span style={{ fontSize: '16px' }}>📚</span>
+                    <span
+                      style={{
+                        color: '#2c2c2c',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                      }}
+                    >
+                      我的作品
+                    </span>
+                  </div>
+
+                  {/* 退出登录 */}
+                  <div
+                    onClick={handleLogout}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <span style={{ fontSize: '16px' }}>🚪</span>
+                    <span
+                      style={{
+                        color: '#ef4444',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                      }}
+                    >
+                      退出登录
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <button
             onClick={handleStartCreating}
-            onMouseEnter={() => setCreateHovered(true)}
+            onMouseEnter={() => isLoggedIn && setCreateHovered(true)}
             onMouseLeave={() => setCreateHovered(false)}
             style={{
               padding: '10px 24px',
-              background: createHovered ? '#00d4b8' : '#00bfa5',
+              background: !isLoggedIn 
+                ? '#e0e0e0' 
+                : (createHovered ? '#00d4b8' : '#00bfa5'),
               border: 'none',
               borderRadius: '24px',
-              color: 'white',
+              color: !isLoggedIn ? '#999' : 'white',
               fontSize: '14px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: !isLoggedIn ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
-              transform: createHovered ? 'scale(1.05)' : 'scale(1)'
+              transform: (isLoggedIn && createHovered) ? 'scale(1.05)' : 'scale(1)',
+              opacity: !isLoggedIn ? 0.6 : 1,
             }}
           >
             开始创作
@@ -317,6 +499,12 @@ export default function LandingPage() {
           ))}
         </div>
       </div>
+
+      {/* 登录弹窗 */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </main>
   )
 }

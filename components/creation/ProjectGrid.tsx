@@ -7,7 +7,7 @@ import styles from './styles.module.css';
 interface Project {
   id: string;
   name: string;
-  description: string;
+  description: string | null | undefined;
   thumbnail?: string;
   createdAt: Date;
   status: 'active' | 'archived';
