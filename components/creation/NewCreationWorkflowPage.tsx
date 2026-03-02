@@ -5,6 +5,17 @@ import { useRouter } from 'next/navigation';
 import styles from './creation-workflow.module.css';
 import CreateProjectModal from '@/components/CreateProjectModal';
 
+interface Graph {
+  id: string;
+  name: string;
+  projectId: string;
+  projectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  nodeCount?: number;
+  edgeCount?: number;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -17,28 +28,53 @@ export default function NewCreationWorkflowPage() {
   const [sortBy, setSortBy] = useState<'updateTime' | 'title'>('updateTime');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingProjects, setExistingProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
+  const [graphs, setGraphs] = useState<Graph[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
 
-  // 加载项目列表
+  // 加载图谱列表（而不是项目列表）
   useEffect(() => {
-    fetchAllProjects();
+    fetchAllGraphs();
   }, []);
 
-  const fetchAllProjects = async () => {
+  const fetchAllGraphs = async () => {
     try {
-      const response = await fetch('/api/projects');
+      const response = await fetch('/api/projects/with-graphs');
       if (response.ok) {
         const data = await response.json();
-        const projectList = data.projects || [];
-        setProjects(projectList);
-        // 默认选中第一个项目
-        if (projectList.length > 0) {
-          setSelectedProjectId(projectList[0].id);
-        }
+        const projectsWithGraphs = data.projects || [];
+        
+        // 将所有图谱展开为独立的卡片数据
+        const allGraphs: Graph[] = [];
+        projectsWithGraphs.forEach((project: any) => {
+          if (project.graphs && project.graphs.length > 0) {
+            project.graphs.forEach((graph: any) => {
+              allGraphs.push({
+                id: graph.id,
+                name: graph.name,
+                projectId: project.id,
+                projectName: project.name,
+                createdAt: graph.createdAt,
+                updatedAt: graph.updatedAt,
+                nodeCount: graph.nodeCount || 0,
+                edgeCount: graph.edgeCount || 0,
+              });
+            });
+          }
+        });
+        
+        setGraphs(allGraphs);
+        
+        // 设置项目列表（用于下拉框）
+        setProjects(projectsWithGraphs.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+        })));
+        
+        // 不再自动选中第一个项目，保持默认的 'all'
       }
     } catch (error) {
-      console.error('加载项目列表失败:', error);
+      console.error('加载图谱列表失败:', error);
     }
   };
 
@@ -54,7 +90,13 @@ export default function NewCreationWorkflowPage() {
       const response = await fetch('/api/projects');
       if (response.ok) {
         const data = await response.json();
-        setExistingProjects(data.projects || []);
+        const projectList = data.projects || [];
+        // 确保包含 description 字段
+        setExistingProjects(projectList.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || '',
+        })));
       }
     } catch (error) {
       console.error('加载项目列表失败:', error);
@@ -86,7 +128,14 @@ export default function NewCreationWorkflowPage() {
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || '创建失败');
+          const errorMessage = error.error || '创建失败';
+          
+          // 如果是 500 错误，可能是数据库连接问题
+          if (response.status === 500) {
+            throw new Error(`${errorMessage}\n\n可能原因：\n1. 数据库连接失败（Neon 数据库可能已暂停）\n2. 请访问 Neon 控制台唤醒数据库\n3. 或查看 DATABASE-CONNECTION-FIX.md 文件获取详细解决方案`);
+          }
+          
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -98,7 +147,8 @@ export default function NewCreationWorkflowPage() {
           throw new Error('未找到选中的项目');
         }
 
-        const response = await fetch('/api/graphs', {
+        // 创建图谱
+        const graphResponse = await fetch('/api/graphs', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -109,17 +159,17 @@ export default function NewCreationWorkflowPage() {
           }),
         });
 
-        if (!response.ok) {
-          const error = await response.json();
+        if (!graphResponse.ok) {
+          const error = await graphResponse.json();
           throw new Error(error.error || '创建图谱失败');
         }
 
-        const data = await response.json();
-        console.log('图谱创建成功:', data);
+        const graphData = await graphResponse.json();
+        console.log('图谱创建成功:', graphData);
       }
 
-      // 创建成功后刷新项目列表
-      await fetchAllProjects();
+      // 创建成功后刷新图谱列表
+      await fetchAllGraphs();
     } catch (error) {
       console.error('创建失败:', error);
       throw error;
@@ -132,6 +182,19 @@ export default function NewCreationWorkflowPage() {
 
   const handleAICreate = () => {
     router.push('/text-page');
+  };
+
+  // 处理图谱卡片点击 - 导航到 3D 图谱编辑器
+  const handleGraphCardClick = (graph: Graph) => {
+    // 验证图谱 ID
+    if (!graph.id || graph.id.trim() === '') {
+      console.error('无效的图谱 ID:', graph.id);
+      alert('无法打开图谱：图谱 ID 无效');
+      return;
+    }
+
+    // 导航到 graph 页面（3D 编辑器）
+    router.push(`/graph?graphId=${graph.id}`);
   };
 
   return (
@@ -220,6 +283,7 @@ export default function NewCreationWorkflowPage() {
                 onChange={(e) => setSelectedProjectId(e.target.value)}
                 style={{ minWidth: '200px' }}
               >
+                <option value="all">全部项目</option>
                 {projects.map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
@@ -258,17 +322,68 @@ export default function NewCreationWorkflowPage() {
           </div>
         </div>
 
-        {/* 项目列表区域 - 占位 */}
+        {/* 项目列表区域 */}
         <div className={styles.projectGrid}>
-          <div style={{ 
-            padding: '40px', 
-            textAlign: 'center', 
-            color: '#999',
-            background: '#fff',
-            borderRadius: '8px'
-          }}>
-            项目列表区域（待实现）
-          </div>
+          {graphs.length === 0 ? (
+            <div style={{ 
+              padding: '40px', 
+              textAlign: 'center', 
+              color: '#999',
+              background: '#fff',
+              borderRadius: '8px'
+            }}>
+              暂无图谱，点击"新建"按钮创建您的第一个图谱
+            </div>
+          ) : (
+            graphs
+              .filter(graph => {
+                // 搜索过滤
+                if (searchQuery && !graph.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+                  return false;
+                }
+                // 项目过滤 - 如果选择了 'all'，显示所有图谱
+                if (selectedProjectId && selectedProjectId !== 'all' && graph.projectId !== selectedProjectId) {
+                  return false;
+                }
+                return true;
+              })
+              .map((graph) => (
+                <div
+                  key={graph.id}
+                  className={styles.projectCard}
+                  onClick={() => handleGraphCardClick(graph)}
+                >
+                  <div className={styles.projectCardContent}>
+                    <h3 className={styles.projectCardTitle}>{graph.projectName || '未知项目'}</h3>
+                    <p className={styles.projectCardDescription}>
+                      图谱：{graph.name}
+                    </p>
+                    <div className={styles.projectCardFooter}>
+                      <span className={styles.projectCardDate}>
+                        {graph.createdAt 
+                          ? new Date(graph.createdAt).toLocaleDateString('zh-CN')
+                          : '未知日期'
+                        }
+                      </span>
+                      {(graph.nodeCount !== undefined || graph.edgeCount !== undefined) && (
+                        <div className={styles.projectCardStats}>
+                          {graph.nodeCount !== undefined && (
+                            <span className={styles.projectCardStat}>
+                              📊 {graph.nodeCount} 节点
+                            </span>
+                          )}
+                          {graph.edgeCount !== undefined && (
+                            <span className={styles.projectCardStat}>
+                              🔗 {graph.edgeCount} 边
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+          )}
         </div>
       </main>
 

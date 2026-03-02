@@ -159,3 +159,58 @@ export async function DELETE(
     )
   }
 }
+
+/**
+ * PATCH /api/projects/[id] - 更新项目信息
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params
+    const body = await request.json()
+    const { name, description } = body
+
+    // 验证项目是否存在
+    const existingProject = await prisma.project.findUnique({
+      where: { id },
+    })
+
+    if (!existingProject) {
+      return NextResponse.json(
+        { error: '项目不存在' },
+        { status: 404 }
+      )
+    }
+
+    // 构建更新数据
+    const updateData: any = {}
+    if (name !== undefined) {
+      updateData.name = name.trim()
+    }
+    if (description !== undefined) {
+      updateData.description = description
+    }
+
+    // 更新项目
+    const updatedProject = await prisma.project.update({
+      where: { id },
+      data: updateData,
+    })
+
+    return NextResponse.json({
+      success: true,
+      project: updatedProject,
+    })
+  } catch (error) {
+    console.error('更新项目失败:', error)
+    return NextResponse.json(
+      { 
+        error: '更新项目失败',
+        details: error instanceof Error ? error.message : '未知错误'
+      },
+      { status: 500 }
+    )
+  }
+}
