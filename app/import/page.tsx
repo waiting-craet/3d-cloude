@@ -19,7 +19,6 @@ export default function ImportPage() {
   const [graphs, setGraphs] = useState<Graph[]>([])
   const [selectedProject, setSelectedProject] = useState<string>('')
   const [selectedGraph, setSelectedGraph] = useState<string>('')
-  const [graphType, setGraphType] = useState<'2D' | '3D'>('2D')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileType, setFileType] = useState<'excel' | 'csv' | 'json' | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -116,8 +115,7 @@ export default function ImportPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          name: newGraphName.trim(),
-          type: graphType
+          name: newGraphName.trim()
         })
       })
       if (response.ok) {
@@ -156,19 +154,16 @@ export default function ImportPage() {
 
   const handleDownloadTemplate = (templateType: 'csv' | 'json' | 'excel') => {
     if (templateType === 'excel') {
-      // For Excel, use API endpoint
-      const type = graphType === '3D' ? '3d' : '2d'
+      // For Excel, use API endpoint - fixed to 3D format
       const link = document.createElement('a')
-      link.href = `/api/templates?type=${type}&format=excel`
-      link.download = `${type}-graph-template.xlsx`
+      link.href = `/api/templates?format=excel`
+      link.download = `3d-graph-template.xlsx`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
     } else {
-      // For CSV and JSON, use static files
-      const fileName = graphType === '3D' 
-        ? `3d-graph-template.${templateType}`
-        : `2d-graph-template.${templateType}`
+      // For CSV and JSON, use static files - fixed to 3D format
+      const fileName = `3d-graph-template.${templateType}`
       
       const link = document.createElement('a')
       link.href = `/templates/${fileName}`
@@ -205,17 +200,36 @@ export default function ImportPage() {
       formData.append('projectId', selectedProject)
       formData.append('graphId', selectedGraph)
       formData.append('fileType', fileType)
-      formData.append('graphType', graphType)
       const response = await fetch('/api/import', {
         method: 'POST',
         body: formData
       })
+      
+      const result = await response.json()
+      
       if (response.ok) {
-        setUploadStatus('导入成功！')
-        setTimeout(() => router.push('/graph'), 1500)
+        let successMessage = '导入成功！'
+        if (result.warnings && result.warnings.length > 0) {
+          successMessage += `\n注意事项：${result.warnings.join('；')}`
+        }
+        if (result.skippedEdges > 0) {
+          successMessage += `\n跳过了 ${result.skippedEdges} 条无效边`
+        }
+        setUploadStatus(successMessage)
+        setTimeout(() => router.push('/graph'), 2000)
       } else {
-        const error = await response.json()
-        setUploadStatus(`导入失败: ${error.message || '未知错误'}`)
+        let errorMessage = '导入失败：'
+        if (result.errors && Array.isArray(result.errors)) {
+          errorMessage += '\n' + result.errors.join('\n')
+        } else {
+          errorMessage += result.message || '未知错误'
+        }
+        
+        if (result.warnings && result.warnings.length > 0) {
+          errorMessage += '\n\n警告：' + result.warnings.join('；')
+        }
+        
+        setUploadStatus(errorMessage)
       }
     } catch (error) {
       console.error('Upload failed:', error)
@@ -228,58 +242,74 @@ export default function ImportPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#e8eef3',
+      background: '#fafafa',
       padding: '0'
     }}>
       {/* 顶部导航栏 */}
-      <div style={{
-        background: '#1a3a52',
-        padding: '18px 40px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      <nav style={{
+        padding: '16px 40px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: 'white',
+        borderBottom: '1px solid #e5e5e5'
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          color: 'white',
-          fontSize: '18px',
-          fontWeight: 'bold'
+          gap: '8px',
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: '#00bfa5'
         }}>
           <div style={{
-            width: '28px',
-            height: '28px',
-            background: 'white',
-            borderRadius: '4px',
+            width: '32px',
+            height: '32px',
+            background: '#00bfa5',
+            borderRadius: '6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '16px'
+            color: 'white',
+            fontSize: '18px'
           }}>
-            📦
+            📊
           </div>
-          项目选设计
+          知识图谱
         </div>
-      </div>
+      </nav>
 
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '40px 20px'
+        padding: '50px 30px 100px 30px'
       }}>
+        {/* 标题 */}
+        <h1 style={{
+          fontSize: '38px',
+          fontWeight: '700',
+          textAlign: 'center',
+          marginBottom: '50px',
+          color: '#2c2c2c',
+          letterSpacing: '-0.3px'
+        }}>
+          导入数据
+        </h1>
         {/* 顶部选择区域 */}
         <div style={{
           display: 'flex',
           gap: '20px',
-          marginBottom: '20px',
+          marginBottom: '30px',
           alignItems: 'center'
         }}>
           {/* 项目选择 */}
           <div style={{
             flex: 1,
             background: 'white',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            borderRadius: '14px',
+            padding: '16px 20px',
+            border: '1px solid #ebebeb',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
             display: 'flex',
             gap: '10px',
             alignItems: 'center'
@@ -306,9 +336,9 @@ export default function ImportPage() {
               onClick={() => setShowNewProjectModal(true)}
               style={{
                 padding: '8px 16px',
-                background: '#1a3a52',
+                background: '#00bfa5',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: '8px',
                 color: 'white',
                 fontSize: '13px',
                 fontWeight: '600',
@@ -317,64 +347,14 @@ export default function ImportPage() {
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#2a4a62'
+                e.currentTarget.style.background = '#00d4b8'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#1a3a52'
+                e.currentTarget.style.background = '#00bfa5'
               }}
             >
               + 新建
             </button>
-          </div>
-
-          {/* 图谱类型切换 */}
-          <div style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: '12px 20px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <span style={{ fontSize: '14px', color: '#666', fontWeight: '600' }}>图谱类型</span>
-            <div style={{
-              display: 'flex',
-              background: '#f5f5f5',
-              borderRadius: '20px',
-              padding: '3px'
-            }}>
-              <button
-                onClick={() => setGraphType('2D')}
-                style={{
-                  padding: '6px 20px',
-                  background: graphType === '2D' ? '#1a3a52' : 'transparent',
-                  color: graphType === '2D' ? 'white' : '#666',
-                  border: 'none',
-                  borderRadius: '18px',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                ▼ 2D
-              </button>
-              <button
-                onClick={() => setGraphType('3D')}
-                style={{
-                  padding: '6px 20px',
-                  background: graphType === '3D' ? '#1a3a52' : 'transparent',
-                  color: graphType === '3D' ? 'white' : '#666',
-                  border: 'none',
-                  borderRadius: '18px',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                3D
-              </button>
-            </div>
           </div>
         </div>
 
@@ -383,20 +363,20 @@ export default function ImportPage() {
           display: 'grid',
           gridTemplateColumns: '2fr 1fr',
           gap: '20px',
-          marginBottom: '20px'
+          marginBottom: '30px'
         }}>
           {/* 左侧 - 导入数据 */}
           <div style={{
             background: 'white',
-            borderRadius: '8px',
+            borderRadius: '14px',
             padding: '30px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            border: '1px solid #e0e0e0'
+            border: '1px solid #ebebeb',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
           }}>
             <h2 style={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              color: '#333',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#2c2c2c',
               marginBottom: '20px'
             }}>
               导入数据
@@ -416,9 +396,9 @@ export default function ImportPage() {
                   style={{
                     padding: '30px 20px',
                     border: selectedFile && fileType?.toUpperCase() === type.toUpperCase()
-                      ? '2px solid #1a3a52'
-                      : '1px solid #ddd',
-                    borderRadius: '8px',
+                      ? '2px solid #00bfa5'
+                      : '1px solid #e5e5e5',
+                    borderRadius: '12px',
                     textAlign: 'center',
                     cursor: 'pointer',
                     background: 'white',
@@ -426,7 +406,7 @@ export default function ImportPage() {
                   }}
                 >
                   <div style={{ fontSize: '40px', marginBottom: '10px', opacity: 0.5 }}>📄</div>
-                  <div style={{ fontSize: '15px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: '600', color: '#2c2c2c', marginBottom: '4px' }}>
                     {type}
                   </div>
                   <div style={{ fontSize: '11px', color: '#999' }}>拖拽文件到此</div>
@@ -460,7 +440,7 @@ export default function ImportPage() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: '600',
-                color: '#333',
+                color: '#2c2c2c',
                 marginBottom: '8px'
               }}>
                 选择图谱
@@ -495,9 +475,9 @@ export default function ImportPage() {
                   disabled={!selectedProject}
                   style={{
                     padding: '10px 16px',
-                    background: !selectedProject ? '#ccc' : '#1a3a52',
+                    background: !selectedProject ? '#ccc' : '#00bfa5',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: '8px',
                     color: 'white',
                     fontSize: '13px',
                     fontWeight: '600',
@@ -507,12 +487,12 @@ export default function ImportPage() {
                   }}
                   onMouseEnter={(e) => {
                     if (selectedProject) {
-                      e.currentTarget.style.background = '#2a4a62'
+                      e.currentTarget.style.background = '#00d4b8'
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (selectedProject) {
-                      e.currentTarget.style.background = '#1a3a52'
+                      e.currentTarget.style.background = '#00bfa5'
                     }
                   }}
                 >
@@ -525,29 +505,29 @@ export default function ImportPage() {
           {/* 右侧 - 模板下载 */}
           <div style={{
             background: 'white',
-            borderRadius: '8px',
+            borderRadius: '14px',
             padding: '30px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            border: '1px solid #e0e0e0'
+            border: '1px solid #ebebeb',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
           }}>
             <h2 style={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              color: '#333',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#2c2c2c',
               marginBottom: '20px'
             }}>
               模板下载
             </h2>
             <div style={{ 
               padding: '12px',
-              background: '#f0f8ff',
-              borderRadius: '6px',
+              background: 'rgba(0, 191, 165, 0.08)',
+              borderRadius: '8px',
               marginBottom: '15px',
               fontSize: '12px',
-              color: '#1a3a52',
-              border: '1px solid #d0e8ff'
+              color: '#00bfa5',
+              border: '1px solid rgba(0, 191, 165, 0.2)'
             }}>
-              当前选择: {graphType} 图谱模板
+              统一使用: 3D 图谱模板
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button
@@ -575,7 +555,7 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📊</span>
-                <span>Excel模板 ({graphType})</span>
+                <span>Excel模板 (3D)</span>
               </button>
               <button
                 onClick={() => handleDownloadTemplate('csv')}
@@ -594,7 +574,7 @@ export default function ImportPage() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#f5f5f5'
-                  e.currentTarget.style.borderColor = '#1a3a52'
+                  e.currentTarget.style.borderColor = '#00bfa5'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'white'
@@ -602,7 +582,7 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📄</span>
-                <span>CSV模板 ({graphType})</span>
+                <span>CSV模板 (3D)</span>
               </button>
               <button
                 onClick={() => handleDownloadTemplate('json')}
@@ -621,7 +601,7 @@ export default function ImportPage() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#f5f5f5'
-                  e.currentTarget.style.borderColor = '#1a3a52'
+                  e.currentTarget.style.borderColor = '#00bfa5'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'white'
@@ -629,7 +609,7 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📋</span>
-                <span>JSON模板 ({graphType})</span>
+                <span>JSON模板 (3D)</span>
               </button>
             </div>
             <div style={{
@@ -641,7 +621,7 @@ export default function ImportPage() {
               color: '#856404',
               border: '1px solid #ffeaa7'
             }}>
-              💡 提示: 切换图谱类型会自动更新模板
+              💡 提示: 所有模板均为3D格式，支持自动转换2D数据
             </div>
           </div>
         </div>
@@ -649,9 +629,10 @@ export default function ImportPage() {
         {/* 底部生成按钮 */}
         <div style={{
           background: 'white',
-          borderRadius: '8px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          borderRadius: '14px',
+          padding: '24px',
+          border: '1px solid #ebebeb',
+          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
           textAlign: 'center'
         }}>
           <button
@@ -660,14 +641,25 @@ export default function ImportPage() {
             style={{
               padding: '14px 60px',
               background: (!selectedFile || !selectedProject || !selectedGraph || uploading)
-                ? '#ccc'
-                : '#1a3a52',
+                ? '#e0e0e0'
+                : '#00bfa5',
               border: 'none',
               borderRadius: '24px',
               color: 'white',
               fontSize: '15px',
               fontWeight: '600',
-              cursor: (!selectedFile || !selectedProject || !selectedGraph || uploading) ? 'not-allowed' : 'pointer'
+              cursor: (!selectedFile || !selectedProject || !selectedGraph || uploading) ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (selectedFile && selectedProject && selectedGraph && !uploading) {
+                e.currentTarget.style.background = '#00d4b8'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedFile && selectedProject && selectedGraph && !uploading) {
+                e.currentTarget.style.background = '#00bfa5'
+              }
             }}
           >
             {uploading ? '正在生成...' : '生成图谱'}
@@ -685,24 +677,6 @@ export default function ImportPage() {
               {uploadStatus}
             </div>
           )}
-        </div>
-
-        {/* 返回按钮 */}
-        <div style={{ textAlign: 'center', marginTop: '15px' }}>
-          <button
-            onClick={() => router.push('/create')}
-            style={{
-              padding: '8px 20px',
-              background: 'rgba(26, 58, 82, 0.1)',
-              border: '1px solid rgba(26, 58, 82, 0.3)',
-              borderRadius: '16px',
-              color: '#1a3a52',
-              fontSize: '13px',
-              cursor: 'pointer'
-            }}
-          >
-            ← 返回
-          </button>
         </div>
       </div>
 
@@ -783,12 +757,24 @@ export default function ImportPage() {
                 disabled={creating || !newProjectName.trim()}
                 style={{
                   padding: '10px 20px',
-                  background: creating || !newProjectName.trim() ? '#ccc' : '#1a3a52',
+                  background: creating || !newProjectName.trim() ? '#e0e0e0' : '#00bfa5',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   color: 'white',
                   fontSize: '14px',
-                  cursor: creating || !newProjectName.trim() ? 'not-allowed' : 'pointer'
+                  cursor: creating || !newProjectName.trim() ? 'not-allowed' : 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (!creating && newProjectName.trim()) {
+                    e.currentTarget.style.background = '#00d4b8'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!creating && newProjectName.trim()) {
+                    e.currentTarget.style.background = '#00bfa5'
+                  }
                 }}
               >
                 {creating ? '创建中...' : '确定'}
@@ -853,9 +839,9 @@ export default function ImportPage() {
               borderRadius: '6px',
               marginBottom: '20px',
               fontSize: '13px',
-              color: '#1a3a52'
+              color: '#00bfa5'
             }}>
-              图谱类型: {graphType}
+              图谱类型: 3D (统一格式)
             </div>
             <div style={{
               display: 'flex',
@@ -885,7 +871,7 @@ export default function ImportPage() {
                 disabled={creating || !newGraphName.trim()}
                 style={{
                   padding: '10px 20px',
-                  background: creating || !newGraphName.trim() ? '#ccc' : '#1a3a52',
+                  background: creating || !newGraphName.trim() ? '#ccc' : '#00bfa5',
                   border: 'none',
                   borderRadius: '6px',
                   color: 'white',
@@ -961,10 +947,6 @@ export default function ImportPage() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#666' }}>类型:</span>
-                  <span style={{ fontWeight: '600', color: '#1a3a52' }}>{graphType}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#666' }}>文件:</span>
                   <span style={{ fontWeight: '600', color: '#333', fontSize: '13px' }}>
                     {selectedFile?.name}
@@ -1014,13 +996,20 @@ export default function ImportPage() {
                 onClick={handleConfirmUpload}
                 style={{
                   padding: '10px 24px',
-                  background: '#1a3a52',
+                  background: '#00bfa5',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   color: 'white',
                   fontSize: '14px',
                   cursor: 'pointer',
-                  fontWeight: '600'
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#00d4b8'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#00bfa5'
                 }}
               >
                 确认生成

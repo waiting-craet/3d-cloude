@@ -204,7 +204,7 @@ npx tsx scripts/verify-gallery-setup.ts
 - [x] 节点数: 5
 - [x] 边数: 4
 - [x] 所有节点有 imageUrl
-- [x] graphType: "2d"
+- [x] graphType: "3d"  // 系统已统一为3D
 - [x] isTemplate: false
 
 ## 🔍 代码质量

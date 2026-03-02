@@ -30,12 +30,9 @@ export async function GET(request: NextRequest) {
     // 构建查询条件
     const where: any = {}
 
-    // 根据类型筛选
-    if (type === '2d') {
-      where.settings = {
-        contains: '"graphType":"2d"',
-      }
-    } else if (type === '3d') {
+    // 根据类型筛选（系统已统一为3D）
+    if (type === '3d' || type === '2d') {
+      // 2D类型重定向到3D，因为系统已统一
       where.settings = {
         contains: '"graphType":"3d"',
       }

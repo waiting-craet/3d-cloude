@@ -29,24 +29,56 @@ export default function CreatePage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px'
+      background: '#fafafa',
+      padding: '0'
     }}>
+      {/* 顶部导航栏 */}
+      <nav style={{
+        padding: '16px 40px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: 'white',
+        borderBottom: '1px solid #e5e5e5'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: '#00bfa5'
+        }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            background: '#00bfa5',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '18px'
+          }}>
+            📊
+          </div>
+          知识图谱
+        </div>
+      </nav>
+
       <div style={{
         maxWidth: '1200px',
-        width: '100%'
+        margin: '0 auto',
+        padding: '50px 30px 100px 30px'
       }}>
         {/* 标题 */}
         <h1 style={{
-          fontSize: '48px',
-          fontWeight: 'bold',
+          fontSize: '38px',
+          fontWeight: '700',
           textAlign: 'center',
-          marginBottom: '60px',
-          color: 'white',
-          textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
+          marginBottom: '50px',
+          color: '#2c2c2c',
+          letterSpacing: '-0.3px'
         }}>
           选择创作方式
         </h1>
@@ -55,8 +87,7 @@ export default function CreatePage() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '30px',
-          padding: '0 20px'
+          gap: '20px'
         }}>
           {/* 创建知识图谱模块 */}
           <div style={{
@@ -66,12 +97,13 @@ export default function CreatePage() {
               onClick={() => setShowGraphDropdown(!showGraphDropdown)}
               style={{
                 background: 'white',
-                borderRadius: '20px',
-                padding: '50px 30px',
+                borderRadius: '14px',
+                padding: '40px 30px',
                 textAlign: 'center',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                border: '1px solid #ebebeb',
+                boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
@@ -79,12 +111,12 @@ export default function CreatePage() {
                 justifyContent: 'center'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-10px)'
-                e.currentTarget.style.boxShadow = '0 15px 40px rgba(0, 0, 0, 0.3)'
+                e.currentTarget.style.transform = 'translateY(-5px)'
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.1)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.2)'
+                e.currentTarget.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.06)'
               }}
             >
               <div style={{
@@ -94,22 +126,22 @@ export default function CreatePage() {
                 📊
               </div>
               <h2 style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#333',
-                marginBottom: '10px'
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#2c2c2c',
+                marginBottom: '8px'
               }}>
                 创建知识图谱
               </h2>
               <p style={{
-                fontSize: '14px',
+                fontSize: '13px',
                 color: '#666',
                 lineHeight: '1.6'
               }}>
                 从零开始创建你的知识图谱
               </p>
               <div style={{
-                marginTop: '10px',
+                marginTop: '8px',
                 fontSize: '12px',
                 color: '#999'
               }}>
@@ -124,10 +156,11 @@ export default function CreatePage() {
                 top: '100%',
                 left: 0,
                 right: 0,
-                marginTop: '10px',
+                marginTop: '8px',
                 background: 'white',
                 borderRadius: '12px',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+                border: '1px solid #e5e5e5',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
                 overflow: 'hidden',
                 zIndex: 10
               }}>
@@ -199,24 +232,25 @@ export default function CreatePage() {
             onClick={handleImportData}
             style={{
               background: 'white',
-              borderRadius: '20px',
-              padding: '50px 30px',
+              borderRadius: '14px',
+              padding: '40px 30px',
               textAlign: 'center',
               cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: '1px solid #ebebeb',
+              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-10px)'
-              e.currentTarget.style.boxShadow = '0 15px 40px rgba(0, 0, 0, 0.3)'
+              e.currentTarget.style.transform = 'translateY(-5px)'
+              e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.1)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.2)'
+              e.currentTarget.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.06)'
             }}
           >
             <div style={{
@@ -226,15 +260,15 @@ export default function CreatePage() {
               📁
             </div>
             <h2 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '10px'
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#2c2c2c',
+              marginBottom: '8px'
             }}>
               导入数据
             </h2>
             <p style={{
-              fontSize: '14px',
+              fontSize: '13px',
               color: '#666',
               lineHeight: '1.6'
             }}>
@@ -247,24 +281,25 @@ export default function CreatePage() {
             onClick={handleAIGenerate}
             style={{
               background: 'white',
-              borderRadius: '20px',
-              padding: '50px 30px',
+              borderRadius: '14px',
+              padding: '40px 30px',
               textAlign: 'center',
               cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: '1px solid #ebebeb',
+              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-10px)'
-              e.currentTarget.style.boxShadow = '0 15px 40px rgba(0, 0, 0, 0.3)'
+              e.currentTarget.style.transform = 'translateY(-5px)'
+              e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.1)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.2)'
+              e.currentTarget.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.06)'
             }}
           >
             <div style={{
@@ -274,15 +309,15 @@ export default function CreatePage() {
               🤖
             </div>
             <h2 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '10px'
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#2c2c2c',
+              marginBottom: '8px'
             }}>
               AI生成知识图谱
             </h2>
             <p style={{
-              fontSize: '14px',
+              fontSize: '13px',
               color: '#666',
               lineHeight: '1.6'
             }}>
@@ -294,29 +329,28 @@ export default function CreatePage() {
         {/* 返回按钮 */}
         <div style={{
           textAlign: 'center',
-          marginTop: '50px'
+          marginTop: '40px'
         }}>
           <button
             onClick={() => router.push('/')}
             style={{
-              padding: '12px 30px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: '2px solid white',
-              borderRadius: '30px',
-              color: 'white',
-              fontSize: '16px',
+              padding: '10px 24px',
+              background: 'white',
+              border: '1px solid #e5e5e5',
+              borderRadius: '24px',
+              color: '#666',
+              fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              backdropFilter: 'blur(10px)'
+              transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
-              e.currentTarget.style.transform = 'scale(1.05)'
+              e.currentTarget.style.borderColor = '#00bfa5'
+              e.currentTarget.style.color = '#00bfa5'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
-              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.borderColor = '#e5e5e5'
+              e.currentTarget.style.color = '#666'
             }}
           >
             ← 返回首页

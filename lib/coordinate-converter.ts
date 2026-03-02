@@ -1,7 +1,10 @@
 /**
- * 二维到三维坐标转换模块
+ * 统一3D坐标转换模块
  * 
- * 该模块负责将二维工作流画布的节点坐标转换为三维知识图谱的空间坐标
+ * 该模块负责确保所有节点都具有完整的3D坐标
+ * 支持自动检测和转换2D坐标为3D坐标
+ * 
+ * 注意：系统已统一为3D模式，不再支持2D图谱
  */
 
 export interface Node2D {
@@ -22,6 +25,19 @@ export interface Node3D {
   z3d: number  // 三维 z 坐标
 }
 
+// 统一的节点接口，支持2D和3D坐标
+export interface Node {
+  id: string
+  label: string
+  description?: string
+  x: number
+  y: number
+  z?: number
+  color?: string
+  size?: number
+  shape?: string
+}
+
 export interface Bounds {
   minX: number
   maxX: number
@@ -35,6 +51,96 @@ export interface Bounds {
 export interface ConversionConfig {
   heightVariation?: number  // Y-axis variation (default: 5)
   minNodeDistance?: number  // Minimum distance between nodes (default: 2)
+}
+
+/**
+ * 统一的坐标转换器类
+ * 实现设计文档中定义的CoordinateConverter接口
+ * 
+ * 系统已统一为3D模式，该类确保所有节点都具有完整的3D坐标
+ */
+export class CoordinateConverter {
+  /**
+   * 检测节点数组的坐标系统类型
+   * @param nodes 节点数组
+   * @returns '2D' 或 '3D'
+   * 
+   * 注意：虽然系统已统一为3D，但保留检测功能用于数据迁移
+   */
+  detectCoordinateSystem(nodes: Node[]): '2D' | '3D' {
+    if (nodes.length === 0) {
+      return '3D' // 默认返回3D（系统统一标准）
+    }
+    
+    // 检查是否至少有一个节点包含有效的z坐标
+    const hasValidZ = nodes.some(node => 
+      node.z !== undefined && 
+      node.z !== null && 
+      !isNaN(node.z)
+    )
+    
+    return hasValidZ ? '3D' : '2D'
+  }
+
+  /**
+   * 批量转换节点坐标
+   * 确保所有节点都有完整的3D坐标（x, y, z）
+   * @param nodes 节点数组
+   * @returns 转换后的节点数组（确保所有节点都有3D坐标）
+   */
+  convertNodeCoordinates(nodes: Node[]): Node[] {
+    const coordinateSystem = this.detectCoordinateSystem(nodes)
+    
+    if (coordinateSystem === '3D') {
+      // 已经是3D坐标，确保z坐标存在
+      return nodes.map(node => ({
+        ...node,
+        z: node.z ?? 0 // 确保z坐标存在
+      }))
+    }
+    
+    // 2D坐标，需要转换为3D（数据迁移场景）
+    return nodes.map(node => ({
+      ...node,
+      z: this.generateZCoordinate(node.x, node.y)
+    }))
+  }
+
+  /**
+   * 生成3D坐标（从x, y坐标生成z坐标）
+   * @param x x坐标
+   * @param y y坐标
+   * @returns 包含x, y, z的3D坐标对象
+   */
+  generate3DCoordinates(x: number, y: number): { x: number, y: number, z: number } {
+    return {
+      x,
+      y,
+      z: this.generateZCoordinate(x, y)
+    }
+  }
+
+  /**
+   * 生成确定性的Z坐标
+   * 基于x, y坐标生成合理的z坐标值
+   * @param x x坐标
+   * @param y y坐标
+   * @returns z坐标值
+   */
+  private generateZCoordinate(x: number, y: number): number {
+    // 验证输入
+    if (!isFinite(x) || !isFinite(y)) {
+      return 0
+    }
+    
+    // 使用确定性算法生成z坐标
+    // 基于x, y的组合生成一个在合理范围内的z值
+    const hash = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453
+    const normalized = (hash - Math.floor(hash)) * 2 - 1 // 归一化到 [-1, 1]
+    
+    // 缩放到合理范围 [-100, 100]
+    return normalized * 100
+  }
 }
 
 /**
