@@ -1,54 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
+import { TemplateGenerator } from '@/lib/services/template-generator'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
-  const format = searchParams.get('format') // 'excel'
-
-  if (format !== 'excel') {
-    return NextResponse.json({ error: 'Invalid format' }, { status: 400 })
-  }
+  const format = searchParams.get('format') || 'excel' // 'json', 'csv', 'excel'
 
   try {
-    // Create workbook
-    const wb = XLSX.utils.book_new()
+    const generator = new TemplateGenerator()
 
-    // 简化的3D Graph Template - Nodes sheet (只需填写必要信息)
-    const nodesData = [
-      ['label', 'description'],
-      ['Python', '一种简单易学的编程语言'],
-      ['数据分析', '使用数据发现规律和洞察'],
-      ['机器学习', '让计算机从数据中学习'],
-      ['Web开发', '构建网站和Web应用'],
-      ['自动化脚本', '自动化重复性任务'],
-    ]
-    const nodesSheet = XLSX.utils.aoa_to_sheet(nodesData)
-    XLSX.utils.book_append_sheet(wb, nodesSheet, 'Nodes')
+    switch (format) {
+      case 'json': {
+        const jsonTemplate = generator.generateJSONTemplate()
+        return new NextResponse(jsonTemplate, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Disposition': 'attachment; filename="3d-graph-template.json"',
+          },
+        })
+      }
 
-    // 简化的3D Graph Template - Edges sheet
-    const edgesData = [
-      ['source', 'target', 'label'],
-      ['Python', '数据分析', '应用于'],
-      ['Python', '机器学习', '应用于'],
-      ['Python', 'Web开发', '应用于'],
-      ['Python', '自动化脚本', '应用于'],
-      ['数据分析', '机器学习', '支撑'],
-    ]
-    const edgesSheet = XLSX.utils.aoa_to_sheet(edgesData)
-    XLSX.utils.book_append_sheet(wb, edgesSheet, 'Edges')
+      case 'csv': {
+        const csvTemplate = generator.generateCSVTemplate()
+        return new NextResponse(csvTemplate, {
+          headers: {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="3d-graph-template.csv"',
+          },
+        })
+      }
 
-    // Generate buffer
-    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+      case 'excel': {
+        // Create workbook
+        const wb = XLSX.utils.book_new()
 
-    // Return file - 固定为3D模板
-    return new NextResponse(buffer, {
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="3d-graph-template.xlsx"`,
-      },
-    })
+        // Generate template data using TemplateGenerator
+        const { relationSheet, instructionSheet } = generator.generateExcelTemplateData()
+
+        // Add relation data sheet (triplet format)
+        const relationWs = XLSX.utils.aoa_to_sheet(relationSheet)
+        XLSX.utils.book_append_sheet(wb, relationWs, '关系数据')
+
+        // Add instruction sheet
+        const instructionWs = XLSX.utils.aoa_to_sheet(instructionSheet)
+        XLSX.utils.book_append_sheet(wb, instructionWs, '使用说明')
+
+        // Generate buffer
+        const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+
+        return new NextResponse(buffer, {
+          headers: {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': 'attachment; filename="3d-graph-template.xlsx"',
+          },
+        })
+      }
+
+      default:
+        return NextResponse.json(
+          { error: 'Invalid format. Supported formats: json, csv, excel' },
+          { status: 400 }
+        )
+    }
   } catch (error) {
-    console.error('Error generating Excel template:', error)
+    console.error('Error generating template:', error)
     return NextResponse.json({ error: 'Failed to generate template' }, { status: 500 })
   }
 }

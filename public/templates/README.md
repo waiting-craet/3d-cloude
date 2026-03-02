@@ -5,6 +5,7 @@
 **新版模板采用极简设计**,用户只需填写最核心的信息:
 - ✅ **节点名称** (必填)
 - ✅ **节点描述** (可选)
+- ✅ **图片/视频** (可选)
 - ✅ **节点关系** (必填)
 
 **系统自动处理**:
@@ -48,11 +49,13 @@ source,target,label
   "nodes": [
     {
       "label": "产品经理",
-      "description": "负责产品规划"
+      "description": "负责产品规划",
+      "image": "https://example.com/pm.jpg"
     },
     {
       "label": "开发团队",
-      "description": "负责代码实现"
+      "description": "负责代码实现",
+      "video": "https://example.com/dev-intro.mp4"
     }
   ],
   "edges": [
@@ -93,6 +96,12 @@ source,target,label
 - `description` (string): 节点描述
   - 示例: "负责产品规划和需求分析"
   - 可以留空,系统会使用默认描述
+- `image` (string): 图片URL
+  - 示例: "https://example.com/image.jpg"
+  - 为节点添加图片展示
+- `video` (string): 视频URL
+  - 示例: "https://example.com/video.mp4"
+  - 为节点添加视频展示
 
 ### 边 (Edges)
 

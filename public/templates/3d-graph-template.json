@@ -3,13 +3,14 @@
     "简介": "这是一个简化的3D知识图谱模板，只需填写节点名称和关系即可",
     "自动生成": "系统会自动生成：3D坐标、节点颜色、节点大小、节点形状、节点ID",
     "必填字段": "label（节点名称）、source（起始节点）、target（目标节点）",
-    "可选字段": "description（节点描述）、label（关系名称）",
+    "可选字段": "description（节点描述）、image（图片URL）、video（视频URL）、label（关系名称）",
     "提示": "删除此说明对象后开始填写您的数据"
   },
   "nodes": [
     {
       "label": "Python",
-      "description": "一种简单易学的编程语言"
+      "description": "一种简单易学的编程语言",
+      "image": "https://example.com/python-logo.png"
     },
     {
       "label": "数据分析",
@@ -17,7 +18,8 @@
     },
     {
       "label": "机器学习",
-      "description": "让计算机从数据中学习"
+      "description": "让计算机从数据中学习",
+      "video": "https://example.com/ml-intro.mp4"
     },
     {
       "label": "Web开发",
