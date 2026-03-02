@@ -3,16 +3,15 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import LoginModal from '@/components/LoginModal'
+import HeroSection from '@/components/HeroSection'
+import SmartCategoryFilter, { Category } from '@/components/SmartCategoryFilter'
 import { useUserStore } from '@/lib/userStore'
 
 export default function LandingPage() {
   const router = useRouter()
-  const [loginHovered, setLoginHovered] = useState(false)
-  const [createHovered, setCreateHovered] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState('全部')
+  const [selectedCategory, setSelectedCategory] = useState('all')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [userMenuHovered, setUserMenuHovered] = useState(false)
-  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const { user, isLoggedIn, logout, initializeFromStorage } = useUserStore()
 
@@ -35,10 +34,40 @@ export default function LandingPage() {
 
   const handleLogout = () => {
     logout()
-    setShowUserMenu(false)
   }
 
-  const categories = ['全部', '科技', '教育', '商业', '艺术', '医疗', '其他']
+  // 分类数据配置
+  const categories: Category[] = [
+    { id: 'all', name: '全部', icon: '📚', color: '#00bfa5' },
+    { id: 'tech', name: '科技', icon: '💻', color: '#2196F3' },
+    { id: 'education', name: '教育', icon: '🎓', color: '#4CAF50' },
+    { id: 'business', name: '商业', icon: '💼', color: '#FF9800' },
+    { id: 'art', name: '艺术', icon: '🎨', color: '#E91E63' },
+    { id: 'medical', name: '医疗', icon: '⚕️', color: '#009688' },
+    { id: 'other', name: '其他', icon: '📋', color: '#607D8B' }
+  ]
+
+  // 模拟作品数量数据
+  const workCount = {
+    all: 120,
+    tech: 45,
+    education: 32,
+    business: 28,
+    art: 15,
+    medical: 8,
+    other: 12
+  }
+
+  const categories_old = ['全部', '科技', '教育', '商业', '艺术', '医疗', '其他']
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query)
+  }
+
+  const handleSearchSubmit = () => {
+    console.log('搜索查询:', searchQuery)
+    // 这里可以实现实际的搜索逻辑
+  }
 
   const handleStartCreating = () => {
     if (!isLoggedIn) {
@@ -53,6 +82,14 @@ export default function LandingPage() {
     } catch (error) {
       console.error('Navigation failed:', error)
       window.location.href = '/creation'
+    }
+  }
+
+  const handleBrowseWorks = () => {
+    // 滚动到作品区域
+    const worksSection = document.querySelector('[data-works-section]')
+    if (worksSection) {
+      worksSection.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
@@ -78,335 +115,46 @@ export default function LandingPage() {
       background: '#fafafa',
       color: '#333'
     }}>
-      {/* 顶部导航栏 */}
-      <nav style={{
-        padding: '16px 40px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: 'white',
-        borderBottom: '1px solid #e5e5e5'
-      }}>
-        {/* Logo */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '20px',
-          fontWeight: 'bold',
-          color: '#00bfa5'
-        }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            background: '#00bfa5',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '18px'
-          }}>
-            📊
-          </div>
-          知识图谱
-        </div>
-
-        {/* 右侧按钮 */}
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          alignItems: 'center'
-        }}>
-          {!isLoggedIn ? (
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
-              onMouseEnter={() => setLoginHovered(true)}
-              onMouseLeave={() => setLoginHovered(false)}
-              style={{
-                padding: '10px 20px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
-                whiteSpace: 'nowrap',
-                transform: loginHovered ? 'translateY(-1px)' : 'translateY(0)',
-              }}
-            >
-              登录
-            </button>
-          ) : (
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                onMouseEnter={() => setUserMenuHovered(true)}
-                onMouseLeave={() => setUserMenuHovered(false)}
-                style={{
-                  padding: '10px 20px',
-                  background: userMenuHovered ? 'rgba(102, 126, 234, 0.1)' : 'transparent',
-                  border: '1px solid rgba(102, 126, 234, 0.3)',
-                  borderRadius: '8px',
-                  color: '#667eea',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <span>👤</span>
-                <span>{user?.username || '用户'}</span>
-              </button>
-
-              {/* 用户菜单下拉框 */}
-              {showUserMenu && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    marginTop: '8px',
-                    minWidth: '180px',
-                    background: 'white',
-                    border: '1px solid #e5e5e5',
-                    borderRadius: '12px',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-                    zIndex: 1001,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {/* 用户信息 */}
-                  <div
-                    style={{
-                      padding: '12px 16px',
-                      borderBottom: '1px solid #e5e5e5',
-                      background: 'rgba(102, 126, 234, 0.05)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        color: '#2c2c2c',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        marginBottom: '4px',
-                      }}
-                    >
-                      {user?.username || '用户'}
-                    </div>
-                    <div
-                      style={{
-                        color: '#999',
-                        fontSize: '12px',
-                      }}
-                    >
-                      已登录
-                    </div>
-                  </div>
-
-                  {/* 菜单项 */}
-                  <div
-                    onClick={() => {
-                      router.push('/my-works')
-                      setShowUserMenu(false)
-                    }}
-                    style={{
-                      padding: '12px 16px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid #e5e5e5',
-                      transition: 'background 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(102, 126, 234, 0.05)'
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
-                    <span style={{ fontSize: '16px' }}>📚</span>
-                    <span
-                      style={{
-                        color: '#2c2c2c',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                      }}
-                    >
-                      我的作品
-                    </span>
-                  </div>
-
-                  {/* 退出登录 */}
-                  <div
-                    onClick={handleLogout}
-                    style={{
-                      padding: '12px 16px',
-                      cursor: 'pointer',
-                      transition: 'background 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
-                    <span style={{ fontSize: '16px' }}>🚪</span>
-                    <span
-                      style={{
-                        color: '#ef4444',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                      }}
-                    >
-                      退出登录
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          <button
-            onClick={handleStartCreating}
-            onMouseEnter={() => isLoggedIn && setCreateHovered(true)}
-            onMouseLeave={() => setCreateHovered(false)}
-            style={{
-              padding: '10px 24px',
-              background: !isLoggedIn 
-                ? '#e0e0e0' 
-                : (createHovered ? '#00d4b8' : '#00bfa5'),
-              border: 'none',
-              borderRadius: '24px',
-              color: !isLoggedIn ? '#999' : 'white',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: !isLoggedIn ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              transform: (isLoggedIn && createHovered) ? 'scale(1.05)' : 'scale(1)',
-              opacity: !isLoggedIn ? 0.6 : 1,
-            }}
-          >
-            开始创作
-          </button>
-        </div>
-      </nav>
+      {/* 英雄区域 */}
+      <HeroSection
+        title="知识图谱作品广场"
+        subtitle="发现、创建和分享知识的无限可能"
+        primaryAction={{
+          text: "开始创作",
+          onClick: handleStartCreating,
+          disabled: !isLoggedIn
+        }}
+        secondaryAction={{
+          text: "浏览作品",
+          onClick: handleBrowseWorks
+        }}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        onSearchSubmit={handleSearchSubmit}
+        backgroundType="gradient"
+        theme="light"
+        showSearch={true}
+        animated={true}
+      />
 
       {/* 主内容区 */}
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '50px 30px 100px 30px'
-      }}>
-        {/* 标题 */}
-        <h1 style={{
-          fontSize: '38px',
-          fontWeight: '700',
-          textAlign: 'center',
-          marginBottom: '35px',
-          color: '#2c2c2c',
-          letterSpacing: '-0.3px'
-        }}>
-          知识图谱作品广场
-        </h1>
-
-        {/* 搜索框 */}
-        <div style={{
-          maxWidth: '650px',
-          margin: '0 auto 28px auto',
-          display: 'flex',
-          gap: '0',
-          background: 'white',
-          borderRadius: '40px',
-          overflow: 'hidden',
-          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
-          border: '1px solid #e0e0e0'
-        }}>
-          <input
-            type="text"
-            placeholder="搜索知识图谱"
-            style={{
-              flex: 1,
-              padding: '15px 26px',
-              border: 'none',
-              outline: 'none',
-              fontSize: '14px',
-              background: 'transparent',
-              color: '#333'
-            }}
-          />
-          <button
-            style={{
-              padding: '15px 30px',
-              background: '#00bfa5',
-              border: 'none',
-              color: 'white',
-              fontSize: '18px',
-              cursor: 'pointer',
-              transition: 'background 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#00d4b8'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#00bfa5'
-            }}
-          >
-            🔍
-          </button>
-        </div>
-
+      }} data-works-section>
         {/* 分类筛选 */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '8px',
-          marginBottom: '45px',
-          flexWrap: 'wrap'
-        }}>
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              style={{
-                padding: '9px 22px',
-                background: selectedCategory === category ? '#00bfa5' : 'white',
-                border: `1px solid ${selectedCategory === category ? '#00bfa5' : '#d8d8d8'}`,
-                borderRadius: '22px',
-                color: selectedCategory === category ? 'white' : '#555',
-                fontSize: '13px',
-                fontWeight: selectedCategory === category ? '600' : '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: selectedCategory === category ? '0 2px 6px rgba(0, 191, 165, 0.2)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (selectedCategory !== category) {
-                  e.currentTarget.style.borderColor = '#00bfa5'
-                  e.currentTarget.style.color = '#00bfa5'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (selectedCategory !== category) {
-                  e.currentTarget.style.borderColor = '#e5e5e5'
-                  e.currentTarget.style.color = '#666'
-                }
-              }}
-            >
-              {category}
-            </button>
-          ))}
+        <div style={{ marginBottom: '45px' }}>
+          <SmartCategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            workCount={workCount}
+            size="medium"
+            variant="pills"
+            showCount={true}
+            animated={true}
+          />
         </div>
 
         {/* 作品网格 */}
@@ -446,12 +194,12 @@ export default function LandingPage() {
                 paddingTop: '100%',
                 position: 'relative',
                 background: `linear-gradient(135deg, ${
-                  index % 6 === 0 ? '#667eea, #764ba2' :
-                  index % 6 === 1 ? '#0f2027, #203a43, #2c5364' :
+                  index % 6 === 0 ? '#00bfa5, #00d4b8' :
+                  index % 6 === 1 ? '#667eea, #764ba2' :
                   index % 6 === 2 ? '#56ab2f, #a8e063' :
-                  index % 6 === 3 ? '#000000, #434343' :
-                  index % 6 === 4 ? '#bdc3c7, #2c3e50' :
-                  '#00b4db, #0083b0'
+                  index % 6 === 3 ? '#434343, #000000' :
+                  index % 6 === 4 ? '#2c3e50, #bdc3c7' :
+                  '#0083b0, #00b4db'
                 })`
               }}>
                 <div style={{

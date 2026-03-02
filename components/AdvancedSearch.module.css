@@ -1,0 +1,288 @@
+/* Advanced Search Component Styles */
+
+.searchContainer {
+  @apply relative w-full max-w-4xl mx-auto;
+}
+
+.searchBox {
+  @apply flex bg-white rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md;
+}
+
+.searchBoxFocused {
+  @apply border-teal-500 shadow-lg;
+}
+
+.searchInput {
+  @apply flex-1 px-6 py-4 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 text-base;
+}
+
+.searchInput:focus {
+  @apply outline-none;
+}
+
+.searchActions {
+  @apply flex items-center gap-2 pr-2;
+}
+
+.filterButton {
+  @apply p-2 rounded-lg transition-colors;
+}
+
+.filterButtonActive {
+  @apply bg-teal-100 text-teal-600;
+}
+
+.filterButtonInactive {
+  @apply text-gray-400 hover:text-gray-600 hover:bg-gray-100;
+}
+
+.searchButton {
+  @apply px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors font-medium;
+}
+
+/* Suggestions Dropdown */
+.suggestionsDropdown {
+  @apply absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto;
+}
+
+.suggestionItem {
+  @apply w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors;
+}
+
+.suggestionItemSelected {
+  @apply bg-teal-50 border-r-2 border-teal-500;
+}
+
+.suggestionIcon {
+  @apply text-lg flex-shrink-0;
+}
+
+.suggestionContent {
+  @apply flex-1 min-w-0;
+}
+
+.suggestionText {
+  @apply text-sm font-medium text-gray-900 truncate;
+}
+
+.suggestionType {
+  @apply px-2 py-1 text-xs rounded-full;
+}
+
+.suggestionTypeKeyword {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.suggestionTypeAuthor {
+  @apply bg-green-100 text-green-700;
+}
+
+.suggestionTypeCategory {
+  @apply bg-purple-100 text-purple-700;
+}
+
+.suggestionTypeTag {
+  @apply bg-orange-100 text-orange-700;
+}
+
+.suggestionCount {
+  @apply text-xs text-gray-500 mt-1;
+}
+
+.suggestionHint {
+  @apply text-xs text-gray-400;
+}
+
+/* History Dropdown */
+.historyDropdown {
+  @apply absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto;
+}
+
+.historyHeader {
+  @apply px-4 py-3 border-b border-gray-100 flex items-center justify-between;
+}
+
+.historyTitle {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.historyClear {
+  @apply text-xs text-gray-500 hover:text-red-500 transition-colors;
+}
+
+.historyItem {
+  @apply flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group;
+}
+
+.historyIcon {
+  @apply text-gray-400;
+}
+
+.historyContent {
+  @apply flex-1 text-left;
+}
+
+.historyQuery {
+  @apply text-sm font-medium text-gray-900 truncate;
+}
+
+.historyMeta {
+  @apply text-xs text-gray-500 mt-1;
+}
+
+.historyRemove {
+  @apply opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1;
+}
+
+/* Filters Panel */
+.filtersPanel {
+  @apply absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-40 p-6;
+}
+
+.filtersGrid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+.filterGroup {
+  @apply space-y-2;
+}
+
+.filterLabel {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.filterInput {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors;
+}
+
+.filterSelect {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-white;
+}
+
+.filtersActions {
+  @apply flex items-center justify-between mt-6 pt-4 border-t border-gray-200;
+}
+
+.resetButton {
+  @apply text-sm text-gray-500 hover:text-gray-700 transition-colors;
+}
+
+.filtersButtonGroup {
+  @apply flex gap-3;
+}
+
+.cancelButton {
+  @apply px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors;
+}
+
+.applyButton {
+  @apply px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors font-medium;
+}
+
+/* Empty States */
+.emptyState {
+  @apply px-4 py-6 text-center text-gray-500;
+}
+
+.emptyStateIcon {
+  @apply text-2xl mb-2;
+}
+
+.emptyStateText {
+  @apply text-sm;
+}
+
+/* Highlight */
+.highlight {
+  @apply bg-yellow-200 text-yellow-800 font-medium;
+}
+
+/* Animations */
+.fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.slideDown {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .searchInput {
+    @apply px-4 py-3 text-sm;
+  }
+  
+  .searchButton {
+    @apply px-4 py-2 text-sm;
+  }
+  
+  .filtersGrid {
+    @apply grid-cols-1 gap-4;
+  }
+  
+  .filtersPanel {
+    @apply p-4;
+  }
+  
+  .suggestionItem {
+    @apply px-3 py-2;
+  }
+  
+  .historyItem {
+    @apply px-3 py-2;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .searchBox {
+    @apply bg-gray-800 border-gray-600;
+  }
+  
+  .searchInput {
+    @apply text-gray-200 placeholder-gray-400;
+  }
+  
+  .suggestionsDropdown,
+  .historyDropdown,
+  .filtersPanel {
+    @apply bg-gray-800 border-gray-600;
+  }
+  
+  .suggestionItem:hover,
+  .historyItem:hover {
+    @apply bg-gray-700;
+  }
+  
+  .suggestionText,
+  .historyQuery {
+    @apply text-gray-200;
+  }
+  
+  .filterInput,
+  .filterSelect {
+    @apply bg-gray-700 border-gray-600 text-gray-200;
+  }
+}

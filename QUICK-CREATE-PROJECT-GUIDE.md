@@ -22,7 +22,7 @@
 ```json
 {
   "graphName": "我的知识图谱",
-  "graphType": "2d"  // 或 "3d"
+  "graphType": "3d"  // 系统已统一为3D
 }
 ```
 

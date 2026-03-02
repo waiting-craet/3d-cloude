@@ -53,7 +53,7 @@ async function main() {
     const graphs2d = await prisma.graph.findMany({
       where: {
         settings: {
-          contains: '"graphType":"2d"',
+          contains: '"graphType":"3d"',  // 系统已统一为3D
         },
       },
     })

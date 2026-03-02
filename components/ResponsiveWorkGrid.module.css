@@ -1,0 +1,692 @@
+/* 响应式作品网格样式 */
+.responsive-work-grid {
+  width: 100%;
+}
+
+/* 骨架屏动画 */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 加载状态样式 */
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid #4A9EFF;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.loading-dot {
+  width: 12px;
+  height: 12px;
+  background-color: #4A9EFF;
+  border-radius: 50%;
+  animation: pulse 1.4s ease-in-out infinite both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.loading-dot:nth-child(3) { animation-delay: 0s; }
+
+/* 骨架屏优化 */
+.skeleton-element {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* 加载状态容器 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 64px 16px;
+  text-align: center;
+}
+
+.loading-text {
+  margin-top: 16px;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+/* 渐进式加载动画 */
+.progressive-load {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 交错动画 */
+.stagger-animation {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.stagger-animation:nth-child(1) { animation-delay: 0.1s; }
+.stagger-animation:nth-child(2) { animation-delay: 0.2s; }
+.stagger-animation:nth-child(3) { animation-delay: 0.3s; }
+.stagger-animation:nth-child(4) { animation-delay: 0.4s; }
+.stagger-animation:nth-child(5) { animation-delay: 0.5s; }
+.stagger-animation:nth-child(6) { animation-delay: 0.6s; }
+
+/* 加载状态主题适配 */
+.loading-dark {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.loading-light {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.loading-dark .loading-spinner {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: #4A9EFF;
+}
+
+.loading-light .loading-spinner {
+  border-color: rgba(0, 0, 0, 0.1);
+  border-top-color: #4A9EFF;
+}
+
+/* 响应式断点 */
+@media (max-width: 767px) {
+  .responsive-work-grid {
+    padding: 0 12px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .responsive-work-grid {
+    padding: 0 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-work-grid {
+    padding: 0 20px;
+  }
+}
+
+/* 卡片悬停效果优化 */
+.enhanced-work-card {
+  will-change: transform, box-shadow;
+}
+
+/* 图片加载过渡 */
+.card-image {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* 标签样式 */
+.work-tag {
+  transition: all 0.2s ease;
+}
+
+.work-tag:hover {
+  transform: scale(1.05);
+}
+
+/* 操作按钮样式 */
+.action-button {
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.action-button:hover {
+  transform: scale(1.1);
+}
+
+/* 空状态样式 */
+.empty-state {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 高级网格布局系统 */
+.work-grid {
+  display: grid;
+  width: 100%;
+  gap: 24px;
+  /* 使用 auto-fit 和 minmax 实现真正的响应式 */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* 网格项目自动调整高度 */
+  grid-auto-rows: min-content;
+  /* 网格对齐 */
+  justify-content: center;
+  align-content: start;
+  /* 网格项目间距优化 */
+  justify-items: stretch;
+  align-items: start;
+}
+
+/* 移动端网格优化 */
+@media (max-width: 767px) {
+  .work-grid {
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* 移动端单列布局 */
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 平板端网格优化 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .work-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* 最多3列 */
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, calc(100% / 3 - 16px)), 1fr));
+  }
+}
+
+/* 桌面端网格优化 */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .work-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* 最多4列 */
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, calc(100% / 4 - 18px)), 1fr));
+  }
+}
+
+/* 宽屏网格优化 */
+@media (min-width: 1440px) {
+  .work-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* 最多6列 */
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, calc(100% / 6 - 20px)), 1fr));
+  }
+}
+
+/* 超宽屏支持 */
+@media (min-width: 1920px) {
+  .work-grid {
+    /* 超宽屏最多8列 */
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, calc(100% / 8 - 24px)), 1fr));
+  }
+}
+
+/* 网格容器优化 */
+.responsive-work-grid {
+  width: 100%;
+  /* 容器查询支持（如果浏览器支持） */
+  container-type: inline-size;
+}
+
+/* 容器查询（现代浏览器支持） */
+@container (max-width: 767px) {
+  .work-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container (min-width: 768px) and (max-width: 1023px) {
+  .work-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@container (min-width: 1024px) {
+  .work-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+/* 对齐方式样式 */
+.align-start {
+  align-items: start;
+  justify-items: start;
+}
+
+.align-center {
+  align-items: center;
+  justify-items: center;
+}
+
+.align-end {
+  align-items: end;
+  justify-items: end;
+}
+
+.align-stretch {
+  align-items: stretch;
+  justify-items: stretch;
+}
+
+/* 内容分布样式 */
+.justify-start {
+  justify-content: start;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-end {
+  justify-content: end;
+}
+
+.justify-space-between {
+  justify-content: space-between;
+}
+
+.justify-space-around {
+  justify-content: space-around;
+}
+
+.justify-space-evenly {
+  justify-content: space-evenly;
+}
+
+/* 网格项目对齐优化 */
+.grid-item {
+  /* 确保网格项目填满可用空间 */
+  width: 100%;
+  height: fit-content;
+  /* 防止内容溢出 */
+  min-width: 0;
+  min-height: 0;
+  /* 对齐方式继承 */
+  align-self: inherit;
+  justify-self: inherit;
+}
+
+/* 特殊对齐情况处理 */
+.align-center .grid-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.align-end .grid-item {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+/* 宽高比支持 */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+.aspect-4-3 {
+  aspect-ratio: 4 / 3;
+}
+
+.aspect-16-9 {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-3-2 {
+  aspect-ratio: 3 / 2;
+}
+
+/* 网格间距微调 */
+.work-grid {
+  /* 确保网格间距一致 */
+  box-sizing: border-box;
+  /* 网格项目间距优化 */
+  grid-gap: inherit;
+}
+
+/* 响应式对齐调整 */
+@media (max-width: 767px) {
+  .align-center,
+  .align-end {
+    /* 移动端强制左对齐以节省空间 */
+    align-items: stretch;
+    justify-items: stretch;
+  }
+  
+  .justify-space-between,
+  .justify-space-around,
+  .justify-space-evenly {
+    /* 移动端简化为居中对齐 */
+    justify-content: center;
+  }
+}
+
+/* 网格容器边距优化 */
+.responsive-work-grid {
+  /* 容器内边距 */
+  padding: 0 16px;
+  /* 确保容器宽度计算正确 */
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .responsive-work-grid {
+    padding: 0 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-work-grid {
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .responsive-work-grid {
+    padding: 0 32px;
+  }
+}
+
+/* 自适应网格间距 */
+.work-grid.compact {
+  gap: 16px;
+}
+
+.work-grid.comfortable {
+  gap: 24px;
+}
+
+.work-grid.spacious {
+  gap: 32px;
+}
+
+/* 响应式间距调整 */
+@media (max-width: 767px) {
+  .work-grid.compact { gap: 12px; }
+  .work-grid.comfortable { gap: 16px; }
+  .work-grid.spacious { gap: 20px; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .work-grid.compact { gap: 16px; }
+  .work-grid.comfortable { gap: 20px; }
+  .work-grid.spacious { gap: 24px; }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .work-grid.compact { gap: 20px; }
+  .work-grid.comfortable { gap: 24px; }
+  .work-grid.spacious { gap: 28px; }
+}
+
+@media (min-width: 1440px) and (max-width: 1919px) {
+  .work-grid.compact { gap: 24px; }
+  .work-grid.comfortable { gap: 28px; }
+  .work-grid.spacious { gap: 32px; }
+}
+
+@media (min-width: 1920px) {
+  .work-grid.compact { gap: 28px; }
+  .work-grid.comfortable { gap: 32px; }
+  .work-grid.spacious { gap: 36px; }
+}
+
+/* 网格加载状态 */
+.loading-grid {
+  display: grid;
+  gap: inherit;
+  grid-template-columns: inherit;
+  grid-auto-rows: inherit;
+  justify-content: inherit;
+  align-content: inherit;
+}
+
+/* 网格空状态 */
+.empty-grid {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+/* 网格错误状态 */
+.error-grid {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+  color: #ef4444;
+}
+
+/* 网格项目动画 */
+.grid-item-enter {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+.grid-item-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: all 0.3s ease-out;
+}
+
+.grid-item-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.grid-item-exit-active {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+  transition: all 0.3s ease-in;
+}
+
+/* 网格布局调试（开发环境） */
+.debug-grid {
+  background-image: 
+    linear-gradient(rgba(255, 0, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* 网格性能优化 */
+.work-grid {
+  /* 启用硬件加速 */
+  will-change: contents;
+  /* 优化重绘 */
+  contain: layout style paint;
+}
+
+.grid-item {
+  /* 优化单个网格项目 */
+  contain: layout style paint;
+  /* 启用合成层 */
+  will-change: transform;
+}
+
+/* 卡片内容区域优化 */
+.card-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.card-description {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 标签容器 */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+/* 统计信息 */
+.stats-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+/* 创建者信息 */
+.creator-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.creator-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 加载状态优化 */
+.loading-container {
+  display: grid;
+  gap: inherit;
+  grid-template-columns: inherit;
+}
+
+/* 错误状态 */
+.error-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 64px 16px;
+  color: #ef4444;
+}
+
+/* 重试按钮 */
+.retry-button {
+  background: #4A9EFF;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 16px;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+}
+
+/* 特色作品边框动画 */
+.featured-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.featured-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #4A9EFF, #60A5FA, #3B82F6, #4A9EFF);
+  background-size: 400% 400%;
+  border-radius: 14px;
+  z-index: -1;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* 无障碍访问优化 */
+.enhanced-work-card:focus {
+  outline: 2px solid #4A9EFF;
+  outline-offset: 2px;
+}
+
+.action-button:focus {
+  outline: 2px solid #4A9EFF;
+  outline-offset: 2px;
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .enhanced-work-card {
+    border-width: 2px;
+  }
+  
+  .work-tag {
+    border: 1px solid currentColor;
+  }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+  .enhanced-work-card,
+  .action-button,
+  .work-tag,
+  .card-image {
+    transition: none;
+  }
+  
+  .shimmer,
+  .gradientShift,
+  .fadeIn {
+    animation: none;
+  }
+}

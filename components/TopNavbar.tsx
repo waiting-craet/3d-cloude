@@ -684,7 +684,7 @@ export default function TopNavbar() {
                                 gap: '8px',
                               }}>
                                 {currentGraph?.id === graph.id && (
-                                  <span style={{ color: '#4A9EFF', fontSize: '16px' }}>✓</span>
+                                  <span style={{ color: '#00bfa5', fontSize: '16px' }}>✓</span>
                                 )}
                                 <span>{graph.name}</span>
                               </div>
@@ -901,7 +901,7 @@ export default function TopNavbar() {
               onClick={() => setIsCreateModalOpen(true)}
               style={{
                 padding: '10px 18px',
-                background: 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)',
+                background: '#00bfa5',
                 border: 'none',
                 borderRadius: '8px',
                 color: 'white',
@@ -909,18 +909,20 @@ export default function TopNavbar() {
                 fontSize: '13px',
                 fontWeight: '600',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(74, 158, 255, 0.3)',
+                boxShadow: '0 2px 8px rgba(0, 191, 165, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'translateY(-1px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 158, 255, 0.4)'
+                e.currentTarget.style.background = '#00d4b8'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.4)'
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(74, 158, 255, 0.3)'
+                e.currentTarget.style.background = '#00bfa5'
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 191, 165, 0.3)'
               }}
             >
               <span style={{ fontSize: '16px' }}>+</span>

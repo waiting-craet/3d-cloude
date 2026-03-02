@@ -15,17 +15,17 @@
 **文件**: `app/api/projects/route.ts`
 
 **修改内容**:
-- 更新POST端点以接收 `graphType` 参数（'2d' 或 '3d'）
+- 更新POST端点以接收 `graphType` 参数（固定为'3d'，系统已统一）
 - 移除对 `projectName` 的依赖，改为使用 `graphName` 作为项目名称
-- 添加 `graphType` 验证（必须是 '2d' 或 '3d'）
+- 添加 `graphType` 验证（必须是 '3d'）
 - 在创建图谱时，将 `graphType` 存储在 `settings` JSON字段中
 
 **关键代码**:
 ```typescript
-// 验证 graphType
-if (!graphType || !['2d', '3d'].includes(graphType)) {
+// 验证 graphType（系统已统一为3D）
+if (!graphType || graphType !== '3d') {
   return NextResponse.json(
-    { error: '图谱类型必须为 2d 或 3d' },
+    { error: '图谱类型必须为 3d（系统已统一）' },
     { status: 400 }
   );
 }
@@ -34,7 +34,7 @@ if (!graphType || !['2d', '3d'].includes(graphType)) {
 graphs: {
   create: {
     name: graphName,
-    description: `${graphName}的${graphType === '2d' ? '二维' : '三维'}知识图谱`,
+    description: `${graphName}的三维知识图谱`,  // 系统已统一为3D
     settings: JSON.stringify({ graphType }),
   },
 }
@@ -58,9 +58,8 @@ const router = useRouter();
 // 创建项目成功后
 if (newProject.graphs && newProject.graphs.length > 0) {
   const graphId = newProject.graphs[0].id;
-  if (graphType === '2d') {
-    router.push(`/workflow?graphId=${graphId}`);
-  } else {
+  // 系统已统一为3D，直接跳转到3D图谱页面
+  router.push(`/graph/${graphId}`);
     router.push(`/gallery?graphId=${graphId}`);
   }
 }
@@ -113,7 +112,7 @@ if (newProject.graphs && newProject.graphs.length > 0) {
 ```json
 {
   "graphName": "我的知识图谱",
-  "graphType": "2d"
+  "graphType": "3d"
 }
 ```
 

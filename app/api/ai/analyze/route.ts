@@ -76,11 +76,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!body.visualizationType || !['2d', '3d'].includes(body.visualizationType)) {
+    if (!body.visualizationType || body.visualizationType !== '3d') {
       return NextResponse.json(
         {
           success: false,
-          error: 'Visualization type must be either "2d" or "3d".',
+          error: 'Visualization type must be "3d". 2D mode is no longer supported.',
         },
         { status: 400 }
       );

@@ -1,0 +1,244 @@
+/* Enhanced Work Card Styles */
+
+.enhancedWorkCard {
+  position: relative;
+  will-change: transform, box-shadow;
+}
+
+.enhancedWorkCard:focus {
+  outline: 2px solid #4A9EFF;
+  outline-offset: 2px;
+}
+
+.enhancedWorkCard:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.thumbnailContainer {
+  position: relative;
+  overflow: hidden;
+}
+
+.thumbnailImage {
+  will-change: transform;
+}
+
+.imageSkeleton {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: shimmer 2s infinite;
+}
+
+.placeholderIcon {
+  transition: color 0.3s ease;
+}
+
+.typeLabel,
+.featuredLabel,
+.templateLabel {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.actionButtons {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.enhancedWorkCard:hover .actionButtons {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.actionButton {
+  transition: all 0.2s ease;
+  will-change: transform, background;
+}
+
+.actionButton:hover {
+  transform: scale(1.1);
+}
+
+.actionButton:active {
+  transform: scale(0.95);
+}
+
+.contentArea {
+  position: relative;
+}
+
+.title {
+  transition: color 0.3s ease;
+}
+
+.description {
+  transition: color 0.3s ease;
+}
+
+.tagsContainer {
+  min-height: 24px;
+}
+
+.tag {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(74, 158, 255, 0.2);
+}
+
+.moreTagsIndicator {
+  transition: color 0.3s ease;
+}
+
+.creatorInfo {
+  transition: all 0.3s ease;
+}
+
+.creatorAvatar,
+.defaultAvatar {
+  transition: all 0.2s ease;
+}
+
+.creatorAvatar:hover,
+.defaultAvatar:hover {
+  transform: scale(1.1);
+}
+
+.creatorName {
+  transition: color 0.3s ease;
+}
+
+.likesCount {
+  transition: all 0.3s ease;
+}
+
+.statsInfo {
+  transition: all 0.3s ease;
+}
+
+.createdTime {
+  transition: color 0.3s ease;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enhancedWorkCard {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .actionButtons {
+    opacity: 1;
+    transform: translateY(0);
+    position: static;
+    justify-content: center;
+    margin-top: 8px;
+    padding: 0 12px;
+  }
+  
+  .actionButton {
+    position: relative;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .enhancedWorkCard {
+    border-width: 2px;
+  }
+  
+  .typeLabel,
+  .featuredLabel,
+  .templateLabel {
+    backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.9) !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .enhancedWorkCard,
+  .thumbnailImage,
+  .actionButton,
+  .tag,
+  .creatorAvatar,
+  .defaultAvatar {
+    transition: none;
+  }
+  
+  .shimmer {
+    animation: none;
+  }
+  
+  .enhancedWorkCard {
+    animation: none;
+  }
+  
+  .enhancedWorkCard:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .enhancedWorkCard {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  .actionButtons {
+    display: none;
+  }
+  
+  .thumbnailImage {
+    transform: none !important;
+  }
+}

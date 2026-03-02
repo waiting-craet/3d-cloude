@@ -848,7 +848,6 @@ function VisualizationSection({
   onEdgeSelect: (edgeId: string) => void
 }) {
   // 导入必要的组件
-  const Interactive2DGraph = require('./Interactive2DGraph').default
   const Preview3DGraph = require('./Preview3DGraph').default
   const { applyLayout } = require('@/lib/graph-layouts')
   
@@ -875,11 +874,11 @@ function VisualizationSection({
       metadata: edge.properties,
     }))
     
-    // 如果是3D模式，应用智能布局算法（AI自动选择）
+    // 如果有多个节点，应用智能布局算法（AI自动选择）
     let optimizedNodes = graphNodes
     let recommendedLayout = 'force' // 默认布局
     
-    if (visualizationType === '3d' && nodes.length > 1) {
+    if (nodes.length > 1) {
       try {
         // AI自动分析并选择最佳布局
         const { nodes: layoutNodes, analysis } = applyLayout(graphNodes, graphEdges)
@@ -912,12 +911,11 @@ function VisualizationSection({
         }))
       }
     } else {
-      // 2D模式使用紧凑的圆形布局
-      const radius = Math.min(20 + nodes.length * 0.5, 30)
-      optimizedNodes = graphNodes.map((node, index) => ({
+      // 单节点使用原点位置
+      optimizedNodes = graphNodes.map((node) => ({
         ...node,
-        x: Math.cos((index / graphNodes.length) * 2 * Math.PI) * radius,
-        y: Math.sin((index / graphNodes.length) * 2 * Math.PI) * radius,
+        x: 0,
+        y: 0,
         z: 0,
       }))
     }
@@ -929,80 +927,22 @@ function VisualizationSection({
     }
   })()
 
-  if (visualizationType === '3d') {
-    // 3D 可视化 - 使用独立的预览组件
-    return (
-      <div style={{ 
-        width: '100%', 
-        height: '100%', 
-        background: 'rgba(0, 0, 0, 0.3)',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        position: 'relative',
-      }}>
-        <Preview3DGraph
-          nodes={graphData.nodes}
-          edges={graphData.edges}
-          onNodeClick={(nodeId: string) => onNodeSelect(nodeId)}
-        />
-        
-        {/* 图例 */}
-        <div style={{
-          position: 'absolute',
-          top: '16px',
-          right: '16px',
-          background: 'rgba(0, 0, 0, 0.7)',
-          backdropFilter: 'blur(10px)',
-          padding: '12px 16px',
-          borderRadius: '10px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 10,
-        }}>
-          <div style={{ color: 'white', fontSize: '12px', fontWeight: '600', marginBottom: '8px' }}>
-            图例
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#6366f1' }} />
-              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>普通节点</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }} />
-              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>重复节点</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '20px', height: '2px', background: '#8b5cf6' }} />
-              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>普通边</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '20px', height: '2px', background: '#ef4444' }} />
-              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>冗余边</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // 2D 可视化 - 使用交互式图谱组件
+  // 3D 可视化 - 统一使用3D模式
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <div style={{ 
-        width: '100%', 
-        height: '100%', 
-        background: 'rgba(0, 0, 0, 0.3)',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-      }}>
-        <Interactive2DGraph
-          nodes={graphData.nodes}
-          edges={graphData.edges}
-          onNodeClick={(nodeId: string) => onNodeSelect(nodeId)}
-          onEdgeClick={(edgeId: string) => onEdgeSelect(edgeId)}
-        />
-      </div>
+    <div style={{ 
+      width: '100%', 
+      height: '100%', 
+      background: 'rgba(0, 0, 0, 0.3)',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      position: 'relative',
+    }}>
+      <Preview3DGraph
+        nodes={graphData.nodes}
+        edges={graphData.edges}
+        onNodeClick={(nodeId: string) => onNodeSelect(nodeId)}
+      />
       
       {/* 图例 */}
       <div style={{

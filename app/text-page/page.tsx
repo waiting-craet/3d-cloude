@@ -493,69 +493,70 @@ export default function TextPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #1e1e2e 0%, #0f0f1e 50%, #1a1a2e 100%)',
-      padding: '60px 20px 80px 20px',
-      position: 'relative',
+      background: '#fafafa',
+      padding: '0'
     }}>
-      {/* 背景装饰 */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '400px',
-        background: 'radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
-      
+      {/* 顶部导航栏 */}
+      <nav style={{
+        padding: '16px 40px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: 'white',
+        borderBottom: '1px solid #e5e5e5'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: '#00bfa5'
+        }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            background: '#00bfa5',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '18px'
+          }}>
+            📊
+          </div>
+          知识图谱
+        </div>
+      </nav>
+
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        position: 'relative',
-        zIndex: 1,
+        padding: '50px 30px 100px 30px'
       }}>
-        {/* 标题区域 */}
-        <div style={{
+        {/* 标题 */}
+        <h1 style={{
+          fontSize: '38px',
+          fontWeight: '700',
           textAlign: 'center',
-          marginBottom: '50px',
+          marginBottom: '16px',
+          color: '#2c2c2c',
+          letterSpacing: '-0.3px'
         }}>
-          <div style={{
-            display: 'inline-block',
-            padding: '8px 20px',
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
-            borderRadius: '20px',
-            marginBottom: '20px',
-            fontSize: '13px',
-            color: 'rgba(167, 139, 250, 1)',
-            fontWeight: '500',
-            letterSpacing: '0.5px',
-          }}>
-            ✨ AI 驱动的智能分析
-          </div>
-          <h1 style={{
-            color: 'white',
-            fontSize: '48px',
-            fontWeight: '800',
-            marginBottom: '16px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #a78bfa 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            letterSpacing: '-1px',
-          }}>
-            知识图谱生成器
-          </h1>
-          <p style={{
-            color: 'rgba(255, 255, 255, 0.6)',
-            fontSize: '18px',
-            maxWidth: '600px',
-            margin: '0 auto',
-            lineHeight: '1.6',
-          }}>
-            导入数据或输入文本，AI 将自动提取实体关系，生成可视化知识图谱
-          </p>
-        </div>
+          AI知识图谱生成器
+        </h1>
+        <p style={{
+          textAlign: 'center',
+          color: '#666',
+          fontSize: '16px',
+          marginBottom: '50px',
+          maxWidth: '600px',
+          margin: '0 auto 50px auto',
+          lineHeight: '1.6'
+        }}>
+          导入数据或输入文本，AI 将自动提取实体关系，生成可视化知识图谱
+        </p>
 
         {/* 主内容区域 */}
         <div style={{
@@ -565,41 +566,20 @@ export default function TextPage() {
         }}>
           {/* 项目和图谱选择区域 */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '20px',
-            padding: '36px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            background: 'white',
+            borderRadius: '14px',
+            padding: '30px',
+            border: '1px solid #ebebeb',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#2c2c2c',
+              marginBottom: '24px'
             }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-              }}>
-                📁
-              </div>
-              <h2 style={{
-                color: 'white',
-                fontSize: '22px',
-                fontWeight: '700',
-                margin: 0,
-              }}>
-                项目与图谱
-              </h2>
-            </div>
+              项目与图谱
+            </h2>
 
             <div style={{
               display: 'grid',
@@ -610,7 +590,7 @@ export default function TextPage() {
               <div>
                 <label style={{
                   display: 'block',
-                  color: 'rgba(255, 255, 255, 0.85)',
+                  color: '#2c2c2c',
                   fontSize: '14px',
                   fontWeight: '600',
                   marginBottom: '12px',
@@ -631,10 +611,10 @@ export default function TextPage() {
                     style={{
                       flex: 1,
                       padding: '12px 16px',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '10px',
-                      color: 'white',
+                      background: 'white',
+                      border: '1px solid #e5e5e5',
+                      borderRadius: '8px',
+                      color: '#2c2c2c',
                       fontSize: '14px',
                       cursor: isLoadingProjects ? 'wait' : 'pointer',
                       transition: 'all 0.2s ease',
@@ -652,10 +632,10 @@ export default function TextPage() {
                     onClick={() => setShowNewProjectModal(true)}
                     style={{
                       padding: '12px 20px',
-                      background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
-                      borderRadius: '10px',
-                      color: 'rgba(52, 211, 153, 1)',
+                      background: '#00bfa5',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: 'white',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
@@ -663,14 +643,12 @@ export default function TextPage() {
                       whiteSpace: 'nowrap',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.3) 100%)'
-                      e.currentTarget.style.transform = 'scale(1.05)'
+                      e.currentTarget.style.background = '#00d4b8'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)'
-                      e.currentTarget.style.transform = 'scale(1)'
+                      e.currentTarget.style.background = '#00bfa5'
                     }}>
-                    ➕ 新建
+                    + 新建
                   </button>
                 </div>
               </div>
@@ -679,7 +657,7 @@ export default function TextPage() {
               <div>
                 <label style={{
                   display: 'block',
-                  color: 'rgba(255, 255, 255, 0.85)',
+                  color: '#2c2c2c',
                   fontSize: '14px',
                   fontWeight: '600',
                   marginBottom: '12px',
@@ -697,10 +675,10 @@ export default function TextPage() {
                     style={{
                       flex: 1,
                       padding: '12px 16px',
-                      background: (selectedProject && !isLoadingGraphs) ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '10px',
-                      color: (selectedProject && !isLoadingGraphs) ? 'white' : 'rgba(255, 255, 255, 0.4)',
+                      background: (selectedProject && !isLoadingGraphs) ? 'white' : '#f5f5f5',
+                      border: '1px solid #e5e5e5',
+                      borderRadius: '8px',
+                      color: (selectedProject && !isLoadingGraphs) ? '#2c2c2c' : '#999',
                       fontSize: '14px',
                       cursor: (selectedProject && !isLoadingGraphs) ? 'pointer' : 'not-allowed',
                       transition: 'all 0.2s ease',
@@ -719,32 +697,28 @@ export default function TextPage() {
                     disabled={!selectedProject}
                     style={{
                       padding: '12px 20px',
-                      background: selectedProject 
-                        ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)'
-                        : 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
-                      borderRadius: '10px',
-                      color: selectedProject ? 'rgba(52, 211, 153, 1)' : 'rgba(255, 255, 255, 0.3)',
+                      background: selectedProject ? '#00bfa5' : '#e0e0e0',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: 'white',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: selectedProject ? 'pointer' : 'not-allowed',
                       transition: 'all 0.2s ease',
                       whiteSpace: 'nowrap',
-                      opacity: selectedProject ? 1 : 0.5,
+                      opacity: selectedProject ? 1 : 0.6,
                     }}
                     onMouseEnter={(e) => {
                       if (selectedProject) {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.3) 100%)'
-                        e.currentTarget.style.transform = 'scale(1.05)'
+                        e.currentTarget.style.background = '#00d4b8'
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (selectedProject) {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)'
-                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.background = '#00bfa5'
                       }
                     }}>
-                    ➕ 新建
+                    + 新建
                   </button>
                 </div>
               </div>
@@ -758,7 +732,7 @@ export default function TextPage() {
                 background: 'rgba(251, 191, 36, 0.1)',
                 border: '1px solid rgba(251, 191, 36, 0.3)',
                 borderRadius: '10px',
-                color: 'rgba(251, 191, 36, 1)',
+                color: '#d97706',
                 fontSize: '13px',
                 display: 'flex',
                 alignItems: 'center',
@@ -772,73 +746,48 @@ export default function TextPage() {
 
           {/* 输入区域 */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '20px',
-            padding: '36px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            background: 'white',
+            borderRadius: '14px',
+            padding: '30px',
+            border: '1px solid #ebebeb',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#2c2c2c',
+              marginBottom: '24px'
             }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-              }}>
-                📝
-              </div>
-              <h2 style={{
-                color: 'white',
-                fontSize: '22px',
-                fontWeight: '700',
-                margin: 0,
-              }}>
-                数据输入
-              </h2>
-            </div>
+              数据输入
+            </h2>
 
             {/* 文件上传按钮 */}
             <div style={{
-              marginBottom: '24px',
+              marginBottom: '20px',
             }}>
               <label style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '10px',
-                padding: '14px 28px',
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)',
-                border: '2px dashed rgba(99, 102, 241, 0.4)',
+                padding: '12px 24px',
+                background: 'white',
+                border: '2px dashed #00bfa5',
                 borderRadius: '12px',
-                color: 'rgba(167, 139, 250, 1)',
+                color: '#00bfa5',
                 cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                fontSize: '15px',
+                transition: 'all 0.2s',
+                fontSize: '14px',
                 fontWeight: '600',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%)'
-                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.6)'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(99, 102, 241, 0.3)'
+                e.currentTarget.style.background = 'rgba(0, 191, 165, 0.05)'
+                e.currentTarget.style.borderColor = '#00d4b8'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)'
-                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)'
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
+                e.currentTarget.style.background = 'white'
+                e.currentTarget.style.borderColor = '#00bfa5'
               }}>
-                <span style={{ fontSize: '20px' }}>📁</span>
+                <span style={{ fontSize: '18px' }}>📁</span>
                 导入文本文件
                 <input
                   type="file"
@@ -849,7 +798,7 @@ export default function TextPage() {
               </label>
               <div style={{
                 marginTop: '8px',
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: '#666',
                 fontSize: '12px',
               }}>
                 支持格式：TXT, MD, Markdown
@@ -859,25 +808,24 @@ export default function TextPage() {
             {/* 已导入文件信息卡片 */}
             {uploadedFile && (
               <div style={{
-                marginBottom: '24px',
-                padding: '20px',
-                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%)',
-                border: '1px solid rgba(34, 197, 94, 0.25)',
-                borderRadius: '16px',
-                boxShadow: '0 4px 12px rgba(34, 197, 94, 0.1)',
+                marginBottom: '20px',
+                padding: '16px',
+                background: 'rgba(0, 191, 165, 0.08)',
+                border: '1px solid rgba(0, 191, 165, 0.2)',
+                borderRadius: '12px',
               }}>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  marginBottom: '16px',
+                  marginBottom: '12px',
                 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      color: 'rgba(34, 197, 94, 1)',
-                      fontSize: '15px',
-                      fontWeight: '700',
-                      marginBottom: '10px',
+                      color: '#00bfa5',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginBottom: '8px',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
@@ -886,15 +834,15 @@ export default function TextPage() {
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: '24px',
-                        height: '24px',
+                        width: '20px',
+                        height: '20px',
                         borderRadius: '50%',
-                        background: 'rgba(34, 197, 94, 0.2)',
+                        background: 'rgba(0, 191, 165, 0.2)',
                       }}>✓</span>
                       文件已导入
                     </div>
                     <div style={{
-                      color: 'rgba(255, 255, 255, 0.95)',
+                      color: '#2c2c2c',
                       fontSize: '14px',
                       marginBottom: '6px',
                       fontWeight: '500',
@@ -902,7 +850,7 @@ export default function TextPage() {
                       📄 {uploadedFile.name}
                     </div>
                     <div style={{
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: '#666',
                       fontSize: '13px',
                       display: 'flex',
                       gap: '12px',
@@ -915,23 +863,21 @@ export default function TextPage() {
                   <button
                     onClick={handleRemoveFile}
                     style={{
-                      padding: '8px 16px',
-                      background: 'rgba(239, 68, 68, 0.15)',
+                      padding: '6px 12px',
+                      background: 'rgba(239, 68, 68, 0.1)',
                       border: '1px solid rgba(239, 68, 68, 0.3)',
-                      borderRadius: '8px',
-                      color: 'rgba(248, 113, 113, 1)',
-                      fontSize: '13px',
+                      borderRadius: '6px',
+                      color: '#ef4444',
+                      fontSize: '12px',
                       fontWeight: '600',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'
-                      e.currentTarget.style.transform = 'scale(1.05)'
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
-                      e.currentTarget.style.transform = 'scale(1)'
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
                     }}>
                     🗑️ 移除
                   </button>
@@ -941,20 +887,22 @@ export default function TextPage() {
                   style={{
                     width: '100%',
                     padding: '10px',
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    borderRadius: '10px',
-                    color: 'rgba(96, 165, 250, 1)',
+                    background: 'white',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: '8px',
+                    color: '#00bfa5',
                     fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)'
+                    e.currentTarget.style.background = 'rgba(0, 191, 165, 0.05)'
+                    e.currentTarget.style.borderColor = '#00bfa5'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)'
+                    e.currentTarget.style.background = 'white'
+                    e.currentTarget.style.borderColor = '#e5e5e5'
                   }}>
                   {showPreview ? '🔼 收起预览' : '🔽 展开预览'}
                 </button>
@@ -962,16 +910,16 @@ export default function TextPage() {
                 {/* 文件预览 */}
                 {showPreview && (
                   <div style={{
-                    marginTop: '16px',
+                    marginTop: '12px',
                     padding: '16px',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '10px',
+                    background: '#f5f5f5',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: '8px',
                     maxHeight: '300px',
                     overflowY: 'auto',
                   }}>
                     <pre style={{
-                      color: 'rgba(255, 255, 255, 0.85)',
+                      color: '#2c2c2c',
                       fontSize: '13px',
                       lineHeight: '1.6',
                       margin: 0,
@@ -987,45 +935,34 @@ export default function TextPage() {
               </div>
             )}
 
-            {/* 数据类型说明 */}
+            {/* AI智能分析说明 */}
             <div style={{
               marginBottom: '20px',
-              padding: '20px',
-              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%)',
-              border: '1px solid rgba(168, 85, 247, 0.2)',
+              padding: '16px',
+              background: 'rgba(0, 191, 165, 0.08)',
+              border: '1px solid rgba(0, 191, 165, 0.2)',
               borderRadius: '12px',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.4)'
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(168, 85, 247, 0.15)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.2)'
-              e.currentTarget.style.boxShadow = 'none'
             }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                marginBottom: '12px',
+                gap: '10px',
+                marginBottom: '8px',
               }}>
+                <span style={{ fontSize: '20px' }}>🤖</span>
                 <div style={{
-                  fontSize: '24px',
-                }}>🤖</div>
-                <div style={{
-                  fontSize: '16px',
-                  color: 'rgba(168, 85, 247, 1)',
-                  fontWeight: '700',
+                  fontSize: '15px',
+                  color: '#00bfa5',
+                  fontWeight: '600',
                 }}>
                   AI 智能分析
                 </div>
               </div>
               <div style={{ 
                 fontSize: '13px', 
-                color: 'rgba(255, 255, 255, 0.7)', 
-                lineHeight: '1.8',
-                paddingLeft: '36px',
+                color: '#666', 
+                lineHeight: '1.6',
+                paddingLeft: '30px',
               }}>
                 支持 TXT、MD 格式 · 自动提取实体和关系 · 生成可视化图谱
               </div>
@@ -1040,23 +977,23 @@ export default function TextPage() {
                 width: '100%',
                 minHeight: '250px',
                 maxHeight: '500px',
-                padding: '18px',
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '12px',
-                color: 'white',
+                padding: '16px',
+                background: 'white',
+                border: '1px solid #e5e5e5',
+                borderRadius: '8px',
+                color: '#2c2c2c',
                 fontSize: '14px',
                 lineHeight: '1.7',
                 resize: 'vertical',
-                fontFamily: 'monospace',
+                fontFamily: 'inherit',
                 cursor: 'text',
                 transition: 'all 0.2s ease',
               }}
             />
 
             <div style={{
-              marginTop: '12px',
-              color: 'rgba(255, 255, 255, 0.5)',
+              marginTop: '8px',
+              color: '#666',
               fontSize: '12px',
             }}>
               {uploadedFile && inputText.trim()
@@ -1069,110 +1006,78 @@ export default function TextPage() {
 
           {/* 配置区域 */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '20px',
-            padding: '36px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            background: 'white',
+            borderRadius: '14px',
+            padding: '30px',
+            border: '1px solid #ebebeb',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#2c2c2c',
+              marginBottom: '24px'
             }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
-              }}>
-                ⚙️
-              </div>
-              <h2 style={{
-                color: 'white',
-                fontSize: '22px',
-                fontWeight: '700',
-                margin: 0,
-              }}>
-                输出配置
-              </h2>
-            </div>
+              输出配置
+            </h2>
 
             {/* 输出格式选择 */}
             <div style={{
-              marginBottom: '28px',
+              marginBottom: '24px',
             }}>
               <label style={{
                 display: 'block',
-                color: 'rgba(255, 255, 255, 0.85)',
-                fontSize: '15px',
+                color: '#2c2c2c',
+                fontSize: '14px',
                 fontWeight: '600',
-                marginBottom: '16px',
+                marginBottom: '12px',
               }}>
                 选择图谱类型
               </label>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: '16px',
+                gap: '12px',
               }}>
                 {/* 2D选项 */}
                 <div
                   onClick={() => setOutputFormat('2d')}
                   style={{
-                    padding: '24px',
-                    background: outputFormat === '2d' 
-                      ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)' 
-                      : 'rgba(255, 255, 255, 0.03)',
-                    border: outputFormat === '2d'
-                      ? '2px solid rgba(99, 102, 241, 0.6)'
-                      : '2px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '16px',
+                    padding: '20px',
+                    background: outputFormat === '2d' ? 'rgba(0, 191, 165, 0.08)' : 'white',
+                    border: outputFormat === '2d' ? '2px solid #00bfa5' : '2px solid #e5e5e5',
+                    borderRadius: '12px',
                     cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.2s',
                     textAlign: 'center',
-                    boxShadow: outputFormat === '2d' 
-                      ? '0 8px 24px rgba(99, 102, 241, 0.25)' 
-                      : 'none',
                   }}
                   onMouseEnter={(e) => {
                     if (outputFormat !== '2d') {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'
-                      e.currentTarget.style.transform = 'translateY(-4px)'
-                      e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.3)'
+                      e.currentTarget.style.borderColor = '#00bfa5'
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (outputFormat !== '2d') {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = 'none'
+                      e.currentTarget.style.borderColor = '#e5e5e5'
                     }
                   }}>
                   <div style={{
-                    fontSize: '40px',
-                    marginBottom: '12px',
+                    fontSize: '36px',
+                    marginBottom: '8px',
                   }}>
                     📊
                   </div>
                   <div style={{
-                    color: 'white',
-                    fontSize: '18px',
-                    fontWeight: '700',
-                    marginBottom: '6px',
+                    color: '#2c2c2c',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    marginBottom: '4px',
                   }}>
                     二维图谱
                   </div>
                   <div style={{
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    fontSize: '13px',
+                    color: '#666',
+                    fontSize: '12px',
                   }}>
                     平面网络视图
                   </div>
@@ -1182,52 +1087,41 @@ export default function TextPage() {
                 <div
                   onClick={() => setOutputFormat('3d')}
                   style={{
-                    padding: '24px',
-                    background: outputFormat === '3d' 
-                      ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)' 
-                      : 'rgba(255, 255, 255, 0.03)',
-                    border: outputFormat === '3d'
-                      ? '2px solid rgba(99, 102, 241, 0.6)'
-                      : '2px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '16px',
+                    padding: '20px',
+                    background: outputFormat === '3d' ? 'rgba(0, 191, 165, 0.08)' : 'white',
+                    border: outputFormat === '3d' ? '2px solid #00bfa5' : '2px solid #e5e5e5',
+                    borderRadius: '12px',
                     cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.2s',
                     textAlign: 'center',
-                    boxShadow: outputFormat === '3d' 
-                      ? '0 8px 24px rgba(99, 102, 241, 0.25)' 
-                      : 'none',
                   }}
                   onMouseEnter={(e) => {
                     if (outputFormat !== '3d') {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'
-                      e.currentTarget.style.transform = 'translateY(-4px)'
-                      e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.3)'
+                      e.currentTarget.style.borderColor = '#00bfa5'
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (outputFormat !== '3d') {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = 'none'
+                      e.currentTarget.style.borderColor = '#e5e5e5'
                     }
                   }}>
                   <div style={{
-                    fontSize: '40px',
-                    marginBottom: '12px',
+                    fontSize: '36px',
+                    marginBottom: '8px',
                   }}>
                     🌐
                   </div>
                   <div style={{
-                    color: 'white',
-                    fontSize: '18px',
-                    fontWeight: '700',
-                    marginBottom: '6px',
+                    color: '#2c2c2c',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    marginBottom: '4px',
                   }}>
                     三维图谱
                   </div>
                   <div style={{
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    fontSize: '13px',
+                    color: '#666',
+                    fontSize: '12px',
                   }}>
                     立体空间视图
                   </div>
@@ -1246,7 +1140,7 @@ export default function TextPage() {
                 marginBottom: '16px',
               }}>
                 <label style={{
-                  color: 'rgba(255, 255, 255, 0.85)',
+                  color: '#2c2c2c',
                   fontSize: '15px',
                   fontWeight: '600',
                   display: 'flex',
@@ -1256,10 +1150,10 @@ export default function TextPage() {
                   <span>自定义提示词</span>
                   <span style={{
                     fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.5)',
+                    color: '#666',
                     fontWeight: '400',
                     padding: '2px 8px',
-                    background: 'rgba(255, 255, 255, 0.05)',
+                    background: '#f5f5f5',
                     borderRadius: '4px',
                   }}>
                     选填
@@ -1269,20 +1163,20 @@ export default function TextPage() {
                   onClick={() => setShowCustomPrompt(!showCustomPrompt)}
                   style={{
                     padding: '6px 12px',
-                    background: 'rgba(99, 102, 241, 0.15)',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    background: 'rgba(0, 191, 165, 0.1)',
+                    border: '1px solid rgba(0, 191, 165, 0.3)',
                     borderRadius: '8px',
-                    color: 'rgba(167, 139, 250, 1)',
+                    color: '#00bfa5',
                     fontSize: '12px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)'
+                    e.currentTarget.style.background = 'rgba(0, 191, 165, 0.15)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)'
+                    e.currentTarget.style.background = 'rgba(0, 191, 165, 0.1)'
                   }}>
                   {showCustomPrompt ? '收起 ▲' : '展开 ▼'}
                 </button>
@@ -1291,8 +1185,8 @@ export default function TextPage() {
               {showCustomPrompt && (
                 <div style={{
                   padding: '20px',
-                  background: 'rgba(99, 102, 241, 0.05)',
-                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  background: 'rgba(0, 191, 165, 0.05)',
+                  border: '1px solid rgba(0, 191, 165, 0.2)',
                   borderRadius: '12px',
                   animation: 'slideDown 0.3s ease',
                 }}>
@@ -1310,7 +1204,7 @@ export default function TextPage() {
                   `}</style>
                   
                   <div style={{
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    color: '#666',
                     fontSize: '13px',
                     marginBottom: '12px',
                     lineHeight: '1.6',
@@ -1334,10 +1228,10 @@ export default function TextPage() {
                       width: '100%',
                       minHeight: '120px',
                       padding: '14px',
-                      background: 'rgba(0, 0, 0, 0.3)',
-                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                      background: 'white',
+                      border: '1px solid #e5e5e5',
                       borderRadius: '10px',
-                      color: 'white',
+                      color: '#2c2c2c',
                       fontSize: '13px',
                       lineHeight: '1.6',
                       resize: 'vertical',
@@ -1345,12 +1239,12 @@ export default function TextPage() {
                       transition: 'all 0.2s ease',
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)'
-                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)'
+                      e.currentTarget.style.borderColor = '#00bfa5'
+                      e.currentTarget.style.background = 'white'
                     }}
                     onBlur={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)'
-                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)'
+                      e.currentTarget.style.borderColor = '#e5e5e5'
+                      e.currentTarget.style.background = 'white'
                     }}
                   />
 
@@ -1361,7 +1255,7 @@ export default function TextPage() {
                     alignItems: 'center',
                   }}>
                     <div style={{
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: '#666',
                       fontSize: '12px',
                     }}>
                       字符数: {customPrompt.length}
@@ -1371,20 +1265,20 @@ export default function TextPage() {
                         onClick={() => setCustomPrompt('')}
                         style={{
                           padding: '6px 12px',
-                          background: 'rgba(239, 68, 68, 0.15)',
+                          background: 'rgba(239, 68, 68, 0.1)',
                           border: '1px solid rgba(239, 68, 68, 0.3)',
                           borderRadius: '6px',
-                          color: 'rgba(248, 113, 113, 1)',
+                          color: '#ef4444',
                           fontSize: '12px',
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'
+                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
                         }}>
                         清空
                       </button>
@@ -1405,8 +1299,8 @@ export default function TextPage() {
                   width: '100%',
                   padding: '20px',
                   background: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing)
-                    ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)'
-                    : 'rgba(255, 255, 255, 0.08)',
+                    ? '#00bfa5'
+                    : '#e0e0e0',
                   border: 'none',
                   borderRadius: '14px',
                   color: 'white',
@@ -1415,21 +1309,23 @@ export default function TextPage() {
                   cursor: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxShadow: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing)
-                    ? '0 8px 24px rgba(168, 85, 247, 0.4)'
+                    ? '0 4px 12px rgba(0, 191, 165, 0.3)'
                     : 'none',
-                  opacity: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) ? 1 : 0.4,
+                  opacity: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) ? 1 : 0.6,
                   letterSpacing: '0.5px',
                 }}
                 onMouseEnter={(e) => {
                   if (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) {
-                    e.currentTarget.style.transform = 'translateY(-3px)'
-                    e.currentTarget.style.boxShadow = '0 12px 32px rgba(168, 85, 247, 0.5)'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 191, 165, 0.4)'
+                    e.currentTarget.style.background = '#00d4b8'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) {
                     e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(168, 85, 247, 0.4)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.3)'
+                    e.currentTarget.style.background = '#00bfa5'
                   }
                 }}>
                 <span style={{ fontSize: '22px', marginRight: '10px' }}>
@@ -1446,7 +1342,7 @@ export default function TextPage() {
                   background: 'rgba(251, 191, 36, 0.1)',
                   border: '1px solid rgba(251, 191, 36, 0.3)',
                   borderRadius: '10px',
-                  color: 'rgba(252, 211, 77, 1)',
+                  color: '#d97706',
                   fontSize: '13px',
                   display: 'flex',
                   alignItems: 'center',
@@ -1462,7 +1358,7 @@ export default function TextPage() {
                   background: 'rgba(251, 191, 36, 0.1)',
                   border: '1px solid rgba(251, 191, 36, 0.3)',
                   borderRadius: '10px',
-                  color: 'rgba(252, 211, 77, 1)',
+                  color: '#d97706',
                   fontSize: '13px',
                   display: 'flex',
                   alignItems: 'center',
@@ -1482,7 +1378,7 @@ export default function TextPage() {
                 background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
                 borderRadius: '12px',
-                color: 'rgba(248, 113, 113, 1)',
+                color: '#dc2626',
                 fontSize: '14px',
               }}>
                 <div style={{ 
@@ -1505,7 +1401,7 @@ export default function TextPage() {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: 'rgba(248, 113, 113, 1)',
+                      color: '#dc2626',
                       fontSize: '18px',
                       cursor: 'pointer',
                       padding: '0 4px',
@@ -1521,11 +1417,11 @@ export default function TextPage() {
                       width: '100%',
                       padding: '10px 16px',
                       background: isAnalyzing 
-                        ? 'rgba(255, 255, 255, 0.05)' 
+                        ? '#f5f5f5' 
                         : 'rgba(239, 68, 68, 0.2)',
                       border: '1px solid rgba(239, 68, 68, 0.4)',
                       borderRadius: '8px',
-                      color: 'rgba(248, 113, 113, 1)',
+                      color: '#dc2626',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: isAnalyzing ? 'not-allowed' : 'pointer',
@@ -1551,12 +1447,12 @@ export default function TextPage() {
             <div style={{
               marginTop: '24px',
               padding: '20px',
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
+              background: 'rgba(0, 191, 165, 0.05)',
+              border: '1px solid rgba(0, 191, 165, 0.2)',
               borderRadius: '14px',
             }}>
               <div style={{
-                color: 'rgba(96, 165, 250, 1)',
+                color: '#666',
                 fontSize: '14px',
                 lineHeight: '1.7',
               }}>
@@ -1566,6 +1462,7 @@ export default function TextPage() {
                   gap: '8px',
                   marginBottom: '12px',
                   fontWeight: '700',
+                  color: '#00bfa5',
                 }}>
                   <span style={{ fontSize: '18px' }}>💡</span>
                   AI智能分析说明
@@ -1573,7 +1470,7 @@ export default function TextPage() {
                 <ul style={{
                   margin: 0,
                   paddingLeft: '24px',
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: '#666',
                 }}>
                   <li style={{ marginBottom: '6px' }}>支持格式：TXT、Markdown (.md) 文本文件</li>
                   <li style={{ marginBottom: '6px' }}>AI自动识别文本中的实体（人物、地点、概念等）</li>
@@ -1595,7 +1492,7 @@ export default function TextPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
+          background: 'rgba(0, 0, 0, 0.5)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -1604,17 +1501,17 @@ export default function TextPage() {
         }}
         onClick={() => setShowNewProjectModal(false)}>
           <div style={{
-            background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+            background: 'white',
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
             width: '90%',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            border: '1px solid #ebebeb',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
           }}
           onClick={(e) => e.stopPropagation()}>
             <h3 style={{
-              color: 'white',
+              color: '#2c2c2c',
               fontSize: '24px',
               fontWeight: '700',
               marginBottom: '20px',
@@ -1629,10 +1526,10 @@ export default function TextPage() {
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'white',
+                border: '1px solid #e5e5e5',
                 borderRadius: '12px',
-                color: 'white',
+                color: '#2c2c2c',
                 fontSize: '15px',
                 marginBottom: '24px',
               }}
@@ -1652,20 +1549,20 @@ export default function TextPage() {
                 }}
                 style={{
                   padding: '12px 24px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'white',
+                  border: '1px solid #e5e5e5',
                   borderRadius: '10px',
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: '#666',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                  e.currentTarget.style.background = '#f5f5f5'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                  e.currentTarget.style.background = 'white'
                 }}>
                 取消
               </button>
@@ -1675,8 +1572,8 @@ export default function TextPage() {
                 style={{
                   padding: '12px 24px',
                   background: newProjectName.trim()
-                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                    : 'rgba(255, 255, 255, 0.05)',
+                    ? '#00bfa5'
+                    : '#e0e0e0',
                   border: 'none',
                   borderRadius: '10px',
                   color: 'white',
@@ -1684,16 +1581,16 @@ export default function TextPage() {
                   fontWeight: '600',
                   cursor: newProjectName.trim() ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
-                  opacity: newProjectName.trim() ? 1 : 0.5,
+                  opacity: newProjectName.trim() ? 1 : 0.6,
                 }}
                 onMouseEnter={(e) => {
                   if (newProjectName.trim()) {
-                    e.currentTarget.style.transform = 'scale(1.05)'
+                    e.currentTarget.style.background = '#00d4b8'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (newProjectName.trim()) {
-                    e.currentTarget.style.transform = 'scale(1)'
+                    e.currentTarget.style.background = '#00bfa5'
                   }
                 }}>
                 创建
@@ -1711,7 +1608,7 @@ export default function TextPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
+          background: 'rgba(0, 0, 0, 0.5)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -1720,17 +1617,17 @@ export default function TextPage() {
         }}
         onClick={() => setShowNewGraphModal(false)}>
           <div style={{
-            background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+            background: 'white',
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
             width: '90%',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            border: '1px solid #ebebeb',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
           }}
           onClick={(e) => e.stopPropagation()}>
             <h3 style={{
-              color: 'white',
+              color: '#2c2c2c',
               fontSize: '24px',
               fontWeight: '700',
               marginBottom: '20px',
@@ -1745,10 +1642,10 @@ export default function TextPage() {
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'white',
+                border: '1px solid #e5e5e5',
                 borderRadius: '12px',
-                color: 'white',
+                color: '#2c2c2c',
                 fontSize: '15px',
                 marginBottom: '24px',
               }}
@@ -1768,20 +1665,20 @@ export default function TextPage() {
                 }}
                 style={{
                   padding: '12px 24px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'white',
+                  border: '1px solid #e5e5e5',
                   borderRadius: '10px',
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: '#666',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                  e.currentTarget.style.background = '#f5f5f5'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                  e.currentTarget.style.background = 'white'
                 }}>
                 取消
               </button>
@@ -1791,8 +1688,8 @@ export default function TextPage() {
                 style={{
                   padding: '12px 24px',
                   background: newGraphName.trim()
-                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                    : 'rgba(255, 255, 255, 0.05)',
+                    ? '#00bfa5'
+                    : '#e0e0e0',
                   border: 'none',
                   borderRadius: '10px',
                   color: 'white',
@@ -1800,7 +1697,7 @@ export default function TextPage() {
                   fontWeight: '600',
                   cursor: newGraphName.trim() ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
-                  opacity: newGraphName.trim() ? 1 : 0.5,
+                  opacity: newGraphName.trim() ? 1 : 0.6,
                 }}
                 onMouseEnter={(e) => {
                   if (newGraphName.trim()) {
@@ -1827,7 +1724,7 @@ export default function TextPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.85)',
+          background: 'rgba(0, 0, 0, 0.5)',
           backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
@@ -1835,13 +1732,13 @@ export default function TextPage() {
           zIndex: 9999,
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+            background: 'white',
             borderRadius: '24px',
             padding: '48px',
             maxWidth: '480px',
             width: '90%',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.6)',
+            border: '1px solid #ebebeb',
+            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.15)',
             textAlign: 'center',
           }}>
             {/* 加载动画 */}
@@ -1854,8 +1751,8 @@ export default function TextPage() {
               <div style={{
                 width: '100%',
                 height: '100%',
-                border: '4px solid rgba(168, 85, 247, 0.2)',
-                borderTop: '4px solid rgba(168, 85, 247, 1)',
+                border: '4px solid rgba(0, 191, 165, 0.2)',
+                borderTop: '4px solid #00bfa5',
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }} />
@@ -1878,7 +1775,7 @@ export default function TextPage() {
 
             {/* 标题 */}
             <h3 style={{
-              color: 'white',
+              color: '#2c2c2c',
               fontSize: '24px',
               fontWeight: '700',
               marginBottom: '16px',
@@ -1889,7 +1786,7 @@ export default function TextPage() {
 
             {/* 描述 */}
             <p style={{
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: '#666',
               fontSize: '15px',
               lineHeight: '1.6',
               marginBottom: '32px',
@@ -1904,22 +1801,20 @@ export default function TextPage() {
               onClick={handleCancelAIAnalysis}
               style={{
                 padding: '14px 32px',
-                background: 'rgba(239, 68, 68, 0.15)',
+                background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
                 borderRadius: '12px',
-                color: 'rgba(248, 113, 113, 1)',
+                color: '#dc2626',
                 fontSize: '15px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'
-                e.currentTarget.style.transform = 'scale(1.05)'
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
-                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
               }}>
               取消生成
             </button>

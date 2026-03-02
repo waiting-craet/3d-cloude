@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import {
-  parseExcelFile,
-  parseCSVFile,
-  parseJSONFile,
+  importAndValidateGraphData,
   generateLayout,
   type ParsedGraphData
 } from '@/lib/services/graph-import'
@@ -15,9 +13,8 @@ export async function POST(request: NextRequest) {
     const projectId = formData.get('projectId') as string
     const graphId = formData.get('graphId') as string
     const fileType = formData.get('fileType') as string
-    const graphType = formData.get('graphType') as '2D' | '3D'
 
-    if (!file || !projectId || !graphId || !fileType || !graphType) {
+    if (!file || !projectId || !graphId || !fileType) {
       return NextResponse.json(
         { message: '缺少必要参数' },
         { status: 400 }
@@ -37,44 +34,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 根据文件类型解析数据
-    let parsedData: ParsedGraphData
+    // 使用统一的导入和验证函数
+    const importResult = await importAndValidateGraphData(file)
     
-    try {
-      switch (fileType) {
-        case 'excel':
-          parsedData = await parseExcelFile(file, graphType)
-          break
-        case 'csv':
-          parsedData = await parseCSVFile(file, graphType)
-          break
-        case 'json':
-          parsedData = await parseJSONFile(file, graphType)
-          break
-        default:
-          return NextResponse.json(
-            { message: '不支持的文件类型' },
-            { status: 400 }
-          )
-      }
-    } catch (parseError) {
-      console.error('Parse error:', parseError)
+    if (!importResult.success) {
       return NextResponse.json(
-        { message: `文件解析失败: ${parseError instanceof Error ? parseError.message : String(parseError)}` },
+        { 
+          message: '数据验证失败',
+          errors: importResult.errors,
+          warnings: importResult.warnings
+        },
         { status: 400 }
       )
     }
 
-    // 验证数据
-    if (!parsedData.nodes || parsedData.nodes.length === 0) {
-      return NextResponse.json(
-        { message: '文件中没有找到有效的节点数据' },
-        { status: 400 }
-      )
-    }
+    const parsedData = importResult.data!
+    const validatedData = importResult.validatedData!
 
-    // 为没有坐标的节点生成布局
-    const nodesWithLayout = generateLayout(parsedData.nodes, parsedData.edges, graphType)
+    // 为没有坐标的节点生成布局 - 统一使用3D模式
+    const nodesWithLayout = generateLayout(validatedData.nodes, validatedData.edges)
 
     // 创建节点映射（label/id -> database id）
     const nodeMap = new Map<string, string>()
@@ -107,7 +85,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 批量创建边 - 过滤无效边并使用事务
-    const validEdges = parsedData.edges.filter(edgeData => {
+    const validEdges = validatedData.edges.filter(edgeData => {
       const sourceId = nodeMap.get(edgeData.source)
       const targetId = nodeMap.get(edgeData.target)
       
@@ -154,8 +132,9 @@ export async function POST(request: NextRequest) {
       message: '导入成功',
       nodesCount: createdNodes.length,
       edgesCount: createdEdges.length,
-      graphType: graphType,
-      skippedEdges: parsedData.edges.length - createdEdges.length
+      coordinateSystem: '3D', // 系统已统一为3D
+      skippedEdges: validatedData.edges.length - createdEdges.length,
+      warnings: importResult.warnings
     })
 
   } catch (error) {

@@ -1,86 +1,58 @@
 {
+  "使用说明": {
+    "简介": "这是一个简化的3D知识图谱模板，只需填写节点名称和关系即可",
+    "自动生成": "系统会自动生成：3D坐标、节点颜色、节点大小、节点形状、节点ID",
+    "必填字段": "label（节点名称）、source（起始节点）、target（目标节点）",
+    "可选字段": "description（节点描述）、label（关系名称）",
+    "提示": "删除此说明对象后开始填写您的数据"
+  },
   "nodes": [
     {
-      "id": "node1",
-      "label": "中心节点",
-      "description": "这是中心节点的描述",
-      "x": 0,
-      "y": 0,
-      "z": 0,
-      "color": "#00bfa5",
-      "size": 1.5,
-      "shape": "sphere"
+      "label": "Python",
+      "description": "一种简单易学的编程语言"
     },
     {
-      "id": "node2",
-      "label": "技术节点",
-      "description": "这是技术节点的描述",
-      "x": 100,
-      "y": 0,
-      "z": 0,
-      "color": "#ff6b6b",
-      "size": 1,
-      "shape": "sphere"
+      "label": "数据分析",
+      "description": "使用数据发现规律和洞察"
     },
     {
-      "id": "node3",
-      "label": "业务节点",
-      "description": "这是业务节点的描述",
-      "x": 0,
-      "y": 100,
-      "z": 0,
-      "color": "#4ecdc4",
-      "size": 1,
-      "shape": "sphere"
+      "label": "机器学习",
+      "description": "让计算机从数据中学习"
     },
     {
-      "id": "node4",
-      "label": "开发节点",
-      "description": "这是开发节点的描述",
-      "x": 0,
-      "y": 0,
-      "z": 100,
-      "color": "#ffe66d",
-      "size": 1,
-      "shape": "sphere"
+      "label": "Web开发",
+      "description": "构建网站和Web应用"
     },
     {
-      "id": "node5",
-      "label": "测试节点",
-      "description": "这是测试节点的描述",
-      "x": 50,
-      "y": 50,
-      "z": 50,
-      "color": "#a8e6cf",
-      "size": 0.8,
-      "shape": "sphere"
+      "label": "自动化脚本",
+      "description": "自动化重复性任务"
     }
   ],
   "edges": [
     {
-      "source": "node1",
-      "target": "node2",
-      "label": "技术关系"
+      "source": "Python",
+      "target": "数据分析",
+      "label": "应用于"
     },
     {
-      "source": "node1",
-      "target": "node3",
-      "label": "业务关系"
+      "source": "Python",
+      "target": "机器学习",
+      "label": "应用于"
     },
     {
-      "source": "node1",
-      "target": "node4",
-      "label": "开发关系"
+      "source": "Python",
+      "target": "Web开发",
+      "label": "应用于"
     },
     {
-      "source": "node2",
-      "target": "node4",
-      "label": "技术开发"
+      "source": "Python",
+      "target": "自动化脚本",
+      "label": "应用于"
     },
     {
-      "source": "node4",
-      "target": "node5",
-      "label": "开发测试"
+      "source": "数据分析",
+      "target": "机器学习",
+      "label": "支撑"
     }
   ]
 }

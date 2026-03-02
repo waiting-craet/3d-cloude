@@ -176,7 +176,7 @@ async function main() {
       projectId: project.id,
       isPublic: true,
       settings: JSON.stringify({
-        graphType: '2d',
+        graphType: '3d',  // 系统已统一为3D
         isTemplate: false,
         thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop',
       }),

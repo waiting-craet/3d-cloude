@@ -1,4 +1,6 @@
 import * as XLSX from 'xlsx'
+import { CoordinateConverter } from '@/lib/coordinate-converter'
+import { DataValidator, validateAndCreateGraphData } from './data-validator'
 
 // 节点数据接口
 export interface NodeData {
@@ -31,8 +33,9 @@ export interface ParsedGraphData {
  * 支持两种格式：
  * 1. 两个工作表（Nodes和Edges）
  * 2. 单个工作表（source, target, relationship格式）
+ * 统一处理为3D格式，自动转换2D坐标
  */
-export async function parseExcelFile(file: File, graphType: '2D' | '3D'): Promise<ParsedGraphData> {
+export async function parseExcelFile(file: File): Promise<ParsedGraphData> {
   const buffer = await file.arrayBuffer()
   const workbook = XLSX.read(buffer, { type: 'array' })
   
@@ -40,19 +43,33 @@ export async function parseExcelFile(file: File, graphType: '2D' | '3D'): Promis
   const hasNodesSheet = workbook.SheetNames.includes('Nodes')
   const hasEdgesSheet = workbook.SheetNames.includes('Edges')
   
+  let result: ParsedGraphData
   if (hasNodesSheet && hasEdgesSheet) {
     // 格式1: 分离的Nodes和Edges工作表
-    return parseExcelWithSeparateSheets(workbook, graphType)
+    result = parseExcelWithSeparateSheets(workbook)
   } else {
     // 格式2: 单个工作表，source-target格式
-    return parseExcelWithSingleSheet(workbook, graphType)
+    result = parseExcelWithSingleSheet(workbook)
   }
+  
+  // 使用坐标转换器确保所有节点都有3D坐标
+  const coordinateConverter = new CoordinateConverter()
+  // 确保所有节点都有必需的字段
+  const nodesWithRequiredFields = result.nodes.map((node, index) => ({
+    ...node,
+    id: node.id || node.label || `node-${index}`,
+    x: node.x ?? 0,
+    y: node.y ?? 0
+  }))
+  result.nodes = coordinateConverter.convertNodeCoordinates(nodesWithRequiredFields)
+  
+  return result
 }
 
 /**
  * 解析带有独立Nodes和Edges工作表的Excel
  */
-function parseExcelWithSeparateSheets(workbook: XLSX.WorkBook, graphType: '2D' | '3D'): ParsedGraphData {
+function parseExcelWithSeparateSheets(workbook: XLSX.WorkBook): ParsedGraphData {
   const nodesSheet = workbook.Sheets['Nodes']
   const edgesSheet = workbook.Sheets['Edges']
   
@@ -65,7 +82,7 @@ function parseExcelWithSeparateSheets(workbook: XLSX.WorkBook, graphType: '2D' |
     description: row.description || row.Description || '',
     x: parseFloat(row.x || row.X) || undefined,
     y: parseFloat(row.y || row.Y) || undefined,
-    z: graphType === '3D' ? (parseFloat(row.z || row.Z) || undefined) : undefined,
+    z: parseFloat(row.z || row.Z) || undefined, // 支持3D坐标，如果存在的话
     color: row.color || row.Color,
     size: parseFloat(row.size || row.Size) || undefined,
     shape: row.shape || row.Shape
@@ -83,7 +100,7 @@ function parseExcelWithSeparateSheets(workbook: XLSX.WorkBook, graphType: '2D' |
 /**
  * 解析单个工作表的Excel（source-target格式）
  */
-function parseExcelWithSingleSheet(workbook: XLSX.WorkBook, graphType: '2D' | '3D'): ParsedGraphData {
+function parseExcelWithSingleSheet(workbook: XLSX.WorkBook): ParsedGraphData {
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
   const data = XLSX.utils.sheet_to_json<any>(firstSheet)
   
@@ -115,8 +132,9 @@ function parseExcelWithSingleSheet(workbook: XLSX.WorkBook, graphType: '2D' | '3
  * 支持两种格式：
  * 1. source, target, relationship格式
  * 2. 完整的节点和边数据
+ * 统一处理为3D格式，自动转换2D坐标
  */
-export async function parseCSVFile(file: File, graphType: '2D' | '3D'): Promise<ParsedGraphData> {
+export async function parseCSVFile(file: File): Promise<ParsedGraphData> {
   const text = await file.text()
   const lines = text.split('\n').filter(line => line.trim())
   
@@ -129,19 +147,33 @@ export async function parseCSVFile(file: File, graphType: '2D' | '3D'): Promise<
   // 检查是否包含节点坐标信息
   const hasCoordinates = headers.includes('x') && headers.includes('y')
   
+  let result: ParsedGraphData
   if (hasCoordinates) {
     // 格式1: 完整的节点数据
-    return parseCSVWithNodeData(lines, headers, graphType)
+    result = parseCSVWithNodeData(lines, headers)
   } else {
     // 格式2: source-target格式
-    return parseCSVWithEdgeData(lines, headers)
+    result = parseCSVWithEdgeData(lines, headers)
   }
+  
+  // 使用坐标转换器确保所有节点都有3D坐标
+  const coordinateConverter = new CoordinateConverter()
+  // 确保所有节点都有必需的字段
+  const nodesWithRequiredFields = result.nodes.map((node, index) => ({
+    ...node,
+    id: node.id || node.label || `node-${index}`,
+    x: node.x ?? 0,
+    y: node.y ?? 0
+  }))
+  result.nodes = coordinateConverter.convertNodeCoordinates(nodesWithRequiredFields)
+  
+  return result
 }
 
 /**
  * 解析包含完整节点数据的CSV
  */
-function parseCSVWithNodeData(lines: string[], headers: string[], graphType: '2D' | '3D'): ParsedGraphData {
+function parseCSVWithNodeData(lines: string[], headers: string[]): ParsedGraphData {
   const nodes: NodeData[] = []
   
   for (let i = 1; i < lines.length; i++) {
@@ -159,7 +191,7 @@ function parseCSVWithNodeData(lines: string[], headers: string[], graphType: '2D
       description: row.description || '',
       x: parseFloat(row.x) || undefined,
       y: parseFloat(row.y) || undefined,
-      z: graphType === '3D' ? (parseFloat(row.z) || undefined) : undefined,
+      z: parseFloat(row.z) || undefined, // 支持3D坐标，如果存在的话
       color: row.color,
       size: parseFloat(row.size) || undefined,
       shape: row.shape
@@ -235,40 +267,55 @@ function parseCSVLine(line: string): string[] {
 /**
  * 解析JSON文件
  * 支持多种JSON格式
+ * 统一处理为3D格式，自动转换2D坐标
  */
-export async function parseJSONFile(file: File, graphType: '2D' | '3D'): Promise<ParsedGraphData> {
+export async function parseJSONFile(file: File): Promise<ParsedGraphData> {
   const text = await file.text()
   const data = JSON.parse(text)
   
+  let result: ParsedGraphData
+  
   // 格式1: { nodes: [...], edges: [...] }
   if (data.nodes && Array.isArray(data.nodes)) {
-    return parseJSONWithNodesEdges(data, graphType)
+    result = parseJSONWithNodesEdges(data)
   }
-  
   // 格式2: { elements: { nodes: [...], edges: [...] } } (Cytoscape格式)
-  if (data.elements && data.elements.nodes) {
-    return parseJSONWithNodesEdges(data.elements, graphType)
+  else if (data.elements && data.elements.nodes) {
+    result = parseJSONWithNodesEdges(data.elements)
   }
-  
   // 格式3: 数组格式 [{ source, target, ... }, ...]
-  if (Array.isArray(data)) {
-    return parseJSONArray(data)
+  else if (Array.isArray(data)) {
+    result = parseJSONArray(data)
+  }
+  else {
+    throw new Error('不支持的JSON格式')
   }
   
-  throw new Error('不支持的JSON格式')
+  // 使用坐标转换器确保所有节点都有3D坐标
+  const coordinateConverter = new CoordinateConverter()
+  // 确保所有节点都有必需的字段
+  const nodesWithRequiredFields = result.nodes.map((node, index) => ({
+    ...node,
+    id: node.id || node.label || `node-${index}`,
+    x: node.x ?? 0,
+    y: node.y ?? 0
+  }))
+  result.nodes = coordinateConverter.convertNodeCoordinates(nodesWithRequiredFields)
+  
+  return result
 }
 
 /**
  * 解析标准的nodes-edges格式JSON
  */
-function parseJSONWithNodesEdges(data: any, graphType: '2D' | '3D'): ParsedGraphData {
+function parseJSONWithNodesEdges(data: any): ParsedGraphData {
   const nodes: NodeData[] = (data.nodes || []).map((node: any) => ({
     id: node.id || node.data?.id,
     label: node.label || node.data?.label || node.name || node.data?.name || '未命名',
     description: node.description || node.data?.description || '',
     x: parseFloat(node.x || node.position?.x || node.data?.x) || undefined,
     y: parseFloat(node.y || node.position?.y || node.data?.y) || undefined,
-    z: graphType === '3D' ? (parseFloat(node.z || node.data?.z) || undefined) : undefined,
+    z: parseFloat(node.z || node.data?.z) || undefined, // 支持3D坐标，如果存在的话
     color: node.color || node.data?.color,
     size: parseFloat(node.size || node.data?.size) || undefined,
     shape: node.shape || node.data?.shape
@@ -312,12 +359,11 @@ function parseJSONArray(data: any[]): ParsedGraphData {
 
 /**
  * 为没有坐标的节点生成布局
- * 使用力导向布局算法
+ * 使用力导向布局算法，统一生成3D坐标
  */
 export function generateLayout(
   nodes: NodeData[],
-  edges: EdgeData[],
-  graphType: '2D' | '3D'
+  edges: EdgeData[]
 ): NodeData[] {
   const hasCoordinates = nodes.some(n => n.x !== undefined && n.y !== undefined)
   
@@ -325,37 +371,37 @@ export function generateLayout(
     // 如果已有坐标，只为缺失坐标的节点生成
     return nodes.map(node => {
       if (node.x === undefined || node.y === undefined) {
-        return generateNodePosition(node, graphType)
+        return generateNodePosition(node)
       }
       return node
     })
   }
   
   // 使用力导向布局
-  return generateForceDirectedLayout(nodes, edges, graphType)
+  return generateForceDirectedLayout(nodes, edges)
 }
 
 /**
- * 为单个节点生成随机位置
+ * 为单个节点生成随机位置（3D坐标）
  */
-function generateNodePosition(node: NodeData, graphType: '2D' | '3D'): NodeData {
+function generateNodePosition(node: NodeData): NodeData {
   const range = 500
   return {
     ...node,
     x: Math.random() * range * 2 - range,
     y: Math.random() * range * 2 - range,
-    z: graphType === '3D' ? Math.random() * range * 2 - range : 0
+    z: Math.random() * range * 2 - range
   }
 }
 
 /**
  * 使用力导向算法生成布局
  * 优化版本：更好的初始分布、自适应参数、更快的收敛
+ * 统一生成3D坐标
  */
 function generateForceDirectedLayout(
   nodes: NodeData[],
-  edges: EdgeData[],
-  graphType: '2D' | '3D'
+  edges: EdgeData[]
 ): NodeData[] {
   const nodeCount = nodes.length
   if (nodeCount === 0) return nodes
@@ -384,24 +430,13 @@ function generateForceDirectedLayout(
   
   // 初始化位置（改进的分布算法）
   const positions = nodes.map((_, i) => {
-    if (graphType === '3D') {
-      // 3D: 使用斐波那契球面分布（更均匀）
-      const phi = Math.acos(1 - 2 * (i + 0.5) / nodeCount)
-      const theta = Math.PI * (1 + Math.sqrt(5)) * i
-      return {
-        x: baseRadius * Math.sin(phi) * Math.cos(theta),
-        y: baseRadius * Math.sin(phi) * Math.sin(theta),
-        z: baseRadius * Math.cos(phi)
-      }
-    } else {
-      // 2D: 使用黄金角螺旋分布（更均匀）
-      const angle = i * 2.399963229728653 // 黄金角
-      const radius = baseRadius * Math.sqrt(i / nodeCount)
-      return {
-        x: radius * Math.cos(angle),
-        y: radius * Math.sin(angle),
-        z: 0
-      }
+    // 3D: 使用斐波那契球面分布（更均匀）
+    const phi = Math.acos(1 - 2 * (i + 0.5) / nodeCount)
+    const theta = Math.PI * (1 + Math.sqrt(5)) * i
+    return {
+      x: baseRadius * Math.sin(phi) * Math.cos(theta),
+      y: baseRadius * Math.sin(phi) * Math.sin(theta),
+      z: baseRadius * Math.cos(phi)
     }
   })
   
@@ -419,7 +454,7 @@ function generateForceDirectedLayout(
       for (let j = i + 1; j < nodeCount; j++) {
         const dx = positions[i].x - positions[j].x
         const dy = positions[i].y - positions[j].y
-        const dz = graphType === '3D' ? positions[i].z - positions[j].z : 0
+        const dz = positions[i].z - positions[j].z
         const distSq = dx * dx + dy * dy + dz * dz
         const distance = Math.sqrt(distSq) || 0.01
         
@@ -427,7 +462,7 @@ function generateForceDirectedLayout(
         const repulsion = (k * k) / distance
         const fx = (dx / distance) * repulsion
         const fy = (dy / distance) * repulsion
-        const fz = graphType === '3D' ? (dz / distance) * repulsion : 0
+        const fz = (dz / distance) * repulsion
         
         forces[i].x += fx
         forces[i].y += fy
@@ -446,14 +481,14 @@ function generateForceDirectedLayout(
       if (i !== undefined && j !== undefined) {
         const dx = positions[i].x - positions[j].x
         const dy = positions[i].y - positions[j].y
-        const dz = graphType === '3D' ? positions[i].z - positions[j].z : 0
+        const dz = positions[i].z - positions[j].z
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01
         
         // 胡克引力: F = d^2 / k
         const attraction = (distance * distance) / k
         const fx = (dx / distance) * attraction
         const fy = (dy / distance) * attraction
-        const fz = graphType === '3D' ? (dz / distance) * attraction : 0
+        const fz = (dz / distance) * attraction
         
         forces[i].x -= fx
         forces[i].y -= fy
@@ -477,24 +512,76 @@ function generateForceDirectedLayout(
       const displacement = Math.min(forceMag, t)
       positions[i].x += (forces[i].x / forceMag) * displacement
       positions[i].y += (forces[i].y / forceMag) * displacement
-      if (graphType === '3D') {
-        positions[i].z += (forces[i].z / forceMag) * displacement
-      }
+      positions[i].z += (forces[i].z / forceMag) * displacement
     }
   }
   
   // 中心化布局（将质心移到原点）
   const centerX = positions.reduce((sum, p) => sum + p.x, 0) / nodeCount
   const centerY = positions.reduce((sum, p) => sum + p.y, 0) / nodeCount
-  const centerZ = graphType === '3D' 
-    ? positions.reduce((sum, p) => sum + p.z, 0) / nodeCount 
-    : 0
+  const centerZ = positions.reduce((sum, p) => sum + p.z, 0) / nodeCount
   
   // 应用计算出的位置（中心化）
   return nodes.map((node, i) => ({
     ...node,
     x: Math.round((positions[i].x - centerX) * 100) / 100,
     y: Math.round((positions[i].y - centerY) * 100) / 100,
-    z: graphType === '3D' ? Math.round((positions[i].z - centerZ) * 100) / 100 : 0
+    z: Math.round((positions[i].z - centerZ) * 100) / 100
   }))
+}
+
+/**
+ * 统一的数据导入和验证函数
+ * 集成文件解析、坐标转换和数据验证
+ */
+export async function importAndValidateGraphData(file: File): Promise<{
+  success: boolean
+  data?: ParsedGraphData
+  validatedData?: any
+  errors?: string[]
+  warnings?: string[]
+}> {
+  try {
+    // 1. 验证文件格式
+    const fileValidation = DataValidator.validateFileFormat(file)
+    if (!fileValidation.isValid) {
+      return {
+        success: false,
+        errors: fileValidation.errors.map(e => e.message)
+      }
+    }
+
+    // 2. 解析文件数据
+    let parsedData: ParsedGraphData
+    const fileName = file.name.toLowerCase()
+    
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      parsedData = await parseExcelFile(file)
+    } else if (fileName.endsWith('.csv')) {
+      parsedData = await parseCSVFile(file)
+    } else if (fileName.endsWith('.json')) {
+      parsedData = await parseJSONFile(file)
+    } else {
+      return {
+        success: false,
+        errors: ['不支持的文件格式']
+      }
+    }
+
+    // 3. 验证数据并创建验证后的图谱数据
+    const { result, validatedData } = validateAndCreateGraphData(parsedData)
+    
+    return {
+      success: result.isValid,
+      data: parsedData,
+      validatedData,
+      errors: result.errors.map(e => e.message),
+      warnings: result.warnings.map(w => w.message)
+    }
+  } catch (error) {
+    return {
+      success: false,
+      errors: [error instanceof Error ? error.message : '导入过程中发生未知错误']
+    }
+  }
 }
