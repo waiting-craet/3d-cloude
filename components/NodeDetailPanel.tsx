@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/lib/store'
 import { getThemeConfig } from '@/lib/theme'
 import { EditableInput } from './EditableInput'
@@ -10,10 +10,11 @@ import { ShapeSelector } from './ShapeSelector'
 import { SizeSelector } from './SizeSelector'
 
 export default function NodeDetailPanel() {
-  const { selectedNode, setSelectedNode, deleteNode, fetchGraph, updateNodeLocal, theme } = useGraphStore()
+  const { selectedNode, setSelectedNode, deleteNode, fetchGraph, updateNodeLocal, updateNode, theme } = useGraphStore()
   const [isAdmin, setIsAdmin] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false) // 标记是否正在删除
 
   const themeConfig = getThemeConfig(theme)
 
@@ -25,6 +26,26 @@ export default function NodeDetailPanel() {
   const [colorMode, setColorMode] = useState<'node' | 'text'>('node')
   const [editedShape, setEditedShape] = useState('sphere')
   const [editedSize, setEditedSize] = useState(1)
+
+  // 使用 ref 来跟踪最新的编辑状态
+  const editStateRef = useRef({
+    name: '',
+    description: '',
+    imageUrl: '',
+    nodeId: '',
+    isDeleting: false,
+  })
+
+  // 更新 ref 以跟踪最新状态
+  useEffect(() => {
+    editStateRef.current = {
+      name: editedName,
+      description: editedDescription,
+      imageUrl: editedImageUrl,
+      nodeId: selectedNode?.id || '',
+      isDeleting: isDeleting,
+    }
+  }, [editedName, editedDescription, editedImageUrl, selectedNode?.id, isDeleting])
 
   useEffect(() => {
     if (selectedNode) {
@@ -69,13 +90,13 @@ export default function NodeDetailPanel() {
 
   const validateInput = (): { valid: boolean; error?: string } => {
     if (!editedName.trim()) {
-      return { valid: false, error: 'Node name cannot be empty' }
+      return { valid: false, error: '节点名称不能为空' }
     }
     if (editedName.length > 100) {
-      return { valid: false, error: 'Node name cannot exceed 100 characters' }
+      return { valid: false, error: '节点名称不能超过100个字符' }
     }
     if (editedDescription.length > 1000) {
-      return { valid: false, error: 'Node description cannot exceed 1000 characters' }
+      return { valid: false, error: '节点描述不能超过1000个字符' }
     }
     return { valid: true }
   }
@@ -102,13 +123,22 @@ export default function NodeDetailPanel() {
       })
 
       if (!response.ok) {
-        throw new Error('Save failed')
+        throw new Error('保存失败')
       }
+
+      const updatedNode = await response.json()
+      
+      // 更新 store 中的节点数据，触发重新渲染
+      await updateNode(selectedNode.id, {
+        name: editedName,
+        description: editedDescription,
+        imageUrl: editedImageUrl,
+      })
 
       return true
     } catch (error) {
-      console.error('Save failed:', error)
-      alert('Save failed, please try again')
+      console.error('保存失败:', error)
+      alert('保存失败，请重试')
       return false
     } finally {
       setIsSaving(false)
@@ -116,9 +146,10 @@ export default function NodeDetailPanel() {
   }
 
   const handleClose = async () => {
-    if (isAdmin && hasChanges()) {
+    // 如果有修改，自动保存
+    if (hasChanges()) {
       const saved = await saveChanges()
-      if (!saved) return
+      if (!saved) return // 如果保存失败，不关闭弹窗
     }
     setSelectedNode(null)
   }
@@ -131,7 +162,66 @@ export default function NodeDetailPanel() {
     }
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
-  }, [selectedNode, isAdmin, editedName, editedDescription, editedImageUrl])
+  }, [selectedNode, editedName, editedDescription, editedImageUrl])
+
+  // 监听 selectedNode 变化，当弹窗被外部关闭时自动保存
+  useEffect(() => {
+    const previousNode = selectedNode
+
+    return () => {
+      // 组件卸载或 selectedNode 变化时
+      const state = editStateRef.current
+      
+      // 如果正在删除，不保存
+      if (state.isDeleting) {
+        return
+      }
+
+      // 如果有节点 ID 且有修改，自动保存
+      if (state.nodeId && previousNode) {
+        const hasChanges = 
+          state.name !== previousNode.name ||
+          state.description !== (previousNode.description || '') ||
+          state.imageUrl !== (previousNode.imageUrl || '')
+
+        if (hasChanges) {
+          // 验证输入
+          if (!state.name.trim()) {
+            console.warn('节点名称不能为空，跳过保存')
+            return
+          }
+          if (state.name.length > 100 || state.description.length > 1000) {
+            console.warn('输入超出长度限制，跳过保存')
+            return
+          }
+
+          // 异步保存，不阻塞关闭
+          fetch(`/api/nodes/${state.nodeId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: state.name,
+              description: state.description,
+              imageUrl: state.imageUrl,
+            }),
+          })
+          .then(response => {
+            if (response.ok) {
+              // 保存成功后，更新 store 中的节点数据
+              // 注意：这里不能直接调用 updateNode，因为它会触发 API 请求
+              // 我们需要直接更新本地状态
+              console.log('自动保存成功')
+              // 触发图谱数据刷新
+              fetchGraph()
+            }
+          })
+          .catch(error => {
+            console.error('自动保存失败:', error)
+          })
+        }
+      }
+    }
+  }, [selectedNode])
 
   const handleEdit = () => {
     setIsEditMode(true)
@@ -191,18 +281,21 @@ export default function NodeDetailPanel() {
   const handleDelete = async () => {
     if (!selectedNode) return
 
-    if (!confirm(`Are you sure you want to delete node "${selectedNode.name}"?\n\nThis will also delete all connections to this node and cannot be undone.`)) {
+    if (!confirm(`确定要删除节点 "${selectedNode.name}" 吗？\n\n这将同时删除所有与该节点相关的连接，且无法撤销。`)) {
       return
     }
 
+    setIsDeleting(true) // 标记正在删除，跳过保存逻辑
     try {
       await deleteNode(selectedNode.id)
-      alert('Node deleted successfully')
+      alert('节点删除成功')
       setSelectedNode(null)
       fetchGraph()
     } catch (error) {
-      console.error('Delete failed:', error)
-      alert('Delete failed, please try again')
+      console.error('删除失败:', error)
+      alert('删除失败，请重试')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -249,10 +342,10 @@ export default function NodeDetailPanel() {
           gap: '10px',
         }}>
           <span style={{ fontSize: '24px' }}>{isEditMode ? '✏️' : '📋'}</span>
-          {isEditMode ? 'Edit Node' : 'Node Details'}
+          {isEditMode ? '编辑节点' : '节点详情'}
           {isSaving && (
             <span style={{ fontSize: '14px', fontWeight: '400', marginLeft: '8px' }}>
-              Saving...
+              保存中...
             </span>
           )}
         </h2>
@@ -299,7 +392,7 @@ export default function NodeDetailPanel() {
                 color: '#374151',
                 marginBottom: '12px',
               }}>
-                Edit Appearance
+                编辑外观
               </label>
               <div style={{
                 display: 'flex',
@@ -324,7 +417,7 @@ export default function NodeDetailPanel() {
                     transition: 'all 0.2s',
                   }}
                 >
-                  🎨 Node Color
+                  🎨 节点颜色
                 </button>
                 <button
                   onClick={(e) => {
@@ -344,7 +437,7 @@ export default function NodeDetailPanel() {
                     transition: 'all 0.2s',
                   }}
                 >
-                  ✏️ Text Color
+                  ✏️ 文字颜色
                 </button>
               </div>
             </div>
@@ -370,30 +463,30 @@ export default function NodeDetailPanel() {
         ) : (
           <>
             <EditableInput
-              label="Name"
+              label="名称"
               value={editedName}
               onChange={setEditedName}
-              placeholder="Enter node name"
+              placeholder="输入节点名称"
               maxLength={100}
-              disabled={!isAdmin || isSaving}
+              disabled={isSaving}
             />
 
             <EditableInput
-              label="Description"
+              label="描述"
               value={editedDescription}
               onChange={setEditedDescription}
-              placeholder="Enter node description"
+              placeholder="输入节点描述"
               maxLength={1000}
               multiline
               rows={4}
-              disabled={!isAdmin || isSaving}
+              disabled={isSaving}
             />
 
             <InlineImageUpload
               nodeId={selectedNode.id}
               currentImageUrl={editedImageUrl}
               onImageChange={setEditedImageUrl}
-              disabled={!isAdmin || isSaving}
+              disabled={isSaving}
             />
           </>
         )}
@@ -434,7 +527,7 @@ export default function NodeDetailPanel() {
               }}
             >
               <span style={{ fontSize: '16px' }}>↺</span>
-              Reset
+              重置
             </button>
           ) : (
             <>
@@ -461,7 +554,7 @@ export default function NodeDetailPanel() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>✏️</span>
-                Edit
+                编辑
               </button>
               <button
                 onClick={handleDelete}
@@ -486,7 +579,7 @@ export default function NodeDetailPanel() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>🗑️</span>
-                Delete
+                删除
               </button>
             </>
           )}

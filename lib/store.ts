@@ -48,6 +48,7 @@ export interface GraphStore {
   connectingFromNode: Node | null
   isDragging: boolean
   isLoading: boolean
+  error: string | null
   projects: Project[]
   currentProject: Project | null
   currentGraph: KnowledgeGraph | null
@@ -58,6 +59,7 @@ export interface GraphStore {
   setConnectingFromNode: (node: Node | null) => void
   setIsDragging: (isDragging: boolean) => void
   setIsLoading: (isLoading: boolean) => void
+  setError: (error: string | null) => void
   setProjects: (projects: Project[]) => void
   setCurrentProject: (project: Project | null) => void
   setCurrentGraph: (graph: KnowledgeGraph | null) => void
@@ -71,6 +73,7 @@ export interface GraphStore {
   updateNodeName: (id: string, name: string) => void
   deleteNode: (id: string) => Promise<void>
   fetchGraph: () => Promise<void>
+  loadGraphById: (graphId: string) => Promise<void>
   createProject: (projectName: string, graphName: string) => void
   addGraphToProject: (projectId: string, graphName: string) => void
   switchGraph: (projectId: string, graphId: string) => void
@@ -84,6 +87,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   connectingFromNode: null,
   isDragging: false,
   isLoading: false,
+  error: null,
   projects: [],
   currentProject: null,
   currentGraph: null,
@@ -95,6 +99,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setConnectingFromNode: (node) => set({ connectingFromNode: node }),
   setIsDragging: (isDragging) => set({ isDragging }),
   setIsLoading: (isLoading) => set({ isLoading }),
+  setError: (error) => set({ error }),
   setProjects: (projects) => set({ projects }),
   setCurrentProject: (project) => set({ currentProject: project }),
   setCurrentGraph: (graph) => set({ currentGraph: graph }),
@@ -354,6 +359,79 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     } catch (error) {
       console.error('❌ 获取图谱数据失败:', error)
       set({ nodes: [], edges: [], isLoading: false })
+    }
+  },
+
+  loadGraphById: async (graphId: string) => {
+    try {
+      console.log('🔄 [loadGraphById] 开始加载图谱:', graphId)
+      set({ isLoading: true, error: null })
+      
+      // 1. 获取图谱详情（包括节点和边）
+      const graphResponse = await fetch(`/api/graphs/${graphId}`)
+      
+      if (!graphResponse.ok) {
+        if (graphResponse.status === 404) {
+          throw new Error('图谱不存在或已被删除')
+        }
+        throw new Error('加载图谱失败')
+      }
+      
+      const graphData = await graphResponse.json()
+      const { graph, nodes, edges } = graphData
+      
+      console.log('✅ [loadGraphById] 图谱数据获取成功:', graph.name)
+      console.log('   节点数:', nodes?.length || 0, '边数:', edges?.length || 0)
+      
+      // 2. 查找或加载项目信息
+      let project = get().projects.find(p => p.id === graph.projectId)
+      
+      if (!project) {
+        console.log('🔄 [loadGraphById] 项目不在列表中，刷新项目列表...')
+        await get().refreshProjects()
+        project = get().projects.find(p => p.id === graph.projectId)
+      }
+      
+      // 3. 构建图谱对象
+      const knowledgeGraph: KnowledgeGraph = {
+        id: graph.id,
+        name: graph.name,
+        projectId: graph.projectId,
+        nodeCount: nodes?.length || 0,
+        edgeCount: edges?.length || 0,
+        createdAt: graph.createdAt,
+      }
+      
+      // 4. 更新状态
+      set({
+        currentProject: project || null,
+        currentGraph: knowledgeGraph,
+        nodes: nodes || [],
+        edges: edges || [],
+        isLoading: false,
+        error: null,
+      })
+      
+      // 5. 保存到 localStorage
+      if (project) {
+        localStorage.setItem('currentProjectId', project.id)
+      }
+      localStorage.setItem('currentGraphId', graphId)
+      
+      console.log('✅ [loadGraphById] 图谱加载完成')
+      console.log('   项目:', project?.name || '未知')
+      console.log('   图谱:', knowledgeGraph.name)
+      
+    } catch (error) {
+      console.error('❌ [loadGraphById] 加载图谱失败:', error)
+      const errorMessage = error instanceof Error ? error.message : '加载图谱失败'
+      set({ 
+        error: errorMessage,
+        isLoading: false,
+        nodes: [],
+        edges: [],
+      })
+      throw error
     }
   },
 

@@ -15,7 +15,6 @@ export default function TopNavbar() {
     currentProject, 
     currentGraph,
     theme,
-    toggleTheme,
     setProjects,
     setSelectedNode,
     createProject,
@@ -89,11 +88,24 @@ export default function TopNavbar() {
           const graphIdFromUrl = urlParams.get('graphId')
           
           // 优先级: URL 参数 > localStorage > 无
-          const projectId = projectIdFromUrl || localStorage.getItem('currentProjectId')
-          const graphId = graphIdFromUrl || localStorage.getItem('currentGraphId')
+          let projectId = projectIdFromUrl || localStorage.getItem('currentProjectId')
+          let graphId = graphIdFromUrl || localStorage.getItem('currentGraphId')
           
           // 验证ID是否是真实的数据库ID（cuid格式）
           const isValidId = (id: string | null) => id && id.startsWith('cmk')
+          
+          // 如果只有 graphId 没有 projectId，尝试从项目列表中查找对应的项目
+          if (isValidId(graphId) && !isValidId(projectId)) {
+            console.log('🔍 [TopNavbar] 只有 graphId，查找对应的项目...')
+            for (const project of projects) {
+              const graph = project.graphs.find((g: any) => g.id === graphId)
+              if (graph) {
+                projectId = project.id
+                console.log('✅ [TopNavbar] 找到对应的项目:', project.name)
+                break
+              }
+            }
+          }
           
           if (isValidId(projectId) && isValidId(graphId)) {
             // 验证项目和图谱是否存在
@@ -101,6 +113,7 @@ export default function TopNavbar() {
             const graph = project?.graphs.find((g: any) => g.id === graphId)
             
             if (project && graph) {
+              console.log('🔄 [TopNavbar] 切换到图谱:', project.name, '/', graph.name)
               switchGraph(projectId!, graphId!)
               
               // 如果是从 URL 参数恢复的，清理 URL（避免刷新时重复处理）
@@ -108,6 +121,7 @@ export default function TopNavbar() {
                 window.history.replaceState({}, '', window.location.pathname)
               }
             } else {
+              console.log('⚠️ [TopNavbar] 项目或图谱不存在，清理缓存')
               localStorage.removeItem('currentProjectId')
               localStorage.removeItem('currentGraphId')
             }
@@ -864,37 +878,6 @@ export default function TopNavbar() {
 
         {/* 右侧按钮区域 */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* 主题切换按钮 */}
-          <button
-            onClick={() => toggleTheme()}
-            title={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
-            style={{
-              padding: '8px 12px',
-              background: 'transparent',
-              border: `1px solid ${themeConfig.buttonBorder}`,
-              borderRadius: '8px',
-              color: themeConfig.buttonText,
-              cursor: 'pointer',
-              fontSize: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s',
-              width: '36px',
-              height: '36px',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = themeConfig.buttonHoverBackground
-              e.currentTarget.style.borderColor = 'rgba(74, 158, 255, 0.5)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.borderColor = themeConfig.buttonBorder
-            }}
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-
           {/* 管理员专属：新建图谱按钮 */}
           {isLoggedIn && (
             <button
