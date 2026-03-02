@@ -4,7 +4,7 @@
  * 支持三种格式:
  * - JSON: nodes/edges分离格式
  * - CSV: 简单的三列格式
- * - Excel: 三元组格式 (实体1-内容1-关系-实体2-内容2)
+ * - Excel: 矩阵列表格式 (每行一个实体，后续列为关系-目标实体对)
  */
 
 export interface TemplateConfig {
@@ -58,24 +58,19 @@ export class TemplateGenerator {
         '简介': '这是一个简化的3D知识图谱模板，只需填写节点名称和关系即可',
         '自动生成': '系统会自动生成：3D坐标、节点颜色、节点大小、节点形状、节点ID',
         '必填字段': 'label（节点名称）、source（起始节点）、target（目标节点）',
-        '可选字段': 'description（节点描述）、image（图片URL）、video（视频URL）、label（关系名称）',
+        '可选字段': 'label（关系名称）',
         '提示': '删除此说明对象后开始填写您的数据'
       }
     }
 
-    if (finalConfig.includeExamples) {
-      const nodes = this.generateExampleNodes(
-        finalConfig.exampleNodeCount,
-        finalConfig.includeMediaFields
-      )
-      const edges = this.generateExampleEdges(nodes, finalConfig.exampleEdgeCount)
-
-      template.nodes = nodes
-      template.edges = edges
-    } else {
-      template.nodes = []
-      template.edges = []
-    }
+    // 空白模板
+    template.nodes = [
+      { label: '节点(1)' },
+      { label: '节点(2)' },
+      { label: '节点(3)' }
+    ]
+    
+    template.edges = []
 
     return JSON.stringify(template, null, 2)
   }
@@ -90,30 +85,27 @@ export class TemplateGenerator {
 
     if (finalConfig.includeInstructions) {
       csv += '# 知识图谱导入模板 (CSV格式)\n'
-      csv += '# 说明: 只需填写三列 - source(起始节点), target(目标节点), label(关系名称)\n'
+      csv += '# 说明: 每行格式为 - 节点,关系,目标节点\n'
       csv += '# 系统会自动生成: 3D坐标、节点颜色、节点大小、节点ID\n'
       csv += '# 提示: 删除这些注释行后开始填写您的数据\n'
       csv += '\n'
     }
 
     // CSV头部
-    csv += 'source,target,label\n'
-
-    if (finalConfig.includeExamples) {
-      const nodes = this.generateExampleNodes(finalConfig.exampleNodeCount, false)
-      const edges = this.generateExampleEdges(nodes, finalConfig.exampleEdgeCount)
-
-      edges.forEach(edge => {
-        csv += `${edge.source},${edge.target},${edge.label || ''}\n`
-      })
-    }
+    csv += '节点,关系,目标节点\n'
+    
+    // 添加空白示例行
+    csv += '节点(1),,\n'
+    csv += '节点(2),,\n'
+    csv += '节点(3),,\n'
 
     return csv
   }
 
   /**
-   * 生成Excel模板数据 (三元组格式)
+   * 生成Excel模板数据 (矩阵列表格式)
    * 返回可以被Excel库使用的数据结构
+   * 格式: 每行一个节点，后续列为关系-节点对
    */
   generateExcelTemplateData(config?: TemplateConfig): {
     relationSheet: any[][]
@@ -121,28 +113,19 @@ export class TemplateGenerator {
   } {
     const finalConfig = { ...this.DEFAULT_CONFIG, ...config }
 
-    // 关系数据工作表 (三元组格式)
+    // 关系数据工作表 (矩阵列表格式)
     const relationSheet: any[][] = []
     
-    // 表头
-    relationSheet.push(['实体', '内容', '关系', '实体', '内容'])
+    // 第一行：说明
+    relationSheet.push(['有同名的节点要在节点名称后面加一个后缀，每一行是节点与别节点进行的连接'])
+    
+    // 第二行：表头
+    const headerRow = ['节点(1)', '关系A', '关系B', '关系C', '关系......', '节点A', '节点B', '节点C', '节点......']
+    relationSheet.push(headerRow)
 
-    if (finalConfig.includeExamples) {
-      const triples = this.generateExampleTriples(
-        finalConfig.exampleEdgeCount,
-        finalConfig.includeMediaFields
-      )
-
-      triples.forEach(triple => {
-        relationSheet.push([
-          triple.entity1,
-          triple.content1 || '',
-          triple.relation || '',
-          triple.entity2,
-          triple.content2 || ''
-        ])
-      })
-    }
+    // 第三行和第四行：空白示例行
+    relationSheet.push(['节点(2)'])
+    relationSheet.push(['节点(3)'])
 
     // 使用说明工作表
     const instructionSheet: any[][] = []
@@ -151,15 +134,20 @@ export class TemplateGenerator {
       instructionSheet.push(['知识图谱导入模板 - 使用说明'])
       instructionSheet.push([])
       instructionSheet.push(['简介'])
-      instructionSheet.push(['这是一个简化的3D知识图谱模板，采用三元组格式（实体-关系-实体）'])
-      instructionSheet.push(['每一行表示一个完整的关系，系统会自动提取节点和生成3D布局'])
+      instructionSheet.push(['这是一个简化的3D知识图谱模板，采用矩阵列表格式'])
+      instructionSheet.push(['每一行表示一个节点及其所有对外关系'])
       instructionSheet.push([])
-      instructionSheet.push(['字段说明'])
-      instructionSheet.push(['列A: 实体1 - 起始节点名称（必填）'])
-      instructionSheet.push(['列B: 内容1 - 起始节点描述（可选）'])
-      instructionSheet.push(['列C: 关系 - 边的标签（可选）'])
-      instructionSheet.push(['列D: 实体2 - 目标节点名称（必填）'])
-      instructionSheet.push(['列E: 内容2 - 目标节点描述（可选）'])
+      instructionSheet.push(['格式说明'])
+      instructionSheet.push(['列A: 节点名称（如：节点(1)、节点(2)、节点(3)...）'])
+      instructionSheet.push(['列B起: 先填写所有关系，再填写所有目标节点'])
+      instructionSheet.push(['  示例：节点(2) | 关系A | 关系B | 节点A | 节点B'])
+      instructionSheet.push(['  表示：节点(2)通过"关系A"连接到节点A，通过"关系B"连接到节点B'])
+      instructionSheet.push([])
+      instructionSheet.push(['填写步骤'])
+      instructionSheet.push(['1. 在列A填写节点名称（如：节点(2)、节点(3)...）'])
+      instructionSheet.push(['2. 在后续列先填写所有关系名称'])
+      instructionSheet.push(['3. 然后填写对应的目标节点名称'])
+      instructionSheet.push(['4. 关系和节点必须一一对应'])
       instructionSheet.push([])
       instructionSheet.push(['自动生成'])
       instructionSheet.push(['系统会自动生成以下内容：'])
@@ -169,18 +157,12 @@ export class TemplateGenerator {
       instructionSheet.push(['- 节点形状'])
       instructionSheet.push(['- 节点ID'])
       instructionSheet.push([])
-      instructionSheet.push(['示例'])
-      instructionSheet.push(['实体1: Python'])
-      instructionSheet.push(['内容1: 一种简单易学的编程语言'])
-      instructionSheet.push(['关系: 应用于'])
-      instructionSheet.push(['实体2: 数据分析'])
-      instructionSheet.push(['内容2: 使用数据发现规律'])
-      instructionSheet.push([])
-      instructionSheet.push(['提示'])
-      instructionSheet.push(['1. 删除"使用说明"工作表后开始填写数据'])
-      instructionSheet.push(['2. 实体名称会自动去重，相同名称会合并为同一个节点'])
-      instructionSheet.push(['3. 内容字段可以留空'])
-      instructionSheet.push(['4. 支持中文节点名称和关系'])
+      instructionSheet.push(['重要提示'])
+      instructionSheet.push(['1. 如有同名节点，请在节点名称后加后缀区分（如：节点(1)、节点(2)）'])
+      instructionSheet.push(['2. 每一行代表一个节点的所有出边关系'])
+      instructionSheet.push(['3. 先填写所有关系，再填写所有目标节点'])
+      instructionSheet.push(['4. 关系数量必须等于目标节点数量'])
+      instructionSheet.push(['5. 删除"使用说明"工作表后开始填写数据'])
     }
 
     return {
@@ -364,6 +346,79 @@ export class TemplateGenerator {
         label: triple.relation
       })
     })
+
+    return {
+      nodes: Array.from(nodeMap.values()),
+      edges
+    }
+  }
+
+  /**
+   * 从矩阵列表数据提取节点和边
+   * 用于将Excel矩阵格式转换为标准的nodes/edges格式
+   * 
+   * 新格式: [节点, 关系1, 关系2, ..., 节点1, 节点2, ...]
+   * 关系和节点分开，先所有关系，再所有目标节点
+   * 
+   * @param matrixData - 矩阵数据，每行格式: [节点, 关系1, 关系2, ..., 节点1, 节点2, ...]
+   * @param skipRows - 跳过的行数（通常是说明行和表头行），默认2
+   */
+  static extractNodesAndEdgesFromMatrix(
+    matrixData: any[][],
+    skipRows: number = 2
+  ): { nodes: SimplifiedNodeData[]; edges: SimplifiedEdgeData[] } {
+    const nodeMap = new Map<string, SimplifiedNodeData>()
+    const edges: SimplifiedEdgeData[] = []
+
+    // 跳过说明行和表头行
+    for (let i = skipRows; i < matrixData.length; i++) {
+      const row = matrixData[i]
+      if (!row || row.length === 0) continue
+
+      const sourceNode = row[0]?.toString().trim()
+      if (!sourceNode) continue
+
+      // 添加源节点
+      if (!nodeMap.has(sourceNode)) {
+        nodeMap.set(sourceNode, {
+          label: sourceNode
+        })
+      }
+
+      // 新格式：先收集所有关系，再收集所有目标节点
+      // 找到关系和节点的分界点（通常关系在前半部分，节点在后半部分）
+      const dataColumns = row.slice(1).filter(cell => cell && cell.toString().trim())
+      
+      if (dataColumns.length === 0) continue
+
+      // 尝试智能分割：如果列数是偶数，对半分；否则根据内容判断
+      const halfPoint = Math.floor(dataColumns.length / 2)
+      const relations = dataColumns.slice(0, halfPoint)
+      const targetNodes = dataColumns.slice(halfPoint)
+
+      // 创建边：关系和目标节点一一对应
+      const edgeCount = Math.min(relations.length, targetNodes.length)
+      for (let j = 0; j < edgeCount; j++) {
+        const relation = relations[j]?.toString().trim()
+        const targetNode = targetNodes[j]?.toString().trim()
+
+        if (targetNode) {
+          // 添加目标节点
+          if (!nodeMap.has(targetNode)) {
+            nodeMap.set(targetNode, {
+              label: targetNode
+            })
+          }
+
+          // 添加边
+          edges.push({
+            source: sourceNode,
+            target: targetNode,
+            label: relation || undefined
+          })
+        }
+      }
+    }
 
     return {
       nodes: Array.from(nodeMap.values()),

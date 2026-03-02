@@ -52,11 +52,11 @@ interface Vector3D {
 export class CoordinateGenerator {
   private readonly DEFAULT_CONFIG: Required<CoordinateGeneratorConfig> = {
     iterations: 100,
-    springLength: 30,
+    springLength: 100,        // 增加弹簧长度,使连接的节点距离更远
     springStrength: 0.1,
-    repulsionStrength: 1000,
+    repulsionStrength: 3000,  // 增加排斥力,使节点分散得更开
     damping: 0.9,
-    minDistance: 20,
+    minDistance: 50,          // 增加最小间距,避免节点重叠
     timeout: 10000
   }
 
