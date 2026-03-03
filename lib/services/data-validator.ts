@@ -13,12 +13,13 @@ import { NodeData, EdgeData, ParsedGraphData } from './graph-import'
 
 // 验证错误类型
 export interface ValidationError {
-  type: 'COORDINATE_MISSING' | 'DUPLICATE_NODE_ID' | 'INVALID_EDGE_REFERENCE' | 'INVALID_FILE_FORMAT' | 'INVALID_COORDINATE_VALUE'
+  type: 'COORDINATE_MISSING' | 'DUPLICATE_NODE_ID' | 'INVALID_EDGE_REFERENCE' | 'INVALID_FILE_FORMAT' | 'INVALID_COORDINATE_VALUE' | 'MISSING_SOURCE' | 'MISSING_TARGET' | 'SELF_LOOP'
   message: string
   details: string
   suggestions: string[]
   nodeId?: string
   edgeIndex?: number
+  line?: number
 }
 
 // 验证结果接口
@@ -356,6 +357,104 @@ export class DataValidator {
     })
 
     return { errors, warnings }
+  }
+
+  /**
+   * 验证边列表数据
+   * 检查源节点和目标节点非空，检测自环边
+   */
+  static validateEdgeListData(edges: Array<{ source: string; relation?: string; target: string }>): ValidationResult {
+    const errors: ValidationError[] = []
+    const warnings: ValidationError[] = []
+    
+    edges.forEach((edge, index) => {
+      const lineNumber = index + 2 // +2 因为第一行是标题，索引从0开始
+      
+      // 检查源节点非空
+      if (!edge.source || edge.source.trim() === '') {
+        errors.push({
+          type: 'MISSING_SOURCE',
+          message: `第 ${lineNumber} 行缺少源节点`,
+          details: '边的源节点字段为空或未定义',
+          suggestions: [
+            '确保每条边都有有效的源节点',
+            '检查数据文件中的源节点列',
+            '源节点不能为空或仅包含空白字符'
+          ],
+          line: lineNumber
+        })
+      }
+      
+      // 检查目标节点非空
+      if (!edge.target || edge.target.trim() === '') {
+        errors.push({
+          type: 'MISSING_TARGET',
+          message: `第 ${lineNumber} 行缺少目标节点`,
+          details: '边的目标节点字段为空或未定义',
+          suggestions: [
+            '确保每条边都有有效的目标节点',
+            '检查数据文件中的目标节点列',
+            '目标节点不能为空或仅包含空白字符'
+          ],
+          line: lineNumber
+        })
+      }
+      
+      // 检查自环边（警告）
+      if (edge.source && edge.target && edge.source.trim() === edge.target.trim()) {
+        warnings.push({
+          type: 'SELF_LOOP',
+          message: `第 ${lineNumber} 行存在自环边: ${edge.source}`,
+          details: `边连接同一个节点: ${edge.source}`,
+          suggestions: [
+            '检查边数据是否正确',
+            '自环边在某些情况下是有效的',
+            '确认这是预期的连接关系'
+          ],
+          line: lineNumber
+        })
+      }
+    })
+    
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    }
+  }
+
+  /**
+   * 生成数据统计信息
+   */
+  static generateStatistics(data: ParsedGraphData): {
+    nodeCount: number
+    edgeCount: number
+    selfLoopCount: number
+    isolatedNodeCount: number
+  } {
+    const nodeCount = data.nodes.length
+    const edgeCount = data.edges.length
+    
+    // 统计自环边
+    const selfLoopCount = data.edges.filter(e => e.source === e.target).length
+    
+    // 统计孤立节点（没有任何边连接的节点）
+    const connectedNodes = new Set<string>()
+    data.edges.forEach(edge => {
+      connectedNodes.add(edge.source)
+      connectedNodes.add(edge.target)
+    })
+    const isolatedNodeCount = data.nodes.filter(node => {
+      const nodeId = node.id || node.label
+      return !connectedNodes.has(nodeId)
+    }).length
+    
+    return {
+      nodeCount,
+      edgeCount,
+      selfLoopCount,
+      isolatedNodeCount
+    }
   }
 
   /**

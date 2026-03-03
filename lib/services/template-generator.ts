@@ -46,7 +46,7 @@ export class TemplateGenerator {
   }
 
   /**
-   * 生成JSON模板
+   * 生成JSON模板（边列表格式）
    */
   generateJSONTemplate(config?: TemplateConfig): string {
     const finalConfig = { ...this.DEFAULT_CONFIG, ...config }
@@ -55,28 +55,27 @@ export class TemplateGenerator {
 
     if (finalConfig.includeInstructions) {
       template['使用说明'] = {
-        '简介': '这是一个简化的3D知识图谱模板，只需填写节点名称和关系即可',
-        '自动生成': '系统会自动生成：3D坐标、节点颜色、节点大小、节点形状、节点ID',
-        '必填字段': 'label（节点名称）、source（起始节点）、target（目标节点）',
-        '可选字段': 'label（关系名称）',
+        '简介': '这是一个简化的3D知识图谱模板，采用边列表格式',
+        '格式说明': '每条边包含source（源节点）、relation（关系）、target（目标节点）',
+        '自动生成': '系统会自动从边数据中提取唯一节点，并生成：3D坐标、节点颜色、节点大小、节点形状、节点ID',
+        '必填字段': 'source（源节点）、target（目标节点）',
+        '可选字段': 'relation（关系名称）',
         '提示': '删除此说明对象后开始填写您的数据'
       }
     }
 
-    // 空白模板
-    template.nodes = [
-      { label: '节点(1)' },
-      { label: '节点(2)' },
-      { label: '节点(3)' }
+    // 边列表格式模板
+    template.edges = [
+      { source: '节点A', relation: '连接', target: '节点B' },
+      { source: '节点A', relation: '包含', target: '节点C' },
+      { source: '节点B', relation: '引用', target: '节点C' }
     ]
-    
-    template.edges = []
 
     return JSON.stringify(template, null, 2)
   }
 
   /**
-   * 生成CSV模板
+   * 生成CSV模板（边列表格式）
    */
   generateCSVTemplate(config?: TemplateConfig): string {
     const finalConfig = { ...this.DEFAULT_CONFIG, ...config }
@@ -84,22 +83,95 @@ export class TemplateGenerator {
     let csv = ''
 
     if (finalConfig.includeInstructions) {
-      csv += '# 知识图谱导入模板 (CSV格式)\n'
-      csv += '# 说明: 每行格式为 - 节点,关系,目标节点\n'
+      csv += '# 知识图谱导入模板 (CSV格式 - 边列表)\n'
+      csv += '# 说明: 每行格式为 - 源节点,关系,目标节点\n'
+      csv += '# 系统会自动从边数据中提取唯一节点\n'
       csv += '# 系统会自动生成: 3D坐标、节点颜色、节点大小、节点ID\n'
+      csv += '# 必填字段: 源节点、目标节点\n'
+      csv += '# 可选字段: 关系\n'
       csv += '# 提示: 删除这些注释行后开始填写您的数据\n'
       csv += '\n'
     }
 
     // CSV头部
-    csv += '节点,关系,目标节点\n'
+    csv += '源节点,关系,目标节点\n'
     
-    // 添加空白示例行
-    csv += '节点(1),,\n'
-    csv += '节点(2),,\n'
-    csv += '节点(3),,\n'
+    // 添加至少3行示例数据
+    csv += '节点A,连接,节点B\n'
+    csv += '节点A,包含,节点C\n'
+    csv += '节点B,引用,节点C\n'
 
     return csv
+  }
+
+  /**
+   * 生成Excel边列表模板数据 (新格式)
+   * 返回可以被Excel库使用的数据结构
+   * 格式: 每行一条边，三列结构（源节点、关系、目标节点）
+   */
+  generateExcelEdgeListTemplateData(config?: TemplateConfig): {
+    edgeSheet: any[][]
+    instructionSheet: any[][]
+  } {
+    const finalConfig = { ...this.DEFAULT_CONFIG, ...config }
+
+    // 边数据工作表 (边列表格式)
+    const edgeSheet: any[][] = []
+    
+    // 第一行：列标题
+    edgeSheet.push(['源节点', '关系', '目标节点'])
+
+    // 添加至少3行示例数据
+    edgeSheet.push(['节点A', '连接', '节点B'])
+    edgeSheet.push(['节点A', '包含', '节点C'])
+    edgeSheet.push(['节点B', '引用', '节点C'])
+
+    // 使用说明工作表
+    const instructionSheet: any[][] = []
+    
+    if (finalConfig.includeInstructions) {
+      instructionSheet.push(['知识图谱导入模板 - 边列表格式使用说明'])
+      instructionSheet.push([])
+      instructionSheet.push(['简介'])
+      instructionSheet.push(['这是一个简化的3D知识图谱模板，采用边列表格式'])
+      instructionSheet.push(['每一行表示一条边关系，系统会自动提取所有唯一节点'])
+      instructionSheet.push([])
+      instructionSheet.push(['格式说明'])
+      instructionSheet.push(['列A: 源节点 - 边的起始节点名称'])
+      instructionSheet.push(['列B: 关系 - 描述源节点和目标节点之间的关系类型（可选）'])
+      instructionSheet.push(['列C: 目标节点 - 边的终止节点名称'])
+      instructionSheet.push([])
+      instructionSheet.push(['示例'])
+      instructionSheet.push(['源节点 | 关系 | 目标节点'])
+      instructionSheet.push(['节点A | 连接 | 节点B'])
+      instructionSheet.push(['节点A | 包含 | 节点C'])
+      instructionSheet.push(['节点B | 引用 | 节点C'])
+      instructionSheet.push([])
+      instructionSheet.push(['说明：'])
+      instructionSheet.push(['- 系统会自动从边数据中提取唯一节点（节点A、节点B、节点C）'])
+      instructionSheet.push(['- 每行代表一条边关系，而非一个节点的所有关系'])
+      instructionSheet.push([])
+      instructionSheet.push(['自动生成'])
+      instructionSheet.push(['系统会自动生成以下内容：'])
+      instructionSheet.push(['- 节点列表（从边数据中提取）'])
+      instructionSheet.push(['- 3D坐标（x, y, z）'])
+      instructionSheet.push(['- 节点颜色'])
+      instructionSheet.push(['- 节点大小'])
+      instructionSheet.push(['- 节点形状'])
+      instructionSheet.push(['- 节点ID'])
+      instructionSheet.push([])
+      instructionSheet.push(['重要提示'])
+      instructionSheet.push(['1. 源节点和目标节点为必填字段'])
+      instructionSheet.push(['2. 关系字段为可选，可以留空'])
+      instructionSheet.push(['3. 系统会跳过空行和仅包含空白字符的行'])
+      instructionSheet.push(['4. 如果源节点等于目标节点，系统会返回警告（自环边）'])
+      instructionSheet.push(['5. 删除"使用说明"工作表后开始填写数据'])
+    }
+
+    return {
+      edgeSheet,
+      instructionSheet
+    }
   }
 
   /**
@@ -310,6 +382,55 @@ export class TemplateGenerator {
     ]
 
     return triples.slice(0, Math.min(count, triples.length))
+  }
+
+  /**
+   * 从边列表数据提取节点和边
+   * 用于将边列表格式转换为标准的nodes/edges格式
+   * 
+   * @param edgeList - 边列表数据，每个对象包含source、relation、target字段
+   */
+  static extractNodesAndEdgesFromEdgeList(
+    edgeList: Array<{ source: string; relation?: string; target: string }>
+  ): { nodes: SimplifiedNodeData[]; edges: SimplifiedEdgeData[] } {
+    const nodeMap = new Map<string, SimplifiedNodeData>()
+    const edges: SimplifiedEdgeData[] = []
+
+    edgeList.forEach(edge => {
+      // 跳过空行和空白行
+      const source = edge.source?.toString().trim()
+      const target = edge.target?.toString().trim()
+      
+      if (!source || !target) {
+        return // 跳过无效边
+      }
+
+      // 提取源节点
+      if (!nodeMap.has(source)) {
+        nodeMap.set(source, {
+          label: source
+        })
+      }
+
+      // 提取目标节点
+      if (!nodeMap.has(target)) {
+        nodeMap.set(target, {
+          label: target
+        })
+      }
+
+      // 创建边
+      edges.push({
+        source: source,
+        target: target,
+        label: edge.relation?.toString().trim() || undefined
+      })
+    })
+
+    return {
+      nodes: Array.from(nodeMap.values()),
+      edges
+    }
   }
 
   /**

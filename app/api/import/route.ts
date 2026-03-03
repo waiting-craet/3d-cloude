@@ -62,7 +62,8 @@ export async function POST(request: NextRequest) {
       nodesWithLayout.map(nodeData => 
         prisma.node.create({
           data: {
-            label: nodeData.label || '未命名节点',
+            name: nodeData.label || '未命名节点',
+            type: 'entity',
             description: nodeData.description || '',
             x: nodeData.x || 0,
             y: nodeData.y || 0,
@@ -101,8 +102,8 @@ export async function POST(request: NextRequest) {
         prisma.edge.create({
           data: {
             label: edgeData.label || '',
-            sourceId: nodeMap.get(edgeData.source)!,
-            targetId: nodeMap.get(edgeData.target)!,
+            fromNodeId: nodeMap.get(edgeData.source)!,
+            toNodeId: nodeMap.get(edgeData.target)!,
             projectId: projectId,
             graphId: graphId
           }
