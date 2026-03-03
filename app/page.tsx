@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import LoginModal from '@/components/LoginModal'
-import HeroSection from '@/components/HeroSection'
 import SmartCategoryFilter, { Category } from '@/components/SmartCategoryFilter'
 import { useUserStore } from '@/lib/userStore'
 
@@ -11,7 +10,6 @@ export default function LandingPage() {
   const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
 
   const { user, isLoggedIn, logout, initializeFromStorage } = useUserStore()
 
@@ -60,15 +58,6 @@ export default function LandingPage() {
 
   const categories_old = ['全部', '科技', '教育', '商业', '艺术', '医疗', '其他']
 
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query)
-  }
-
-  const handleSearchSubmit = () => {
-    console.log('搜索查询:', searchQuery)
-    // 这里可以实现实际的搜索逻辑
-  }
-
   const handleStartCreating = () => {
     if (!isLoggedIn) {
       // 未登录时提示用户先登录
@@ -82,14 +71,6 @@ export default function LandingPage() {
     } catch (error) {
       console.error('Navigation failed:', error)
       window.location.href = '/creation'
-    }
-  }
-
-  const handleBrowseWorks = () => {
-    // 滚动到作品区域
-    const worksSection = document.querySelector('[data-works-section]')
-    if (worksSection) {
-      worksSection.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
@@ -115,27 +96,175 @@ export default function LandingPage() {
       background: '#fafafa',
       color: '#333'
     }}>
-      {/* 英雄区域 */}
-      <HeroSection
-        title="知识图谱作品广场"
-        subtitle="发现、创建和分享知识的无限可能"
-        primaryAction={{
-          text: "开始创作",
-          onClick: handleStartCreating,
-          disabled: !isLoggedIn
-        }}
-        secondaryAction={{
-          text: "浏览作品",
-          onClick: handleBrowseWorks
-        }}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        onSearchSubmit={handleSearchSubmit}
-        backgroundType="gradient"
-        theme="light"
-        showSearch={true}
-        animated={true}
-      />
+      {/* 顶部导航栏 */}
+      <nav style={{
+        background: 'white',
+        borderBottom: '1px solid #e0e0e0',
+        padding: '16px 0',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 30px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          {/* Logo/标题 */}
+          <div style={{
+            fontSize: '20px',
+            fontWeight: '700',
+            color: '#00bfa5'
+          }}>
+            知识图谱
+          </div>
+
+          {/* 右侧按钮组 */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'center'
+          }}>
+            {isLoggedIn ? (
+              <>
+                <button
+                  onClick={handleStartCreating}
+                  style={{
+                    padding: '10px 24px',
+                    background: 'linear-gradient(135deg, #00bfa5, #00d4b8)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.3)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  开始创作
+                </button>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    padding: '10px 24px',
+                    background: 'transparent',
+                    color: '#666',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#00bfa5'
+                    e.currentTarget.style.color = '#00bfa5'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#ddd'
+                    e.currentTarget.style.color = '#666'
+                  }}
+                >
+                  退出登录
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  style={{
+                    padding: '10px 24px',
+                    background: 'linear-gradient(135deg, #00bfa5, #00d4b8)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.3)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  登录/注册
+                </button>
+                <button
+                  onClick={handleStartCreating}
+                  style={{
+                    padding: '10px 24px',
+                    background: 'transparent',
+                    color: '#666',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#00bfa5'
+                    e.currentTarget.style.color = '#00bfa5'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#ddd'
+                    e.currentTarget.style.color = '#666'
+                  }}
+                >
+                  开始创作
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* 标题区域 */}
+      <div style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #00bfa5 50%, #00d4b8 75%, #4facfe 100%)',
+        padding: '40px 0',
+        textAlign: 'center'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 30px'
+        }}>
+          <h1 style={{
+            fontSize: '32px',
+            fontWeight: '800',
+            color: 'white',
+            margin: '0 0 12px 0',
+            textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            知识图谱作品广场
+          </h1>
+          <p style={{
+            fontSize: '16px',
+            color: 'rgba(255, 255, 255, 0.95)',
+            margin: 0,
+            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+          }}>
+            发现、创建和分享知识的无限可能
+          </p>
+        </div>
+      </div>
 
       {/* 主内容区 */}
       <div style={{

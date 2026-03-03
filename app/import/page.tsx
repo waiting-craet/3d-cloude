@@ -48,7 +48,8 @@ export default function ImportPage() {
       const response = await fetch('/api/projects')
       if (response.ok) {
         const data = await response.json()
-        setProjects(Array.isArray(data) ? data : [])
+        // API 返回 { projects: [...] } 格式
+        setProjects(Array.isArray(data.projects) ? data.projects : (Array.isArray(data) ? data : []))
       }
     } catch (error) {
       console.error('Failed to fetch projects:', error)
@@ -61,7 +62,8 @@ export default function ImportPage() {
       const response = await fetch(`/api/projects/${projectId}/graphs`)
       if (response.ok) {
         const data = await response.json()
-        setGraphs(Array.isArray(data) ? data : [])
+        // API 返回 { graphs: [...] } 格式
+        setGraphs(Array.isArray(data.graphs) ? data.graphs : (Array.isArray(data) ? data : []))
       }
     } catch (error) {
       console.error('Failed to fetch graphs:', error)
@@ -81,16 +83,20 @@ export default function ImportPage() {
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newProjectName.trim() })
+        body: JSON.stringify({ 
+          name: newProjectName.trim(),
+          graphName: '默认图谱' // API 需要 graphName 参数
+        })
       })
       if (response.ok) {
-        const newProject = await response.json()
+        const result = await response.json()
         await fetchProjects()
-        setSelectedProject(newProject.id)
+        setSelectedProject(result.project.id)
         setShowNewProjectModal(false)
         setNewProjectName('')
       } else {
-        alert('创建项目失败')
+        const error = await response.json()
+        alert(error.error || '创建项目失败')
       }
     } catch (error) {
       console.error('Failed to create project:', error)
@@ -119,13 +125,14 @@ export default function ImportPage() {
         })
       })
       if (response.ok) {
-        const newGraph = await response.json()
+        const result = await response.json()
         await fetchGraphs(selectedProject)
-        setSelectedGraph(newGraph.id)
+        setSelectedGraph(result.graph.id)
         setShowNewGraphModal(false)
         setNewGraphName('')
       } else {
-        alert('创建图谱失败')
+        const error = await response.json()
+        alert(error.error || '创建图谱失败')
       }
     } catch (error) {
       console.error('Failed to create graph:', error)

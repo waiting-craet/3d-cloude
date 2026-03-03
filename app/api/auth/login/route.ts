@@ -8,56 +8,54 @@ export async function POST(request: NextRequest) {
     const { username, password } = body;
 
     // 验证输入
-    if (!username || typeof username !== 'string') {
+    if (!username || !password) {
       return NextResponse.json(
-        { success: false, error: '请输入用户名' },
-        { status: 400 }
-      );
-    }
-
-    if (!password || typeof password !== 'string') {
-      return NextResponse.json(
-        { success: false, error: '请输入密码' },
+        { success: false, error: '请输入用户名和密码', field: 'general' },
         { status: 400 }
       );
     }
 
     // 查询用户
-    const users = await prisma.$queryRaw<Array<{ id: string; username: string; password: string }>>`
-      SELECT id, username, password FROM "User" WHERE username = ${username} LIMIT 1
-    `;
+    const user = await prisma.user.findUnique({
+      where: { username }
+    });
 
-    if (users.length === 0) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: '用户名或密码错误' },
+        { success: false, error: '用户名或密码错误', field: 'general' },
         { status: 401 }
       );
     }
-
-    const user = users[0];
 
     // 验证密码
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { success: false, error: '用户名或密码错误' },
+        { success: false, error: '用户名或密码错误', field: 'general' },
         { status: 401 }
       );
     }
 
-    // 返回用户信息（不含密码）
+    // 登录成功，返回用户信息（不包含密码）
+    const userInfo = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      avatar: user.avatar,
+      createdAt: user.createdAt
+    };
+
     return NextResponse.json({
       success: true,
-      user: {
-        id: user.id,
-        username: user.username,
-      },
+      user: userInfo,
+      message: '登录成功'
     });
+
   } catch (error) {
     console.error('登录错误:', error);
     return NextResponse.json(
-      { success: false, error: '登录失败，请稍后重试' },
+      { success: false, error: '服务器错误，请稍后重试' },
       { status: 500 }
     );
   }
