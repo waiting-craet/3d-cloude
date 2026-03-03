@@ -26,6 +26,199 @@ export interface EdgeData {
 export interface ParsedGraphData {
   nodes: NodeData[]
   edges: EdgeData[]
+  metadata?: {
+    format: 'edge-list' | 'matrix-list' | 'unknown'
+    version?: string
+    nodeCount: number
+    edgeCount: number
+  }
+}
+
+// 边列表行数据接口
+export interface EdgeListRow {
+  source: string
+  relation?: string
+  target: string
+}
+
+/**
+ * 检测Excel文件格式类型
+ * 返回 'edge-list'、'matrix-list' 或 'unknown'
+ */
+export function detectFileFormat(workbook: XLSX.WorkBook): 'edge-list' | 'matrix-list' | 'unknown' {
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+  const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
+  
+  if (data.length === 0) return 'unknown'
+  
+  const headers = data[0] as string[]
+  
+  // 检测边列表格式：三列且标题匹配
+  if (headers.length === 3) {
+    const header0 = headers[0]?.toString().toLowerCase().trim()
+    const header1 = headers[1]?.toString().toLowerCase().trim()
+    const header2 = headers[2]?.toString().toLowerCase().trim()
+    
+    // 检查是否包含"源节点"、"关系"、"目标节点"关键词
+    if (
+      (header0.includes('源节点') || header0.includes('source')) &&
+      (header1.includes('关系') || header1.includes('relation') || header1.includes('relationship')) &&
+      (header2.includes('目标节点') || header2.includes('target'))
+    ) {
+      return 'edge-list'
+    }
+  }
+  
+  // 否则尝试矩阵列表格式
+  // 矩阵列表格式通常有多列，且第一列是节点名称
+  if (headers.length > 3) {
+    return 'matrix-list'
+  }
+  
+  return 'unknown'
+}
+
+/**
+ * 解析边列表格式的Excel文件
+ */
+export function parseEdgeListExcel(workbook: XLSX.WorkBook): ParsedGraphData {
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+  const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
+  
+  if (data.length === 0) {
+    throw new Error('Excel文件为空')
+  }
+  
+  // 跳过标题行
+  const edgeRows: EdgeListRow[] = []
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i]
+    if (!row || row.length === 0) continue
+    
+    const source = row[0]?.toString().trim()
+    const relation = row[1]?.toString().trim()
+    const target = row[2]?.toString().trim()
+    
+    // 跳过空行和空白行
+    if (!source || !target) continue
+    
+    edgeRows.push({
+      source,
+      relation: relation || undefined,
+      target
+    })
+  }
+  
+  // 从边列表提取节点和边
+  return extractNodesAndEdgesFromEdgeList(edgeRows)
+}
+
+/**
+ * 解析边列表格式的CSV文件
+ */
+export function parseEdgeListCSV(text: string): ParsedGraphData {
+  const lines = text.split('\n').filter(line => {
+    const trimmed = line.trim()
+    return trimmed && !trimmed.startsWith('#') // 跳过空行和注释行
+  })
+  
+  if (lines.length === 0) {
+    throw new Error('CSV文件为空')
+  }
+  
+  // 跳过标题行
+  const edgeRows: EdgeListRow[] = []
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCSVLine(lines[i])
+    if (values.length === 0) continue
+    
+    const source = values[0]?.trim()
+    const relation = values[1]?.trim()
+    const target = values[2]?.trim()
+    
+    // 跳过空行和空白行
+    if (!source || !target) continue
+    
+    edgeRows.push({
+      source,
+      relation: relation || undefined,
+      target
+    })
+  }
+  
+  // 从边列表提取节点和边
+  return extractNodesAndEdgesFromEdgeList(edgeRows)
+}
+
+/**
+ * 解析边列表格式的JSON文件
+ */
+export function parseEdgeListJSON(data: any): ParsedGraphData {
+  if (!data.edges || !Array.isArray(data.edges)) {
+    throw new Error('JSON文件必须包含edges数组')
+  }
+  
+  const edgeRows: EdgeListRow[] = data.edges.map((edge: any) => ({
+    source: edge.source?.toString().trim() || '',
+    relation: edge.relation?.toString().trim() || undefined,
+    target: edge.target?.toString().trim() || ''
+  }))
+  
+  // 从边列表提取节点和边
+  return extractNodesAndEdgesFromEdgeList(edgeRows)
+}
+
+/**
+ * 从边列表提取节点和边
+ * 自动提取所有唯一节点
+ */
+export function extractNodesAndEdgesFromEdgeList(edgeList: EdgeListRow[]): ParsedGraphData {
+  const nodeMap = new Map<string, NodeData>()
+  const edges: EdgeData[] = []
+  
+  edgeList.forEach(edge => {
+    const source = edge.source?.trim()
+    const target = edge.target?.trim()
+    
+    // 跳过空行和空白行
+    if (!source || !target) return
+    
+    // 提取源节点
+    if (!nodeMap.has(source)) {
+      nodeMap.set(source, {
+        label: source,
+        description: ''
+      })
+    }
+    
+    // 提取目标节点
+    if (!nodeMap.has(target)) {
+      nodeMap.set(target, {
+        label: target,
+        description: ''
+      })
+    }
+    
+    // 创建边
+    edges.push({
+      source,
+      target,
+      label: edge.relation || ''
+    })
+  })
+  
+  const nodes = Array.from(nodeMap.values())
+  
+  return {
+    nodes,
+    edges,
+    metadata: {
+      format: 'edge-list',
+      version: '2.0',
+      nodeCount: nodes.length,
+      edgeCount: edges.length
+    }
+  }
 }
 
 /**
@@ -33,23 +226,33 @@ export interface ParsedGraphData {
  * 支持两种格式：
  * 1. 两个工作表（Nodes和Edges）
  * 2. 单个工作表（source, target, relationship格式）
+ * 3. 边列表格式（源节点、关系、目标节点）
  * 统一处理为3D格式，自动转换2D坐标
  */
 export async function parseExcelFile(file: File): Promise<ParsedGraphData> {
   const buffer = await file.arrayBuffer()
   const workbook = XLSX.read(buffer, { type: 'array' })
   
-  // 检查是否有Nodes和Edges工作表
-  const hasNodesSheet = workbook.SheetNames.includes('Nodes')
-  const hasEdgesSheet = workbook.SheetNames.includes('Edges')
+  // 检测文件格式
+  const format = detectFileFormat(workbook)
   
   let result: ParsedGraphData
-  if (hasNodesSheet && hasEdgesSheet) {
-    // 格式1: 分离的Nodes和Edges工作表
-    result = parseExcelWithSeparateSheets(workbook)
+  
+  if (format === 'edge-list') {
+    // 格式1: 边列表格式（新格式）
+    result = parseEdgeListExcel(workbook)
   } else {
-    // 格式2: 单个工作表，source-target格式
-    result = parseExcelWithSingleSheet(workbook)
+    // 检查是否有Nodes和Edges工作表
+    const hasNodesSheet = workbook.SheetNames.includes('Nodes')
+    const hasEdgesSheet = workbook.SheetNames.includes('Edges')
+    
+    if (hasNodesSheet && hasEdgesSheet) {
+      // 格式2: 分离的Nodes和Edges工作表
+      result = parseExcelWithSeparateSheets(workbook)
+    } else {
+      // 格式3: 单个工作表，source-target格式或矩阵列表格式
+      result = parseExcelWithSingleSheet(workbook)
+    }
   }
   
   // 使用坐标转换器确保所有节点都有3D坐标
@@ -275,15 +478,19 @@ export async function parseJSONFile(file: File): Promise<ParsedGraphData> {
   
   let result: ParsedGraphData
   
-  // 格式1: { nodes: [...], edges: [...] }
-  if (data.nodes && Array.isArray(data.nodes)) {
+  // 格式1: { edges: [...] } (边列表格式)
+  if (data.edges && Array.isArray(data.edges) && !data.nodes) {
+    result = parseEdgeListJSON(data)
+  }
+  // 格式2: { nodes: [...], edges: [...] }
+  else if (data.nodes && Array.isArray(data.nodes)) {
     result = parseJSONWithNodesEdges(data)
   }
-  // 格式2: { elements: { nodes: [...], edges: [...] } } (Cytoscape格式)
+  // 格式3: { elements: { nodes: [...], edges: [...] } } (Cytoscape格式)
   else if (data.elements && data.elements.nodes) {
     result = parseJSONWithNodesEdges(data.elements)
   }
-  // 格式3: 数组格式 [{ source, target, ... }, ...]
+  // 格式4: 数组格式 [{ source, target, ... }, ...]
   else if (Array.isArray(data)) {
     result = parseJSONArray(data)
   }

@@ -123,6 +123,9 @@ export class CoordinateGenerator {
 
       // 居中布局
       generatedNodes = this.centerLayout(generatedNodes)
+      
+      // 添加默认属性
+      generatedNodes = this.addDefaultProperties(generatedNodes)
     }
 
     // 合并有坐标和生成坐标的节点
@@ -356,6 +359,29 @@ export class CoordinateGenerator {
     }
 
     return result
+  }
+
+  /**
+   * 添加默认属性
+   */
+  private addDefaultProperties(nodes: NodeData[]): NodeData[] {
+    const defaultColors = [
+      '#3b82f6', // blue
+      '#ef4444', // red
+      '#10b981', // green
+      '#f59e0b', // amber
+      '#8b5cf6', // purple
+      '#ec4899', // pink
+      '#06b6d4', // cyan
+      '#f97316'  // orange
+    ]
+    
+    return nodes.map((node, index) => ({
+      ...node,
+      color: node.color || defaultColors[index % defaultColors.length],
+      size: node.size || 10,
+      shape: node.shape || 'sphere'
+    }))
   }
 
   /**

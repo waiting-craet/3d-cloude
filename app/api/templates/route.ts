@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const generator = new TemplateGenerator()
+    const timestamp = new Date().toISOString().split('T')[0] // YYYY-MM-DD
 
     switch (format) {
       case 'json': {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
         return new NextResponse(jsonTemplate, {
           headers: {
             'Content-Type': 'application/json',
-            'Content-Disposition': 'attachment; filename="3d-graph-template.json"',
+            'Content-Disposition': `attachment; filename="graph-template-edgelist-v2-${timestamp}.json"`,
           },
         })
       }
@@ -24,8 +25,8 @@ export async function GET(request: NextRequest) {
         const csvTemplate = generator.generateCSVTemplate()
         return new NextResponse(csvTemplate, {
           headers: {
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename="3d-graph-template.csv"',
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename="graph-template-edgelist-v2-${timestamp}.csv"`,
           },
         })
       }
@@ -34,16 +35,24 @@ export async function GET(request: NextRequest) {
         // Create workbook
         const wb = XLSX.utils.book_new()
 
-        // Generate template data using TemplateGenerator
-        const { relationSheet, instructionSheet } = generator.generateExcelTemplateData()
+        // Generate edge-list template data using TemplateGenerator
+        const { edgeSheet, instructionSheet } = generator.generateExcelEdgeListTemplateData()
 
-        // Add relation data sheet (triplet format)
-        const relationWs = XLSX.utils.aoa_to_sheet(relationSheet)
-        XLSX.utils.book_append_sheet(wb, relationWs, '关系数据')
+        // Add edge data sheet (edge-list format)
+        const edgeWs = XLSX.utils.aoa_to_sheet(edgeSheet)
+        XLSX.utils.book_append_sheet(wb, edgeWs, '边数据')
 
         // Add instruction sheet
         const instructionWs = XLSX.utils.aoa_to_sheet(instructionSheet)
         XLSX.utils.book_append_sheet(wb, instructionWs, '使用说明')
+
+        // Add metadata to workbook
+        wb.Props = {
+          Title: '知识图谱导入模板 - 边列表格式',
+          Subject: '3D知识图谱数据导入',
+          Author: '系统自动生成',
+          CreatedDate: new Date()
+        }
 
         // Generate buffer
         const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
@@ -51,7 +60,7 @@ export async function GET(request: NextRequest) {
         return new NextResponse(buffer, {
           headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition': 'attachment; filename="3d-graph-template.xlsx"',
+            'Content-Disposition': `attachment; filename="graph-template-edgelist-v2-${timestamp}.xlsx"`,
           },
         })
       }
