@@ -13,7 +13,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    email: '',
     confirmPassword: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -30,7 +29,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       setFormData({
         username: '',
         password: '',
-        email: '',
         confirmPassword: ''
       });
       setErrors({});
@@ -59,7 +57,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden'; // Prevent background scroll
+      document.body.style.overflow = 'hidden';
     }
 
     return () => {
@@ -74,7 +72,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    // Username validation
     if (!formData.username.trim()) {
       newErrors.username = '请输入用户名';
     } else if (formData.username.length < 2) {
@@ -83,16 +80,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       newErrors.username = '用户名不能超过30个字符';
     }
 
-    // Email validation for registration
-    if (activeTab === 'register') {
-      if (!formData.email.trim()) {
-        newErrors.email = '请输入邮箱地址';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = '请输入有效的邮箱地址';
-      }
-    }
-
-    // Password validation
     if (!formData.password) {
       newErrors.password = '请输入密码';
     } else if (formData.password.length < 6) {
@@ -101,7 +88,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       newErrors.password = '密码不能超过128个字符';
     }
 
-    // Confirm password validation for registration
     if (activeTab === 'register') {
       if (!formData.confirmPassword) {
         newErrors.confirmPassword = '请确认密码';
@@ -129,8 +115,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         ? { username: formData.username, password: formData.password }
         : { 
             username: formData.username, 
-            password: formData.password, 
-            email: formData.email 
+            password: formData.password
           };
 
       const response = await fetch(endpoint, {
@@ -144,15 +129,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       const data = await response.json();
 
       if (data.success && data.user) {
-        // Success - include more user information
         const userWithDetails = {
           ...data.user,
-          email: data.user.email || formData.email || `${data.user.username}@example.com`,
+          email: data.user.email || `${data.user.username}@example.com`,
           avatar: data.user.avatar || null,
           createdAt: data.user.createdAt || new Date().toISOString()
         };
         
-        // Handle auth token
         const authToken = data.token ? {
           token: data.token,
           expiresAt: Date.now() + (data.expiresIn || 3600) * 1000,
@@ -161,7 +144,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         
         login(userWithDetails, authToken);
         
-        // Show success message briefly
         if (activeTab === 'register') {
           setErrors({ success: '注册成功！正在为您登录...' });
           setTimeout(() => {
@@ -171,7 +153,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           handleClose();
         }
       } else {
-        // Handle specific error cases
         if (data.error) {
           if (data.field) {
             setErrors({ [data.field]: data.error });
@@ -194,7 +175,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setFormData({
       username: '',
       password: '',
-      email: '',
       confirmPassword: ''
     });
     setErrors({});
@@ -205,11 +185,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear field-specific error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-    // Clear general error when user makes changes
     if (errors.general) {
       setErrors(prev => ({ ...prev, general: '' }));
     }
@@ -220,49 +198,115 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="login-modal-title"
-      className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '16px'
+      }}
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300"
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          width: '100%',
+          maxWidth: '448px',
+          maxHeight: '90vh',
+          overflowY: 'auto'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h2 id="login-modal-title" className="text-xl font-semibold text-gray-800">
+        <div style={{
+          padding: '16px 24px',
+          borderBottom: '1px solid #f3f4f6'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <h2 id="login-modal-title" style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#1f2937',
+              margin: 0
+            }}>
               {activeTab === 'login' ? '登录' : '注册'}
             </h2>
             <button
               onClick={handleClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              style={{
+                padding: '8px',
+                borderRadius: '8px',
+                transition: 'background-color 0.2s',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               aria-label="关闭"
             >
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '20px', height: '20px', color: '#6b7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
           {/* Tab switcher */}
-          <div className="flex mt-4 bg-gray-100 rounded-lg p-1">
+          <div style={{
+            display: 'flex',
+            marginTop: '16px',
+            backgroundColor: '#f3f4f6',
+            borderRadius: '8px',
+            padding: '4px'
+          }}>
             <button
+              type="button"
               onClick={() => setActiveTab('login')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                activeTab === 'login'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              style={{
+                flex: 1,
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'all 0.2s',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: activeTab === 'login' ? 'white' : 'transparent',
+                color: activeTab === 'login' ? '#111827' : '#6b7280',
+                boxShadow: activeTab === 'login' ? '0 1px 2px 0 rgba(0, 0, 0, 0.05)' : 'none'
+              }}
             >
               登录
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('register')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                activeTab === 'register'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              style={{
+                flex: 1,
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'all 0.2s',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: activeTab === 'register' ? 'white' : 'transparent',
+                color: activeTab === 'register' ? '#111827' : '#6b7280',
+                boxShadow: activeTab === 'register' ? '0 1px 2px 0 rgba(0, 0, 0, 0.05)' : 'none'
+              }}
             >
               注册
             </button>
@@ -270,10 +314,21 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 py-6 space-y-4">
+        <form onSubmit={handleSubmit} style={{
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
           {/* Username field */}
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="username" style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '8px'
+            }}>
               用户名
             </label>
             <input
@@ -282,56 +337,78 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               type="text"
               value={formData.username}
               onChange={(e) => handleInputChange('username', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors ${
-                errors.username ? 'border-red-300 bg-red-50' : 'border-gray-300'
-              }`}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: errors.username ? '1px solid #fca5a5' : '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px',
+                backgroundColor: errors.username ? '#fef2f2' : 'white',
+                outline: 'none',
+                transition: 'all 0.2s',
+                boxSizing: 'border-box'
+              }}
+              onFocus={(e) => {
+                if (!errors.username) {
+                  e.target.style.borderColor = '#14b8a6'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(20, 184, 166, 0.1)'
+                }
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = errors.username ? '#fca5a5' : '#d1d5db'
+                e.target.style.boxShadow = 'none'
+              }}
               placeholder="请输入用户名"
               disabled={loading}
               autoComplete="username"
             />
             {errors.username && (
-              <p className="mt-1 text-sm text-red-600">{errors.username}</p>
+              <p style={{
+                marginTop: '4px',
+                fontSize: '14px',
+                color: '#dc2626'
+              }}>{errors.username}</p>
             )}
           </div>
 
-          {/* Email field (registration only) */}
-          {activeTab === 'register' && (
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                邮箱地址
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors ${
-                  errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-                placeholder="请输入邮箱地址"
-                disabled={loading}
-                autoComplete="email"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
-          )}
-
           {/* Password field */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '8px'
+            }}>
               密码
             </label>
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors ${
-                  errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
+                style={{
+                  width: '100%',
+                  padding: '12px 48px 12px 16px',
+                  border: errors.password ? '1px solid #fca5a5' : '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: errors.password ? '#fef2f2' : 'white',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  if (!errors.password) {
+                    e.target.style.borderColor = '#14b8a6'
+                    e.target.style.boxShadow = '0 0 0 3px rgba(20, 184, 166, 0.1)'
+                  }
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = errors.password ? '#fca5a5' : '#d1d5db'
+                  e.target.style.boxShadow = 'none'
+                }}
                 placeholder="请输入密码（至少6位）"
                 disabled={loading}
                 autoComplete={activeTab === 'login' ? 'current-password' : 'new-password'}
@@ -339,15 +416,27 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#9ca3af',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
                 tabIndex={-1}
               >
                 {showPassword ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
@@ -355,25 +444,53 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               </button>
             </div>
             {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              <p style={{
+                marginTop: '4px',
+                fontSize: '14px',
+                color: '#dc2626'
+              }}>{errors.password}</p>
             )}
           </div>
 
           {/* Confirm password field (registration only) */}
           {activeTab === 'register' && (
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
                 确认密码
               </label>
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors ${
-                    errors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
+                  style={{
+                    width: '100%',
+                    padding: '12px 48px 12px 16px',
+                    border: errors.confirmPassword ? '1px solid #fca5a5' : '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    backgroundColor: errors.confirmPassword ? '#fef2f2' : 'white',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => {
+                    if (!errors.confirmPassword) {
+                      e.target.style.borderColor = '#14b8a6'
+                      e.target.style.boxShadow = '0 0 0 3px rgba(20, 184, 166, 0.1)'
+                    }
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = errors.confirmPassword ? '#fca5a5' : '#d1d5db'
+                    e.target.style.boxShadow = 'none'
+                  }}
                   placeholder="请再次输入密码"
                   disabled={loading}
                   autoComplete="new-password"
@@ -381,15 +498,27 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#9ca3af',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
                   tabIndex={-1}
                 >
                   {showConfirmPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
@@ -397,19 +526,37 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                <p style={{
+                  marginTop: '4px',
+                  fontSize: '14px',
+                  color: '#dc2626'
+                }}>{errors.confirmPassword}</p>
               )}
             </div>
           )}
 
           {/* Error/Success messages */}
           {errors.general && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            <div style={{
+              padding: '12px',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              color: '#dc2626',
+              fontSize: '14px'
+            }}>
               {errors.general}
             </div>
           )}
           {errors.success && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm">
+            <div style={{
+              padding: '12px',
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '8px',
+              color: '#16a34a',
+              fontSize: '14px'
+            }}>
               {errors.success}
             </div>
           )}
@@ -418,13 +565,42 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center"
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              backgroundColor: loading ? '#d1d5db' : '#14b8a6',
+              color: 'white',
+              fontWeight: '500',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = '#0d9488'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = '#14b8a6'
+              }
+            }}
           >
             {loading ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg style={{
+                  animation: 'spin 1s linear infinite',
+                  marginRight: '12px',
+                  height: '20px',
+                  width: '20px'
+                }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 {activeTab === 'login' ? '登录中...' : '注册中...'}
               </>
@@ -434,6 +610,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </button>
         </form>
       </div>
+      <style jsx>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }

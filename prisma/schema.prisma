@@ -169,14 +169,11 @@ model Graph {
 // 用户模型 - 用户认证和管理
 model User {
   id       String  @id @default(cuid())
-  email    String  @unique
-  password String  // bcrypt hashed password
+  email    String? @unique
+  password String  @map("password") // bcrypt hashed password
   username String  @unique
   name     String?
   avatar   String?
-
-  // 会话管理
-  lastLoginAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
