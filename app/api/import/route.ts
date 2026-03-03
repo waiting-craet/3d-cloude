@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 批量创建边 - 过滤无效边并使用事务
-    const validEdges = validatedData.edges.filter(edgeData => {
+    const validEdges = validatedData.edges.filter((edgeData: { source: string; target: string; label?: string }) => {
       const sourceId = nodeMap.get(edgeData.source)
       const targetId = nodeMap.get(edgeData.target)
       
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     })
 
     const createdEdges = validEdges.length > 0 ? await prisma.$transaction(
-      validEdges.map(edgeData => 
+      validEdges.map((edgeData: { source: string; target: string; label?: string }) => 
         prisma.edge.create({
           data: {
             label: edgeData.label || '',

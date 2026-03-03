@@ -401,14 +401,14 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       <Text
         ref={textRef}
         position={[0, getTextYPosition(shape, size), 0]}
-        fontSize={1.5}
+        fontSize={2.5}
         color={node.textColor || '#FFFFFF'}
         anchorX="center"
         anchorY="bottom"
-        outlineWidth={0.2}
+        outlineWidth={0.3}
         outlineColor="#000000"
         outlineOpacity={1}
-        maxWidth={10}
+        maxWidth={15}
         textAlign="center"
         depthOffset={-1}
       >

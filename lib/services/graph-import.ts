@@ -559,10 +559,14 @@ export function generateLayout(
   nodes: NodeData[],
   edges: EdgeData[]
 ): NodeData[] {
-  const hasCoordinates = nodes.some(n => n.x !== undefined && n.y !== undefined)
+  // 检查是否有有效的坐标（不是undefined且不全为0）
+  const hasValidCoordinates = nodes.some(n => 
+    n.x !== undefined && n.y !== undefined && 
+    (n.x !== 0 || n.y !== 0 || (n.z !== undefined && n.z !== 0))
+  )
   
-  if (hasCoordinates) {
-    // 如果已有坐标，只为缺失坐标的节点生成
+  if (hasValidCoordinates) {
+    // 如果已有有效坐标，只为缺失坐标的节点生成
     return nodes.map(node => {
       if (node.x === undefined || node.y === undefined) {
         return generateNodePosition(node)
@@ -590,7 +594,7 @@ function generateNodePosition(node: NodeData): NodeData {
 
 /**
  * 使用力导向算法生成布局
- * 优化版本：更好的初始分布、自适应参数、更快的收敛
+ * 优化版本：更好的3D空间分布、合理的节点间距
  * 统一生成3D坐标
  */
 function generateForceDirectedLayout(
@@ -619,31 +623,36 @@ function generateForceDirectedLayout(
     }
   })
   
-  // 自适应布局范围（根据节点数量）- 进一步增大间距
-  const baseRadius = Math.max(1000, Math.min(3000, nodeCount * 100))
+  // 自适应布局范围 - 大幅缩小，让节点更紧凑
+  const baseRadius = Math.max(30, Math.min(80, nodeCount * 5))
   
-  // 初始化位置（改进的分布算法）
-  const positions = nodes.map((_, i) => {
-    // 3D: 使用斐波那契球面分布（更均匀）
-    const phi = Math.acos(1 - 2 * (i + 0.5) / nodeCount)
-    const theta = Math.PI * (1 + Math.sqrt(5)) * i
+  // 初始化位置 - 使用真正的随机3D球体分布
+  const positions = nodes.map(() => {
+    // 使用均匀随机分布在球体内
+    const u = Math.random()
+    const v = Math.random()
+    const w = Math.random()
+    const theta = 2 * Math.PI * u // 方位角 [0, 2π]
+    const phi = Math.acos(2 * v - 1) // 极角 [0, π]
+    const r = baseRadius * Math.cbrt(w) // 立方根保证球体内均匀分布
+    
     return {
-      x: baseRadius * Math.sin(phi) * Math.cos(theta),
-      y: baseRadius * Math.sin(phi) * Math.sin(theta),
-      z: baseRadius * Math.cos(phi)
+      x: r * Math.sin(phi) * Math.cos(theta),
+      y: r * Math.sin(phi) * Math.sin(theta),
+      z: r * Math.cos(phi)
     }
   })
   
-  // 自适应参数 - 进一步增大理想距离和斥力
-  const k = Math.sqrt((baseRadius * baseRadius * 4) / nodeCount) * 3 // 理想距离增大3倍
-  const iterations = Math.min(200, Math.max(80, nodeCount * 4)) // 增加迭代次数
-  const initialTemp = baseRadius * 0.8 // 增大初始温度
+  // 自适应参数 - 调整力的平衡以获得更紧凑的布局
+  const k = Math.sqrt((baseRadius * baseRadius * 4) / nodeCount) * 0.8 // 减小理想距离
+  const iterations = Math.min(100, Math.max(40, nodeCount * 3)) // 增加迭代次数以获得更稳定的布局
+  const initialTemp = baseRadius * 0.5
   
   // 力导向迭代
   for (let iter = 0; iter < iterations; iter++) {
     const forces = positions.map(() => ({ x: 0, y: 0, z: 0 }))
     
-    // 计算斥力（所有节点对之间）- 使用Barnes-Hut近似加速
+    // 计算斥力（所有节点对之间）- 适度斥力保持间距
     for (let i = 0; i < nodeCount; i++) {
       for (let j = i + 1; j < nodeCount; j++) {
         const dx = positions[i].x - positions[j].x
@@ -652,8 +661,8 @@ function generateForceDirectedLayout(
         const distSq = dx * dx + dy * dy + dz * dz
         const distance = Math.sqrt(distSq) || 0.01
         
-        // 库仑斥力: F = k^2 / d - 增强斥力
-        const repulsion = (k * k * 2) / distance // 斥力增大2倍
+        // 库仑斥力: F = k^2 / d，适度斥力
+        const repulsion = (k * k * 2.0) / distance
         const fx = (dx / distance) * repulsion
         const fy = (dy / distance) * repulsion
         const fz = (dz / distance) * repulsion
@@ -667,7 +676,7 @@ function generateForceDirectedLayout(
       }
     }
     
-    // 计算引力（连接的节点之间）
+    // 计算引力（连接的节点之间）- 适度引力保持连接
     edges.forEach(edge => {
       const i = nodeIndex.get(edge.source)
       const j = nodeIndex.get(edge.target)
@@ -678,8 +687,8 @@ function generateForceDirectedLayout(
         const dz = positions[i].z - positions[j].z
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01
         
-        // 胡克引力: F = d^2 / k
-        const attraction = (distance * distance) / k
+        // 胡克引力: F = d^2 / k，适度引力
+        const attraction = (distance * distance) / (k * 2.0)
         const fx = (dx / distance) * attraction
         const fy = (dy / distance) * attraction
         const fz = (dz / distance) * attraction
@@ -694,7 +703,7 @@ function generateForceDirectedLayout(
     })
     
     // 应用力并限制移动距离（模拟退火）
-    const t = initialTemp * (1 - iter / iterations) // 线性降温
+    const t = initialTemp * (1 - iter / iterations)
     for (let i = 0; i < nodeCount; i++) {
       const forceMag = Math.sqrt(
         forces[i].x * forces[i].x +
@@ -715,7 +724,7 @@ function generateForceDirectedLayout(
   const centerY = positions.reduce((sum, p) => sum + p.y, 0) / nodeCount
   const centerZ = positions.reduce((sum, p) => sum + p.z, 0) / nodeCount
   
-  // 应用计算出的位置（中心化）
+  // 应用计算出的位置（中心化并四舍五入）
   return nodes.map((node, i) => ({
     ...node,
     x: Math.round((positions[i].x - centerX) * 100) / 100,
