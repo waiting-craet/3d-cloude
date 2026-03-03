@@ -1,5 +1,4 @@
 import * as XLSX from 'xlsx'
-import { CoordinateConverter } from '@/lib/coordinate-converter'
 import { DataValidator, validateAndCreateGraphData } from './data-validator'
 
 // 节点数据接口
@@ -255,16 +254,12 @@ export async function parseExcelFile(file: File): Promise<ParsedGraphData> {
     }
   }
   
-  // 使用坐标转换器确保所有节点都有3D坐标
-  const coordinateConverter = new CoordinateConverter()
-  // 确保所有节点都有必需的字段
-  const nodesWithRequiredFields = result.nodes.map((node, index) => ({
+  // 确保所有节点都有必需的字段（id）
+  // 不在这里生成坐标，让后续的 generateLayout 函数处理
+  result.nodes = result.nodes.map((node, index) => ({
     ...node,
-    id: node.id || node.label || `node-${index}`,
-    x: node.x ?? 0,
-    y: node.y ?? 0
+    id: node.id || node.label || `node-${index}`
   }))
-  result.nodes = coordinateConverter.convertNodeCoordinates(nodesWithRequiredFields)
   
   return result
 }
@@ -359,16 +354,12 @@ export async function parseCSVFile(file: File): Promise<ParsedGraphData> {
     result = parseCSVWithEdgeData(lines, headers)
   }
   
-  // 使用坐标转换器确保所有节点都有3D坐标
-  const coordinateConverter = new CoordinateConverter()
-  // 确保所有节点都有必需的字段
-  const nodesWithRequiredFields = result.nodes.map((node, index) => ({
+  // 确保所有节点都有必需的字段（id）
+  // 不在这里生成坐标，让后续的 generateLayout 函数处理
+  result.nodes = result.nodes.map((node, index) => ({
     ...node,
-    id: node.id || node.label || `node-${index}`,
-    x: node.x ?? 0,
-    y: node.y ?? 0
+    id: node.id || node.label || `node-${index}`
   }))
-  result.nodes = coordinateConverter.convertNodeCoordinates(nodesWithRequiredFields)
   
   return result
 }
@@ -498,16 +489,12 @@ export async function parseJSONFile(file: File): Promise<ParsedGraphData> {
     throw new Error('不支持的JSON格式')
   }
   
-  // 使用坐标转换器确保所有节点都有3D坐标
-  const coordinateConverter = new CoordinateConverter()
-  // 确保所有节点都有必需的字段
-  const nodesWithRequiredFields = result.nodes.map((node, index) => ({
+  // 确保所有节点都有必需的字段（id）
+  // 不在这里生成坐标，让后续的 generateLayout 函数处理
+  result.nodes = result.nodes.map((node, index) => ({
     ...node,
-    id: node.id || node.label || `node-${index}`,
-    x: node.x ?? 0,
-    y: node.y ?? 0
+    id: node.id || node.label || `node-${index}`
   }))
-  result.nodes = coordinateConverter.convertNodeCoordinates(nodesWithRequiredFields)
   
   return result
 }
