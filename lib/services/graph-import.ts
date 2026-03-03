@@ -632,8 +632,8 @@ function generateForceDirectedLayout(
     }
   })
   
-  // 自适应布局范围（根据节点数量）
-  const baseRadius = Math.max(200, Math.min(500, nodeCount * 10))
+  // 自适应布局范围（根据节点数量）- 进一步增大间距
+  const baseRadius = Math.max(1000, Math.min(3000, nodeCount * 100))
   
   // 初始化位置（改进的分布算法）
   const positions = nodes.map((_, i) => {
@@ -647,10 +647,10 @@ function generateForceDirectedLayout(
     }
   })
   
-  // 自适应参数
-  const k = Math.sqrt((baseRadius * baseRadius * 4) / nodeCount) // 理想距离
-  const iterations = Math.min(100, Math.max(30, nodeCount * 2)) // 自适应迭代次数
-  const initialTemp = baseRadius * 0.3 // 初始温度
+  // 自适应参数 - 进一步增大理想距离和斥力
+  const k = Math.sqrt((baseRadius * baseRadius * 4) / nodeCount) * 3 // 理想距离增大3倍
+  const iterations = Math.min(200, Math.max(80, nodeCount * 4)) // 增加迭代次数
+  const initialTemp = baseRadius * 0.8 // 增大初始温度
   
   // 力导向迭代
   for (let iter = 0; iter < iterations; iter++) {
@@ -665,8 +665,8 @@ function generateForceDirectedLayout(
         const distSq = dx * dx + dy * dy + dz * dz
         const distance = Math.sqrt(distSq) || 0.01
         
-        // 库仑斥力: F = k^2 / d
-        const repulsion = (k * k) / distance
+        // 库仑斥力: F = k^2 / d - 增强斥力
+        const repulsion = (k * k * 2) / distance // 斥力增大2倍
         const fx = (dx / distance) * repulsion
         const fy = (dy / distance) * repulsion
         const fz = (dz / distance) * repulsion
