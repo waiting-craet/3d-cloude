@@ -138,9 +138,12 @@ function generateLayout(nodes: NodeData[], edges: EdgeData[]): NodeData[]
 
 **实现要点**:
 - 支持三种文件格式：Excel (.xlsx, .xls)、CSV (.csv)、JSON (.json)
+- Excel格式采用三元组结构（实体1-关系-实体2），每行表示一个完整关系
+- JSON和CSV格式保持nodes/edges分离结构
 - 自动检测简化格式和旧格式，兼容两者
 - 解析时只提取必要字段，忽略未知字段
 - 对于缺失的可选字段，使用默认值
+- 从三元组格式自动提取节点和边信息
 
 
 
@@ -385,10 +388,14 @@ source,target,label
 示例节点1,示例节点2,关系名称
 ```
 
-3. **Excel模板结构**
-- Sheet 1: "Nodes" - 包含label, description, image, video列
-- Sheet 2: "Edges" - 包含source, target, label列
-- Sheet 3: "使用说明" - 详细的使用指南
+3. **Excel模板结构**（三元组格式）
+- Sheet 1: "关系数据" - 每行表示一个完整的关系
+  - 列A: 实体1（起始节点名称）
+  - 列B: 内容1（起始节点描述，可选）
+  - 列C: 关系（边的标签，可选）
+  - 列D: 实体2（目标节点名称）
+  - 列E: 内容2（目标节点描述，可选）
+- Sheet 2: "使用说明" - 详细的使用指南和示例
 
 
 

@@ -493,70 +493,83 @@ export default function TextPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#fafafa',
+      background: 'linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 30%, #80DEEA 70%, #4DD0E1 100%)',
       padding: '0'
     }}>
-      {/* 顶部导航栏 */}
+      {/* 顶部导航栏 - 夏威夷海滩风格 */}
       <nav style={{
-        padding: '16px 40px',
+        padding: '20px 40px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        background: 'white',
-        borderBottom: '1px solid #e5e5e5'
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(0, 188, 212, 0.1)',
+        boxShadow: '0 2px 20px rgba(0, 188, 212, 0.08)'
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          fontSize: '20px',
+          gap: '12px',
+          fontSize: '22px',
           fontWeight: 'bold',
-          color: '#00bfa5'
+          background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
         }}>
           <div style={{
-            width: '32px',
-            height: '32px',
-            background: '#00bfa5',
-            borderRadius: '6px',
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+            borderRadius: '12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            fontSize: '18px'
+            fontSize: '20px',
+            boxShadow: '0 4px 12px rgba(0, 188, 212, 0.3)'
           }}>
-            📊
+            🌊
           </div>
-          知识图谱
+          知识图谱生成器
         </div>
       </nav>
 
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '50px 30px 100px 30px'
+        padding: '60px 30px 100px 30px'
       }}>
-        {/* 标题 */}
-        <h1 style={{
-          fontSize: '38px',
-          fontWeight: '700',
+        {/* 标题 - 夏威夷风格 */}
+        <div style={{
           textAlign: 'center',
-          marginBottom: '16px',
-          color: '#2c2c2c',
-          letterSpacing: '-0.3px'
+          marginBottom: '60px'
         }}>
-          AI知识图谱生成器
-        </h1>
-        <p style={{
-          textAlign: 'center',
-          color: '#666',
-          fontSize: '16px',
-          marginBottom: '50px',
-          maxWidth: '600px',
-          margin: '0 auto 50px auto',
-          lineHeight: '1.6'
-        }}>
-          导入数据或输入文本，AI 将自动提取实体关系，生成可视化知识图谱
-        </p>
+          <h1 style={{
+            fontSize: '48px',
+            fontWeight: '800',
+            marginBottom: '20px',
+            background: 'linear-gradient(135deg, #00BCD4 0%, #FF6F61 50%, #FFD54F 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            letterSpacing: '-1px',
+            textShadow: '0 2px 20px rgba(0, 188, 212, 0.1)'
+          }}>
+            AI知识图谱生成器
+          </h1>
+          <p style={{
+            color: '#00838F',
+            fontSize: '18px',
+            maxWidth: '700px',
+            margin: '0 auto',
+            lineHeight: '1.8',
+            fontWeight: '500'
+          }}>
+            🏝️ 导入数据或输入文本，AI 将自动提取实体关系，生成可视化知识图谱
+          </p>
+        </div>
 
         {/* 主内容区域 */}
         <div style={{
@@ -564,21 +577,28 @@ export default function TextPage() {
           gridTemplateColumns: '1fr',
           gap: '24px',
         }}>
-          {/* 项目和图谱选择区域 */}
+          {/* 项目和图谱选择区域 - 夏威夷风格 */}
           <div style={{
-            background: 'white',
-            borderRadius: '14px',
-            padding: '30px',
-            border: '1px solid #ebebeb',
-            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '24px',
+            padding: '36px',
+            border: '1px solid rgba(0, 188, 212, 0.15)',
+            boxShadow: '0 8px 32px rgba(0, 188, 212, 0.12)'
           }}>
             <h2 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#2c2c2c',
-              marginBottom: '24px'
+              fontSize: '20px',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
             }}>
-              项目与图谱
+              <span>📁</span> 项目与图谱
             </h2>
 
             <div style={{
@@ -590,16 +610,16 @@ export default function TextPage() {
               <div>
                 <label style={{
                   display: 'block',
-                  color: '#2c2c2c',
-                  fontSize: '14px',
-                  fontWeight: '600',
+                  color: '#00838F',
+                  fontSize: '15px',
+                  fontWeight: '700',
                   marginBottom: '12px',
                 }}>
                   选择项目
                 </label>
                 <div style={{
                   display: 'flex',
-                  gap: '10px',
+                  gap: '12px',
                 }}>
                   <select
                     value={selectedProject}
@@ -610,14 +630,16 @@ export default function TextPage() {
                     disabled={isLoadingProjects}
                     style={{
                       flex: 1,
-                      padding: '12px 16px',
+                      padding: '14px 18px',
                       background: 'white',
-                      border: '1px solid #e5e5e5',
-                      borderRadius: '8px',
-                      color: '#2c2c2c',
-                      fontSize: '14px',
+                      border: '2px solid #B2EBF2',
+                      borderRadius: '12px',
+                      color: '#00838F',
+                      fontSize: '15px',
+                      fontWeight: '500',
                       cursor: isLoadingProjects ? 'wait' : 'pointer',
-                      transition: 'all 0.2s ease',
+                      transition: 'all 0.3s ease',
+                      outline: 'none'
                     }}>
                     <option value="">
                       {isLoadingProjects ? '加载中...' : '请选择项目'}
@@ -631,22 +653,25 @@ export default function TextPage() {
                   <button
                     onClick={() => setShowNewProjectModal(true)}
                     style={{
-                      padding: '12px 20px',
-                      background: '#00bfa5',
+                      padding: '14px 24px',
+                      background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '12px',
                       color: 'white',
-                      fontSize: '14px',
-                      fontWeight: '600',
+                      fontSize: '15px',
+                      fontWeight: '700',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease',
+                      transition: 'all 0.3s ease',
                       whiteSpace: 'nowrap',
+                      boxShadow: '0 4px 12px rgba(0, 188, 212, 0.3)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#00d4b8'
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 188, 212, 0.4)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#00bfa5'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 188, 212, 0.3)'
                     }}>
                     + 新建
                   </button>
@@ -657,16 +682,16 @@ export default function TextPage() {
               <div>
                 <label style={{
                   display: 'block',
-                  color: '#2c2c2c',
-                  fontSize: '14px',
-                  fontWeight: '600',
+                  color: '#00838F',
+                  fontSize: '15px',
+                  fontWeight: '700',
                   marginBottom: '12px',
                 }}>
                   选择图谱
                 </label>
                 <div style={{
                   display: 'flex',
-                  gap: '10px',
+                  gap: '12px',
                 }}>
                   <select
                     value={selectedGraph}
@@ -674,14 +699,16 @@ export default function TextPage() {
                     disabled={!selectedProject || isLoadingGraphs}
                     style={{
                       flex: 1,
-                      padding: '12px 16px',
-                      background: (selectedProject && !isLoadingGraphs) ? 'white' : '#f5f5f5',
-                      border: '1px solid #e5e5e5',
-                      borderRadius: '8px',
-                      color: (selectedProject && !isLoadingGraphs) ? '#2c2c2c' : '#999',
-                      fontSize: '14px',
+                      padding: '14px 18px',
+                      background: (selectedProject && !isLoadingGraphs) ? 'white' : '#F0F9FA',
+                      border: '2px solid #B2EBF2',
+                      borderRadius: '12px',
+                      color: (selectedProject && !isLoadingGraphs) ? '#00838F' : '#80DEEA',
+                      fontSize: '15px',
+                      fontWeight: '500',
                       cursor: (selectedProject && !isLoadingGraphs) ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.2s ease',
+                      transition: 'all 0.3s ease',
+                      outline: 'none'
                     }}>
                     <option value="">
                       {isLoadingGraphs ? '加载中...' : '请选择图谱'}
@@ -696,26 +723,29 @@ export default function TextPage() {
                     onClick={() => setShowNewGraphModal(true)}
                     disabled={!selectedProject}
                     style={{
-                      padding: '12px 20px',
-                      background: selectedProject ? '#00bfa5' : '#e0e0e0',
+                      padding: '14px 24px',
+                      background: selectedProject ? 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)' : '#E0E0E0',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '12px',
                       color: 'white',
-                      fontSize: '14px',
-                      fontWeight: '600',
+                      fontSize: '15px',
+                      fontWeight: '700',
                       cursor: selectedProject ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.2s ease',
+                      transition: 'all 0.3s ease',
                       whiteSpace: 'nowrap',
-                      opacity: selectedProject ? 1 : 0.6,
+                      opacity: selectedProject ? 1 : 0.5,
+                      boxShadow: selectedProject ? '0 4px 12px rgba(0, 188, 212, 0.3)' : 'none'
                     }}
                     onMouseEnter={(e) => {
                       if (selectedProject) {
-                        e.currentTarget.style.background = '#00d4b8'
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 188, 212, 0.4)'
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (selectedProject) {
-                        e.currentTarget.style.background = '#00bfa5'
+                        e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 188, 212, 0.3)'
                       }
                     }}>
                     + 新建
@@ -724,70 +754,80 @@ export default function TextPage() {
               </div>
             </div>
 
-            {/* 提示信息 */}
+            {/* 提示信息 - 夏威夷风格 */}
             {!selectedProject && (
               <div style={{
-                marginTop: '16px',
-                padding: '12px 16px',
-                background: 'rgba(251, 191, 36, 0.1)',
-                border: '1px solid rgba(251, 191, 36, 0.3)',
-                borderRadius: '10px',
-                color: '#d97706',
-                fontSize: '13px',
+                marginTop: '20px',
+                padding: '16px 20px',
+                background: 'linear-gradient(135deg, rgba(255, 213, 79, 0.15) 0%, rgba(255, 193, 7, 0.1) 100%)',
+                border: '2px solid rgba(255, 193, 7, 0.3)',
+                borderRadius: '16px',
+                color: '#F57C00',
+                fontSize: '14px',
+                fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '12px',
               }}>
-                <span>⚠️</span>
+                <span style={{ fontSize: '20px' }}>🌺</span>
                 <span>请先选择或创建一个项目</span>
               </div>
             )}
           </div>
 
-          {/* 输入区域 */}
+          {/* 输入区域 - 夏威夷风格 */}
           <div style={{
-            background: 'white',
-            borderRadius: '14px',
-            padding: '30px',
-            border: '1px solid #ebebeb',
-            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '24px',
+            padding: '36px',
+            border: '1px solid rgba(0, 188, 212, 0.15)',
+            boxShadow: '0 8px 32px rgba(0, 188, 212, 0.12)'
           }}>
             <h2 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#2c2c2c',
-              marginBottom: '24px'
+              fontSize: '20px',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
             }}>
-              数据输入
+              <span>📝</span> 数据输入
             </h2>
 
-            {/* 文件上传按钮 */}
+            {/* 文件上传按钮 - 夏威夷风格 */}
             <div style={{
-              marginBottom: '20px',
+              marginBottom: '24px',
             }}>
               <label style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '10px',
-                padding: '12px 24px',
+                gap: '12px',
+                padding: '16px 32px',
                 background: 'white',
-                border: '2px dashed #00bfa5',
-                borderRadius: '12px',
-                color: '#00bfa5',
+                border: '3px dashed #4DD0E1',
+                borderRadius: '16px',
+                color: '#00ACC1',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: '14px',
-                fontWeight: '600',
+                transition: 'all 0.3s ease',
+                fontSize: '15px',
+                fontWeight: '700',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 191, 165, 0.05)'
-                e.currentTarget.style.borderColor = '#00d4b8'
+                e.currentTarget.style.background = 'rgba(77, 208, 225, 0.08)'
+                e.currentTarget.style.borderColor = '#00BCD4'
+                e.currentTarget.style.transform = 'translateY(-2px)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'white'
-                e.currentTarget.style.borderColor = '#00bfa5'
+                e.currentTarget.style.borderColor = '#4DD0E1'
+                e.currentTarget.style.transform = 'translateY(0)'
               }}>
-                <span style={{ fontSize: '18px' }}>📁</span>
+                <span style={{ fontSize: '24px' }}>🏖️</span>
                 导入文本文件
                 <input
                   type="file"
@@ -797,9 +837,10 @@ export default function TextPage() {
                 />
               </label>
               <div style={{
-                marginTop: '8px',
-                color: '#666',
-                fontSize: '12px',
+                marginTop: '10px',
+                color: '#00838F',
+                fontSize: '13px',
+                fontWeight: '500'
               }}>
                 支持格式：TXT, MD, Markdown
               </div>
@@ -972,21 +1013,26 @@ export default function TextPage() {
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="输入文本内容，AI 将自动提取实体和关系..."
+              disabled={!!uploadedFile}
+              placeholder={
+                uploadedFile 
+                  ? "已导入文件，如需输入文本请先移除文件" 
+                  : "输入文本内容，AI 将自动提取实体和关系..."
+              }
               style={{
                 width: '100%',
                 minHeight: '250px',
                 maxHeight: '500px',
                 padding: '16px',
-                background: 'white',
+                background: uploadedFile ? '#f5f5f5' : 'white',
                 border: '1px solid #e5e5e5',
                 borderRadius: '8px',
-                color: '#2c2c2c',
+                color: uploadedFile ? '#999' : '#2c2c2c',
                 fontSize: '14px',
                 lineHeight: '1.7',
                 resize: 'vertical',
                 fontFamily: 'inherit',
-                cursor: 'text',
+                cursor: uploadedFile ? 'not-allowed' : 'text',
                 transition: 'all 0.2s ease',
               }}
             />

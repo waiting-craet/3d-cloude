@@ -8,33 +8,33 @@
 
 ## 任务列表
 
-- [ ] 1. 实现CoordinateGenerator服务
-  - [ ] 1.1 创建CoordinateGenerator类和接口
+- [x] 1. 实现CoordinateGenerator服务
+  - [x] 1.1 创建CoordinateGenerator类和接口
     - 创建 `lib/services/coordinate-generator.ts` 文件
     - 定义 `CoordinateGeneratorConfig`、`CoordinateGenerationResult` 接口
     - 实现 `CoordinateGenerator` 类的基本结构
     - _需求: 2.1, 2.2, 2.5_
   
-  - [ ] 1.2 实现力导向布局算法
+  - [x] 1.2 实现力导向布局算法
     - 实现 `applyForceLayout` 方法，使用物理模拟算法
     - 实现排斥力计算（库仑力）
     - 实现吸引力计算（胡克定律）
     - 实现迭代优化和能量最小化
     - _需求: 2.1, 2.4_
   
-  - [ ] 1.3 实现随机布局后备算法
+  - [x] 1.3 实现随机布局后备算法
     - 实现 `applyRandomLayout` 方法
     - 在球形空间内随机分布节点
     - 确保最小节点间距
     - _需求: 9.5_
   
-  - [ ] 1.4 实现坐标验证和优化功能
+  - [x] 1.4 实现坐标验证和优化功能
     - 实现 `validateCoordinateRange` 方法，验证坐标在-10000到10000范围内
     - 实现 `enforceMinimumDistance` 方法，确保节点间距
     - 实现 `centerLayout` 方法，居中布局
     - _需求: 2.2, 2.3_
   
-  - [ ] 1.5 实现主生成方法和性能优化
+  - [x] 1.5 实现主生成方法和性能优化
     - 实现 `generateCoordinates` 主方法
     - 根据节点数量动态调整参数
     - 实现超时保护机制
@@ -87,15 +87,15 @@
     - **属性10: 可选字段容忍** - 验证可选字段可以为空
     - **验证需求: 6.5**
 
-- [ ] 3. 创建TemplateGenerator服务
-  - [ ] 3.1 创建TemplateGenerator类和接口
+- [x] 3. 创建TemplateGenerator服务
+  - [x] 3.1 创建TemplateGenerator类和接口
     - 创建 `lib/services/template-generator.ts` 文件
     - 定义 `TemplateConfig` 接口
     - 定义 `SimplifiedNodeData` 和 `SimplifiedEdgeData` 接口
     - 实现 `TemplateGenerator` 类的基本结构
     - _需求: 1.1, 1.2, 1.3, 1.4_
   
-  - [ ] 3.2 实现JSON模板生成
+  - [x] 3.2 实现JSON模板生成
     - 实现 `generateJSONTemplate` 方法
     - 生成包含使用说明的JSON结构
     - 只包含必要字段（label, description, image, video）
@@ -103,21 +103,22 @@
     - 包含5个示例节点和5条示例边
     - _需求: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 4.1, 4.2, 4.3, 4.4, 4.5_
   
-  - [ ] 3.3 实现CSV模板生成
+  - [x] 3.3 实现CSV模板生成
     - 实现 `generateCSVTemplate` 方法
     - 生成节点和边的CSV格式
     - 包含使用说明注释
     - 包含示例数据
     - _需求: 1.1, 1.2, 1.3, 1.4, 4.1, 4.2, 4.3, 4.4_
   
-  - [ ] 3.4 实现Excel模板生成
+  - [x] 3.4 实现Excel模板生成（三元组格式）
     - 实现 `generateExcelTemplate` 方法
-    - 创建Nodes和Edges工作表
+    - 创建"关系数据"工作表，使用三元组格式（实体1-内容1-关系-实体2-内容2）
     - 创建使用说明工作表
     - 包含示例数据和字段说明
+    - 列标题：实体、内容、关系、实体、内容
     - _需求: 1.1, 1.2, 1.3, 1.4, 4.1, 4.2, 4.3, 4.4_
   
-  - [ ] 3.5 实现示例数据生成
+  - [x] 3.5 实现示例数据生成
     - 实现 `generateExampleNodes` 方法
     - 实现 `generateExampleEdges` 方法
     - 生成有意义的示例数据
@@ -137,10 +138,13 @@
     - 确保坐标字段为可选
     - _需求: 3.1, 3.2, 3.3_
   
-  - [ ] 4.2 更新Excel解析器
+  - [ ] 4.2 更新Excel解析器（支持三元组格式）
     - 更新 `parseExcelFile` 和 `parseExcelWithSeparateSheets` 方法
-    - 解析image和video字段
+    - 支持三元组格式解析（实体1-内容1-关系-实体2-内容2）
+    - 从三元组数据自动提取节点列表和边列表
+    - 解析image和video字段（如果存在）
     - 支持坐标字段可选
+    - 向后兼容旧的Nodes/Edges分离格式
     - _需求: 8.2_
   
   - [ ] 4.3 更新CSV解析器
@@ -197,15 +201,15 @@
     - 测试进度指示功能
     - 测试日志记录
 
-- [ ] 6. 更新模板API
-  - [ ] 6.1 创建或更新模板API端点
+- [x] 6. 更新模板API
+  - [x] 6.1 创建或更新模板API端点
     - 更新 `app/api/templates/route.ts` 文件
     - 集成TemplateGenerator服务
     - 支持format参数（json, csv, excel）
     - 设置正确的Content-Type和文件名
     - _需求: 4.3_
   
-  - [ ] 6.2 实现多格式模板下载
+  - [x] 6.2 实现多格式模板下载
     - 实现JSON格式下载
     - 实现CSV格式下载
     - 实现Excel格式下载
@@ -242,20 +246,20 @@
     - 测试完整格式导出
     - 测试导出数据的正确性
 
-- [ ] 8. 更新数据库模型
-  - [ ] 8.1 添加媒体字段到Prisma Schema
+- [x] 8. 更新数据库模型
+  - [x] 8.1 添加媒体字段到Prisma Schema
     - 更新 `prisma/schema.prisma` 文件
     - 在Node模型中添加image和video字段（可选）
     - 确保字段类型为String?
     - _需求: 3.1, 3.2_
   
-  - [ ] 8.2 创建数据库迁移
+  - [x] 8.2 创建数据库迁移
     - 运行 `npx prisma migrate dev` 创建迁移
     - 命名迁移为 "add_media_fields_to_node"
     - 验证迁移文件正确
     - _需求: 3.1, 3.2_
   
-  - [ ] 8.3 更新数据库查询和保存逻辑
+  - [x] 8.3 更新数据库查询和保存逻辑
     - 更新节点创建和更新的Prisma查询
     - 包含image和video字段
     - 确保字段正确保存和读取
@@ -296,8 +300,8 @@
     - 测试成功反馈显示
     - 测试用户交互流程
 
-- [ ] 10. 更新模板文件
-  - [ ] 10.1 更新JSON模板文件
+- [x] 10. 更新模板文件
+  - [x] 10.1 更新JSON模板文件
     - 更新 `public/templates/3d-graph-template.json` 文件
     - 移除所有坐标字段（x, y, z）
     - 添加image和video字段示例
@@ -305,7 +309,7 @@
     - 包含至少3个节点和3条边的示例
     - _需求: 4.1, 4.2, 4.3, 4.4, 4.5_
   
-  - [ ] 10.2 更新README文档
+  - [x] 10.2 更新README文档
     - 更新 `public/templates/README.md` 文件
     - 说明简化模板的优势
     - 列出必填和可选字段
@@ -313,7 +317,7 @@
     - 提供媒体字段使用示例
     - _需求: 4.3, 7.1, 7.2, 7.4_
   
-  - [ ] 10.3 更新QUICK-START文档
+  - [x] 10.3 更新QUICK-START文档
     - 更新 `public/templates/QUICK-START.md` 文件
     - 提供简化模板的快速入门指南
     - 包含完整的示例数据
