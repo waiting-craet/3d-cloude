@@ -360,7 +360,7 @@ export default function TextPage() {
     }
   }
 
-  // AI预览保存处理函数
+  // AI预览保存处理函数 - Enhanced for navigation (Task 2.2)
   const handleAISave = async (editedData: PreviewData, mergeDecisions: MergeDecision[]) => {
     try {
       // 调用保存API
@@ -385,10 +385,6 @@ export default function TextPage() {
       if (result.success) {
         console.log('Graph saved successfully:', result.data)
         
-        // 关闭模态框
-        setShowAIPreview(false)
-        setAiGeneratedData(null)
-        
         // 刷新图谱列表
         if (selectedProject) {
           const graphsResponse = await fetch(`/api/projects/${selectedProject}/graphs`)
@@ -398,15 +394,25 @@ export default function TextPage() {
           }
         }
         
-        // 显示成功消息（可选）
-        alert(`图谱保存成功！\n创建节点: ${result.data.nodesCreated}\n更新节点: ${result.data.nodesUpdated}\n创建边: ${result.data.edgesCreated}`)
+        // Return success with graphId for navigation (Task 2.2)
+        return {
+          success: true,
+          graphId: result.data.graphId,
+          graphName: result.data.graphName
+        }
       } else {
-        // 显示错误消息
-        alert(`保存失败: ${result.error}`)
+        // Return error without navigation (Requirement 3.2)
+        return {
+          success: false,
+          error: result.error || '保存失败，请重试'
+        }
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('保存失败，请重试')
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '保存失败，请重试'
+      }
     }
   }
 
@@ -421,6 +427,7 @@ export default function TextPage() {
         },
         body: JSON.stringify({
           name: newProjectName.trim(),
+          graphName: '默认图谱',
         }),
       })
 
@@ -1879,6 +1886,7 @@ export default function TextPage() {
           data={aiGeneratedData}
           onSave={handleAISave}
           visualizationType={outputFormat}
+          enableAutoNavigation={true}
         />
       )}
     </main>
