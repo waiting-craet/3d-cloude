@@ -34,47 +34,6 @@ export default function FloatingAddButton() {
     }
   }, [])
 
-  // 只在管理员登录时显示按钮
-  if (!isAdmin) return null
-
-  return (
-    <div style={{
-      position: 'fixed',
-      bottom: '30px',
-      right: '30px',
-      zIndex: 999,
-    }}>
-      {/* 二维按钮 (原加号按钮) */}
-      <button
-        onClick={() => router.push('/workflow')}
-        style={{
-          width: '60px',
-          height: '60px',
-          borderRadius: '8px',
-          background: 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)',
-          border: 'none',
-          color: 'white',
-          fontSize: '16px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          boxShadow: '0 4px 20px rgba(74, 158, 255, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.3s ease',
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1)'
-          e.currentTarget.style.boxShadow = '0 6px 30px rgba(74, 158, 255, 0.6)'
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.transform = 'scale(1)'
-          e.currentTarget.style.boxShadow = '0 4px 20px rgba(74, 158, 255, 0.4)'
-        }}
-        title="创建新项目"
-      >
-        二维
-      </button>
-    </div>
-  )
+  // 二维按钮已移动到TopNavbar，此组件暂时不显示任何内容
+  return null
 }
