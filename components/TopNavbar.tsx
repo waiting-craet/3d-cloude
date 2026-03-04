@@ -206,6 +206,11 @@ export default function TopNavbar() {
   }
 
   const handleSwitchGraph = (projectId: string, graphId: string) => {
+    // 更新 URL 参数，避免与 TopNavbar 的 useEffect 冲突
+    const url = new URL(window.location.href)
+    url.searchParams.set('graphId', graphId)
+    window.history.replaceState({}, '', url.toString())
+    
     switchGraph(projectId, graphId)
     setShowProjectMenu(false)
     setHoveredProjectId(null)

@@ -11,6 +11,7 @@ export interface Project {
   description: string | null
   nodeCount: number
   edgeCount: number
+  graphCount: number  // 新增图谱数量字段
   createdAt: Date
   updatedAt: Date
 }
@@ -62,12 +63,8 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
         </h3>
         <div className={styles.stats}>
           <span className={styles.statItem}>
-            <span className={styles.statIcon}>🔵</span>
-            {project.nodeCount} 节点
-          </span>
-          <span className={styles.statItem}>
-            <span className={styles.statIcon}>🔗</span>
-            {project.edgeCount} 边
+            <span className={styles.statIcon}>🗺️</span>
+            包含 {project.graphCount} 个图谱
           </span>
         </div>
       </div>

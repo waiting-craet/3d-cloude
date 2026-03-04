@@ -105,12 +105,15 @@ export default function ProjectSearch({ onSearchResults, onClear }: ProjectSearc
           value={searchTerm}
           onChange={handleInputChange}
           className={styles.searchInput}
+          autoComplete="off"
+          spellCheck="false"
         />
         {searchTerm && (
           <button
             onClick={handleClear}
             className={styles.clearButton}
             aria-label="清除搜索"
+            type="button"
           >
             ✕
           </button>

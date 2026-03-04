@@ -55,8 +55,7 @@ export default function ProjectList({
         project && 
         project.id && 
         project.name && 
-        typeof project.nodeCount === 'number' && 
-        typeof project.edgeCount === 'number'
+        typeof project.graphCount === 'number'
       )
       
       setAllProjects(validProjects)

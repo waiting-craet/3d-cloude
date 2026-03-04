@@ -1,34 +1,54 @@
 /* 搜索容器 */
 .searchContainer {
   width: 100%;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: center;
 }
 
 /* 搜索输入包装器 */
 .searchInputWrapper {
   position: relative;
-  max-width: 500px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 600px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.searchInputWrapper:hover {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.12);
+}
+
+.searchInputWrapper:focus-within {
+  box-shadow: 0 4px 30px rgba(0, 191, 165, 0.15);
+  transform: translateY(-2px);
 }
 
 /* 搜索图标 */
 .searchIcon {
   position: absolute;
-  left: 16px;
+  left: 20px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 16px;
+  font-size: 18px;
   color: #999;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.searchInputWrapper:focus-within .searchIcon {
+  color: #00bfa5;
 }
 
 /* 搜索加载动画 */
 .searchSpinner {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border: 2px solid #f0f0f0;
   border-top: 2px solid #00bfa5;
   border-radius: 50%;
@@ -43,55 +63,105 @@
 /* 搜索输入框 */
 .searchInput {
   width: 100%;
-  padding: 14px 50px 14px 50px;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
+  padding: 18px 60px 18px 60px;
+  border: none;
+  border-radius: 16px;
   font-size: 16px;
-  background: white;
+  font-weight: 400;
+  background: transparent;
   transition: all 0.2s ease;
   outline: none;
-}
-
-.searchInput:focus {
-  border-color: #00bfa5;
-  box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.1);
+  color: #333;
+  line-height: 1.5;
 }
 
 .searchInput::placeholder {
-  color: #999;
+  color: #aaa;
+  font-weight: 400;
+}
+
+.searchInput:focus::placeholder {
+  color: #ccc;
 }
 
 /* 清除按钮 */
 .clearButton {
   position: absolute;
-  right: 16px;
+  right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
+  background: #f5f5f5;
   border: none;
-  font-size: 18px;
-  color: #999;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
+  color: #666;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0.7;
 }
 
 .clearButton:hover {
-  background: #f5f5f5;
-  color: #666;
+  background: #e0e0e0;
+  color: #333;
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.clearButton:active {
+  transform: translateY(-50%) scale(0.95);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .searchContainer {
+    margin-bottom: 32px;
+    padding: 0 16px;
+  }
+  
   .searchInputWrapper {
     max-width: 100%;
+    border-radius: 12px;
   }
   
   .searchInput {
+    padding: 16px 50px 16px 50px;
     font-size: 16px; /* 防止iOS缩放 */
+    border-radius: 12px;
+  }
+  
+  .searchIcon {
+    left: 16px;
+    font-size: 16px;
+  }
+  
+  .clearButton {
+    right: 16px;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .searchInputWrapper {
+    border-radius: 10px;
+  }
+  
+  .searchInput {
+    padding: 14px 45px 14px 45px;
+    border-radius: 10px;
+  }
+  
+  .searchIcon {
+    left: 14px;
+  }
+  
+  .clearButton {
+    right: 14px;
   }
 }

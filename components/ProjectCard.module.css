@@ -70,7 +70,7 @@
 /* 统计信息 */
 .stats {
   display: flex;
-  gap: 12px;
+  justify-content: center;
   align-items: center;
 }
 
@@ -83,7 +83,7 @@
 }
 
 .statIcon {
-  font-size: 8px;
+  font-size: 12px;
 }
 
 /* 响应式设计 */
