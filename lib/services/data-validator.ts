@@ -167,43 +167,45 @@ export class DataValidator {
       }
 
       // 验证3D坐标完整性（属性1）
-      if (node.x === undefined || node.x === null || isNaN(node.x)) {
+      // 注意：坐标是可选的，如果缺失会在后续的 generateLayout 中自动生成
+      // 只有当坐标存在但无效时才报错
+      if (node.x !== undefined && node.x !== null && isNaN(node.x)) {
         errors.push({
-          type: 'COORDINATE_MISSING',
-          message: `节点 ${nodeId} 缺少有效的x坐标`,
-          details: `节点的x坐标值为: ${node.x}`,
+          type: 'INVALID_COORDINATE_VALUE',
+          message: `节点 ${nodeId} 的x坐标值无效`,
+          details: `节点的x坐标值为: ${node.x}，必须是有效的数字`,
           suggestions: [
-            '确保所有节点都包含有效的x坐标',
             '坐标值必须是数字类型',
-            '参考3D模板文件的坐标格式'
+            '检查数据文件中的坐标格式',
+            '如果不提供坐标，系统会自动生成'
           ],
           nodeId
         })
       }
 
-      if (node.y === undefined || node.y === null || isNaN(node.y)) {
+      if (node.y !== undefined && node.y !== null && isNaN(node.y)) {
         errors.push({
-          type: 'COORDINATE_MISSING',
-          message: `节点 ${nodeId} 缺少有效的y坐标`,
-          details: `节点的y坐标值为: ${node.y}`,
+          type: 'INVALID_COORDINATE_VALUE',
+          message: `节点 ${nodeId} 的y坐标值无效`,
+          details: `节点的y坐标值为: ${node.y}，必须是有效的数字`,
           suggestions: [
-            '确保所有节点都包含有效的y坐标',
             '坐标值必须是数字类型',
-            '参考3D模板文件的坐标格式'
+            '检查数据文件中的坐标格式',
+            '如果不提供坐标，系统会自动生成'
           ],
           nodeId
         })
       }
 
-      if (node.z === undefined || node.z === null || isNaN(node.z)) {
+      if (node.z !== undefined && node.z !== null && isNaN(node.z)) {
         errors.push({
-          type: 'COORDINATE_MISSING',
-          message: `节点 ${nodeId} 缺少有效的z坐标`,
-          details: `节点的z坐标值为: ${node.z}`,
+          type: 'INVALID_COORDINATE_VALUE',
+          message: `节点 ${nodeId} 的z坐标值无效`,
+          details: `节点的z坐标值为: ${node.z}，必须是有效的数字`,
           suggestions: [
-            '确保所有节点都包含有效的z坐标',
-            '对于2D数据，z坐标可以设置为0',
-            '参考3D模板文件的坐标格式'
+            '坐标值必须是数字类型',
+            '检查数据文件中的坐标格式',
+            '如果不提供坐标，系统会自动生成'
           ],
           nodeId
         })
@@ -550,15 +552,16 @@ export class DataValidator {
   /**
    * 创建验证后的图谱数据
    * 确保所有数据符合3D格式要求
+   * 注意：不设置默认坐标，让 generateLayout 函数处理坐标生成
    */
   static createValidatedGraphData(data: ParsedGraphData): ValidatedGraphData {
     const validatedNodes: ValidatedNode[] = data.nodes.map((node, index) => ({
       id: node.id || node.label || `node-${index}`,
       label: node.label || `节点-${index}`,
       description: node.description || '',
-      x: node.x || 0,
-      y: node.y || 0,
-      z: node.z || 0,
+      x: node.x !== undefined ? node.x : 0,  // 保留原有坐标，如果没有则设为0（会被 generateLayout 覆盖）
+      y: node.y !== undefined ? node.y : 0,
+      z: node.z !== undefined ? node.z : 0,
       color: node.color,
       size: node.size,
       shape: node.shape

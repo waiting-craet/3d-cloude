@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import { del, list } from '@vercel/blob'
 
 // 使用 Node.js Runtime
@@ -125,6 +125,8 @@ export async function DELETE(
   try {
     const { id } = params
     
+    console.log(`[DELETE] 开始删除图谱 ID: ${id}`)
+    
     // 查询图谱及其节点（获取图片 URL）
     const graph = await prisma.graph.findUnique({
       where: { id },
@@ -144,11 +146,14 @@ export async function DELETE(
     })
     
     if (!graph) {
+      console.log(`[DELETE] 图谱不存在 ID: ${id}`)
       return NextResponse.json(
         { error: '图谱不存在' },
         { status: 404 }
       )
     }
+    
+    console.log(`[DELETE] 找到图谱，节点数: ${graph.nodes.length}, 边数: ${graph.edges.length}`)
     
     // 收集所有需要删除的图片 URL
     const imageUrls: string[] = []
@@ -158,20 +163,26 @@ export async function DELETE(
       if (node.coverUrl) imageUrls.push(node.coverUrl)
     })
     
+    console.log(`[DELETE] 收集到 ${imageUrls.length} 个图片URL`)
+    
     // 删除图谱（级联删除节点和边）
+    console.log(`[DELETE] 开始从数据库删除图谱...`)
     await prisma.graph.delete({
       where: { id },
     })
+    console.log(`[DELETE] 数据库删除成功`)
     
     // 删除 Blob 存储中的文件
     let deletedFileCount = 0
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
+        console.log(`[DELETE] 开始删除 Blob 文件...`)
         // 尝试批量删除图谱文件夹
         const blobs = await list({ prefix: `graphs/${id}/` })
         if (blobs.blobs.length > 0) {
           await Promise.all(blobs.blobs.map(blob => del(blob.url)))
           deletedFileCount = blobs.blobs.length
+          console.log(`[DELETE] 删除了 ${deletedFileCount} 个 Blob 文件`)
         }
         
         // 删除单独的图片文件
@@ -186,8 +197,11 @@ export async function DELETE(
         console.warn('删除 Blob 文件时出错:', error)
         // 不阻塞主流程，继续返回成功
       }
+    } else {
+      console.log(`[DELETE] 未配置 BLOB_READ_WRITE_TOKEN，跳过 Blob 文件删除`)
     }
     
+    console.log(`[DELETE] 删除完成`)
     return NextResponse.json({
       success: true,
       deletedNodeCount: graph.nodes.length,
@@ -195,11 +209,13 @@ export async function DELETE(
       deletedFileCount,
     })
   } catch (error) {
-    console.error('删除图谱失败:', error)
+    console.error('[DELETE] 删除图谱失败:', error)
+    console.error('[DELETE] 错误堆栈:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
       { 
         error: '删除图谱失败',
-        details: error instanceof Error ? error.message : '未知错误'
+        details: error instanceof Error ? error.message : '未知错误',
+        stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
       },
       { status: 500 }
     )
