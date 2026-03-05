@@ -9,10 +9,30 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation' // Add Next.js router for navigation (Task 2.2)
 import { MergeDecision } from '@/lib/services/merge-resolution'
 import { NavigationService, EnhancedNavigationResult, NavigationErrorType, ErrorRecoveryStrategy } from '@/lib/services/navigation-service' // Import enhanced NavigationService (Task 5.1)
+
+// Add CSS animations for loading states (Task 2.3)
+const styles = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+`
+
+// Inject styles into document head
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style')
+  styleSheet.textContent = styles
+  document.head.appendChild(styleSheet)
+}
 
 /**
  * Preview node structure with duplicate detection metadata
@@ -63,6 +83,23 @@ export interface PreviewData {
   stats: PreviewStats
 }
 
+// Enhanced state interfaces for panel synchronization (Task 1.1)
+interface EditPanelState {
+  selectedNodeId: string | null
+  selectedEdgeId: string | null
+  panelMode: 'nodes' | 'edges'
+  isLoading: boolean
+  lastUpdateTimestamp: number
+  error: string | null
+  retryCount: number
+}
+
+interface NodeSelectionEvent {
+  nodeId: string
+  timestamp: number
+  source: 'list' | 'direct'
+}
+
 /**
  * Component props
  */
@@ -100,6 +137,17 @@ export default function AIPreviewModal({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
   
+  // Enhanced panel synchronization state (Task 1.1)
+  const [panelState, setPanelState] = useState<EditPanelState>({
+    selectedNodeId: null,
+    selectedEdgeId: null,
+    panelMode: 'nodes',
+    isLoading: false,
+    lastUpdateTimestamp: 0,
+    error: null,
+    retryCount: 0
+  })
+  
   // State for save operation
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -129,6 +177,18 @@ export default function AIPreviewModal({
     setSelectedNodeId(null)
     setSelectedEdgeId(null)
     setSaveError(null)
+    
+    // Reset enhanced panel synchronization state (Task 1.1)
+    setPanelState({
+      selectedNodeId: null,
+      selectedEdgeId: null,
+      panelMode: 'nodes',
+      isLoading: false,
+      lastUpdateTimestamp: 0,
+      error: null,
+      retryCount: 0
+    })
+    
     // Reset enhanced navigation and loading state (Task 5.2)
     setIsNavigating(false)
     setShowSuccessMessage(false)
@@ -404,6 +464,99 @@ export default function AIPreviewModal({
     })
   }
 
+  // Enhanced node selection handler with automatic synchronization (Task 1.3)
+  const handleNodeSelection = useCallback((nodeId: string, source: 'list' | 'direct' = 'list') => {
+    const timestamp = Date.now()
+    
+    // Clear any previous errors
+    setPanelState(prev => ({
+      ...prev,
+      selectedNodeId: nodeId,
+      selectedEdgeId: null, // Clear edge selection when selecting node
+      panelMode: 'nodes',
+      isLoading: true,
+      lastUpdateTimestamp: timestamp,
+      error: null,
+      retryCount: 0
+    }))
+    
+    // Update legacy state for backward compatibility
+    setSelectedNodeId(nodeId)
+    setSelectedEdgeId(null)
+    
+    // Simulate async loading with error handling (Task 5.3)
+    setTimeout(() => {
+      // Simulate potential loading failure (for testing)
+      const shouldFail = false // Set to true to test error handling
+      
+      if (shouldFail) {
+        setPanelState(prev => ({ 
+          ...prev, 
+          isLoading: false,
+          error: '加载节点数据失败，请重试',
+          retryCount: prev.retryCount + 1
+        }))
+      } else {
+        setPanelState(prev => ({ 
+          ...prev, 
+          isLoading: false,
+          error: null
+        }))
+      }
+    }, 50)
+  }, [])
+
+  // Enhanced edge selection handler with automatic synchronization
+  const handleEdgeSelection = useCallback((edgeId: string, source: 'list' | 'direct' = 'list') => {
+    const timestamp = Date.now()
+    
+    // Clear any previous errors
+    setPanelState(prev => ({
+      ...prev,
+      selectedNodeId: null, // Clear node selection when selecting edge
+      selectedEdgeId: edgeId,
+      panelMode: 'edges',
+      isLoading: true,
+      lastUpdateTimestamp: timestamp,
+      error: null,
+      retryCount: 0
+    }))
+    
+    // Update legacy state for backward compatibility
+    setSelectedNodeId(null)
+    setSelectedEdgeId(edgeId)
+    
+    // Simulate async loading with error handling (Task 5.3)
+    setTimeout(() => {
+      // Simulate potential loading failure (for testing)
+      const shouldFail = false // Set to true to test error handling
+      
+      if (shouldFail) {
+        setPanelState(prev => ({ 
+          ...prev, 
+          isLoading: false,
+          error: '加载边数据失败，请重试',
+          retryCount: prev.retryCount + 1
+        }))
+      } else {
+        setPanelState(prev => ({ 
+          ...prev, 
+          isLoading: false,
+          error: null
+        }))
+      }
+    }, 50)
+  }, [])
+
+  // Retry handler for failed selections (Task 5.3)
+  const handleRetrySelection = useCallback(() => {
+    if (panelState.selectedNodeId) {
+      handleNodeSelection(panelState.selectedNodeId, 'direct')
+    } else if (panelState.selectedEdgeId) {
+      handleEdgeSelection(panelState.selectedEdgeId, 'direct')
+    }
+  }, [panelState.selectedNodeId, panelState.selectedEdgeId, handleNodeSelection, handleEdgeSelection])
+
   // Handle node edit
   const handleNodeEdit = (nodeId: string, updates: Partial<PreviewNode>) => {
     setEditedNodes(prev =>
@@ -629,10 +782,12 @@ export default function AIPreviewModal({
                 edges={editedEdges}
                 selectedNode={selectedNode}
                 selectedEdge={selectedEdge}
-                onNodeSelect={setSelectedNodeId}
-                onEdgeSelect={setSelectedEdgeId}
+                panelState={panelState}
+                onNodeSelect={handleNodeSelection}
+                onEdgeSelect={handleEdgeSelection}
                 onNodeEdit={handleNodeEdit}
                 onEdgeEdit={handleEdgeEdit}
+                onRetrySelection={handleRetrySelection}
               />
             </div>
           )}
@@ -2032,19 +2187,23 @@ function EditingSection({
   edges,
   selectedNode,
   selectedEdge,
+  panelState,
   onNodeSelect,
   onEdgeSelect,
   onNodeEdit,
   onEdgeEdit,
+  onRetrySelection
 }: {
   nodes: PreviewNode[]
   edges: PreviewEdge[]
   selectedNode: PreviewNode | null
   selectedEdge: PreviewEdge | null
-  onNodeSelect: (nodeId: string) => void
-  onEdgeSelect: (edgeId: string) => void
+  panelState: EditPanelState
+  onNodeSelect: (nodeId: string, source?: 'list' | 'direct') => void
+  onEdgeSelect: (edgeId: string, source?: 'list' | 'direct') => void
   onNodeEdit: (nodeId: string, updates: Partial<PreviewNode>) => void
   onEdgeEdit: (edgeId: string, updates: Partial<PreviewEdge>) => void
+  onRetrySelection?: () => void
 }) {
   const [activeEditor, setActiveEditor] = useState<'nodes' | 'edges'>('nodes')
   const [searchTerm, setSearchTerm] = useState('')
@@ -2276,23 +2435,107 @@ function EditingSection({
           borderRadius: '12px',
           overflow: 'hidden'
         }}>
-          {activeEditor === 'nodes' ? (
+          {/* Error State Display (Task 5.3) */}
+          {panelState.error ? (
+            <div style={{ 
+              flex: 1, 
+              display: 'flex', 
+              flexDirection: 'column',
+              alignItems: 'center', 
+              justifyContent: 'center',
+              color: 'rgba(239, 68, 68, 1)',
+              fontSize: '14px',
+              gap: '16px',
+              padding: '40px'
+            }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '2px solid rgba(239, 68, 68, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px'
+              }}>
+                ⚠️
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
+                  加载失败
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '16px' }}>
+                  {panelState.error}
+                </div>
+                {onRetrySelection && (
+                  <button
+                    onClick={onRetrySelection}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '6px',
+                      color: 'rgba(239, 68, 68, 1)',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
+                    }}
+                  >
+                    🔄 重试 {panelState.retryCount > 0 && `(${panelState.retryCount})`}
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : activeEditor === 'nodes' ? (
             selectedNode ? (
               <NodeEditor
                 node={selectedNode}
                 onNodeEdit={onNodeEdit}
-                onClose={() => onNodeSelect('')}
+                onClose={() => onNodeSelect('', 'direct')}
+                isLoading={panelState.isLoading}
+                autoFocus={true}
               />
             ) : (
               <div style={{ 
                 flex: 1, 
                 display: 'flex', 
+                flexDirection: 'column',
                 alignItems: 'center', 
                 justifyContent: 'center',
                 color: 'rgba(255, 255, 255, 0.5)',
-                fontSize: '14px'
+                fontSize: '14px',
+                gap: '16px',
+                padding: '40px'
               }}>
-                选择一个节点开始编辑
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '2px dashed rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '24px'
+                }}>
+                  📝
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
+                    选择一个节点开始编辑
+                  </div>
+                  <div style={{ fontSize: '12px', opacity: 0.7 }}>
+                    从左侧列表中点击任意节点来查看和编辑其属性
+                  </div>
+                </div>
               </div>
             )
           ) : (
@@ -2301,18 +2544,41 @@ function EditingSection({
                 edge={selectedEdge}
                 nodes={nodes}
                 onEdgeEdit={onEdgeEdit}
-                onClose={() => onEdgeSelect('')}
+                onClose={() => onEdgeSelect('', 'direct')}
               />
             ) : (
               <div style={{ 
                 flex: 1, 
                 display: 'flex', 
+                flexDirection: 'column',
                 alignItems: 'center', 
                 justifyContent: 'center',
                 color: 'rgba(255, 255, 255, 0.5)',
-                fontSize: '14px'
+                fontSize: '14px',
+                gap: '16px',
+                padding: '40px'
               }}>
-                选择一条边开始编辑
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '2px dashed rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '24px'
+                }}>
+                  🔗
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
+                    选择一条边开始编辑
+                  </div>
+                  <div style={{ fontSize: '12px', opacity: 0.7 }}>
+                    从左侧列表中点击任意边来查看和编辑其属性
+                  </div>
+                </div>
               </div>
             )
           )}
@@ -2355,14 +2621,14 @@ function NodeList({
 }: {
   nodes: PreviewNode[]
   selectedNodeId: string | null
-  onNodeSelect: (nodeId: string) => void
+  onNodeSelect: (nodeId: string, source?: 'list' | 'direct') => void
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       {nodes.map(node => (
         <div
           key={node.id}
-          onClick={() => onNodeSelect(node.id)}
+          onClick={() => onNodeSelect(node.id, 'list')}
           style={{
             padding: '12px 16px',
             background: selectedNodeId === node.id 
@@ -2436,7 +2702,7 @@ function EdgeList({
   edges: PreviewEdge[]
   nodes: PreviewNode[]
   selectedEdgeId: string | null
-  onEdgeSelect: (edgeId: string) => void
+  onEdgeSelect: (edgeId: string, source?: 'list' | 'direct') => void
 }) {
   const getNodeName = (nodeId: string) => {
     return nodes.find(n => n.id === nodeId)?.name || '未知节点'
@@ -2447,7 +2713,7 @@ function EdgeList({
       {edges.map(edge => (
         <div
           key={edge.id}
-          onClick={() => onEdgeSelect(edge.id)}
+          onClick={() => onEdgeSelect(edge.id, 'list')}
           style={{
             padding: '12px 16px',
             background: selectedEdgeId === edge.id 
@@ -2503,14 +2769,34 @@ function EdgeList({
 function NodeEditor({
   node,
   onNodeEdit,
-  onClose
+  onClose,
+  isLoading = false,
+  autoFocus = true
 }: {
   node: PreviewNode
   onNodeEdit: (nodeId: string, updates: Partial<PreviewNode>) => void
   onClose: () => void
+  isLoading?: boolean
+  autoFocus?: boolean
 }) {
   const [editedNode, setEditedNode] = useState(node)
   const [hasChanges, setHasChanges] = useState(false)
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  // Auto-update content when node changes (Task 2.3)
+  useEffect(() => {
+    setEditedNode(node)
+    setHasChanges(false)
+  }, [node])
+
+  // Auto-focus on name input when component mounts or node changes (Task 2.3)
+  useEffect(() => {
+    if (autoFocus && nameInputRef.current && !isLoading) {
+      setTimeout(() => {
+        nameInputRef.current?.focus()
+      }, 100) // Small delay to ensure smooth transition
+    }
+  }, [node.id, autoFocus, isLoading])
 
   const handleFieldChange = (field: keyof PreviewNode, value: any) => {
     setEditedNode(prev => ({ ...prev, [field]: value }))
@@ -2524,7 +2810,7 @@ function NodeEditor({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Header */}
+      {/* Header with node identifier (Task 2.3) */}
       <div style={{
         padding: '16px 20px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
@@ -2533,8 +2819,13 @@ function NodeEditor({
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>
-          编辑节点
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>
+            编辑节点
+          </div>
+          <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px' }}>
+            {node.name} ({node.type})
+          </div>
         </div>
         <button
           onClick={onClose}
@@ -2556,6 +2847,46 @@ function NodeEditor({
         </button>
       </div>
 
+      {/* Loading overlay (Task 2.3) */}
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.3)',
+          backdropFilter: 'blur(2px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10,
+          borderRadius: '12px'
+        }}>
+          <div style={{
+            padding: '16px 24px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            color: 'white',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <div style={{
+              width: '16px',
+              height: '16px',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              borderTop: '2px solid white',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            正在加载节点数据...
+          </div>
+        </div>
+      )}
+
       {/* Form */}
       <div style={{ flex: 1, padding: '20px', overflow: 'auto' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -2571,9 +2902,11 @@ function NodeEditor({
               节点名称 *
             </label>
             <input
+              ref={nameInputRef}
               type="text"
               value={editedNode.name}
               onChange={(e) => handleFieldChange('name', e.target.value)}
+              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -2582,7 +2915,9 @@ function NodeEditor({
                 borderRadius: '8px',
                 color: 'white',
                 fontSize: '14px',
-                outline: 'none'
+                outline: 'none',
+                opacity: isLoading ? 0.5 : 1,
+                cursor: isLoading ? 'not-allowed' : 'text'
               }}
             />
           </div>
@@ -2602,6 +2937,7 @@ function NodeEditor({
               type="text"
               value={editedNode.type}
               onChange={(e) => handleFieldChange('type', e.target.value)}
+              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -2610,7 +2946,9 @@ function NodeEditor({
                 borderRadius: '8px',
                 color: 'white',
                 fontSize: '14px',
-                outline: 'none'
+                outline: 'none',
+                opacity: isLoading ? 0.5 : 1,
+                cursor: isLoading ? 'not-allowed' : 'text'
               }}
             />
           </div>
@@ -2633,7 +2971,8 @@ function NodeEditor({
               borderRadius: '8px',
               color: 'rgba(255, 255, 255, 0.7)',
               fontSize: '13px',
-              fontFamily: 'monospace'
+              fontFamily: 'monospace',
+              opacity: isLoading ? 0.5 : 1
             }}>
               {JSON.stringify(editedNode.properties, null, 2)}
             </div>
@@ -2642,7 +2981,7 @@ function NodeEditor({
       </div>
 
       {/* Footer */}
-      {hasChanges && (
+      {hasChanges && !isLoading && (
         <div style={{
           padding: '16px 20px',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',

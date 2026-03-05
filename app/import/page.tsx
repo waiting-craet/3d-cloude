@@ -90,6 +90,12 @@ export default function ImportPage() {
       })
       if (response.ok) {
         const result = await response.json()
+        
+        // 显示警告信息（如果有）
+        if (result.warnings && result.warnings.length > 0) {
+          console.warn('项目创建警告:', result.warnings)
+        }
+        
         await fetchProjects()
         setSelectedProject(result.project.id)
         setShowNewProjectModal(false)

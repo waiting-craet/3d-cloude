@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import AIPreviewModal, { PreviewData } from '@/components/AIPreviewModal'
 import { MergeDecision } from '@/lib/services/merge-resolution'
+import styles from './page.module.css'
 
 interface Project {
   id: string
@@ -33,6 +34,10 @@ export default function TextPage() {
   const [showNewGraphModal, setShowNewGraphModal] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
   const [newGraphName, setNewGraphName] = useState('')
+  
+  // 创建状态 - 防抖动
+  const [isCreatingProject, setIsCreatingProject] = useState(false)
+  const [isCreatingGraph, setIsCreatingGraph] = useState(false)
   
   // 项目和图谱数据（从API获取）
   const [projects, setProjects] = useState<Project[]>([])
@@ -418,7 +423,12 @@ export default function TextPage() {
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return
-
+    
+    // 防抖动：如果正在创建中，直接返回
+    if (isCreatingProject) return
+    
+    setIsCreatingProject(true)
+    
     try {
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -427,7 +437,6 @@ export default function TextPage() {
         },
         body: JSON.stringify({
           name: newProjectName.trim(),
-          graphName: '默认图谱',
         }),
       })
 
@@ -437,6 +446,11 @@ export default function TextPage() {
         // 关闭模态框
         setShowNewProjectModal(false)
         setNewProjectName('')
+        
+        // 显示警告信息（如果有）
+        if (result.warnings && result.warnings.length > 0) {
+          console.warn('项目创建警告:', result.warnings)
+        }
         
         // 刷新项目列表
         const projectsResponse = await fetch('/api/projects')
@@ -453,11 +467,19 @@ export default function TextPage() {
     } catch (error) {
       console.error('Create project error:', error)
       alert('创建项目失败，请重试')
+    } finally {
+      // 无论成功还是失败，都要重置创建状态
+      setIsCreatingProject(false)
     }
   }
 
   const handleCreateGraph = async () => {
     if (!newGraphName.trim() || !selectedProject) return
+    
+    // 防抖动：如果正在创建中，直接返回
+    if (isCreatingGraph) return
+    
+    setIsCreatingGraph(true)
 
     try {
       const response = await fetch(`/api/projects/${selectedProject}/graphs`, {
@@ -492,6 +514,9 @@ export default function TextPage() {
     } catch (error) {
       console.error('Create graph error:', error)
       alert('创建图谱失败，请重试')
+    } finally {
+      // 无论成功还是失败，都要重置创建状态
+      setIsCreatingGraph(false)
     }
   }
 
@@ -1621,10 +1646,10 @@ export default function TextPage() {
               </button>
               <button
                 onClick={handleCreateProject}
-                disabled={!newProjectName.trim()}
+                disabled={!newProjectName.trim() || isCreatingProject}
                 style={{
                   padding: '12px 24px',
-                  background: newProjectName.trim()
+                  background: (newProjectName.trim() && !isCreatingProject)
                     ? '#00bfa5'
                     : '#e0e0e0',
                   border: 'none',
@@ -1632,21 +1657,27 @@ export default function TextPage() {
                   color: 'white',
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: newProjectName.trim() ? 'pointer' : 'not-allowed',
+                  cursor: (newProjectName.trim() && !isCreatingProject) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
-                  opacity: newProjectName.trim() ? 1 : 0.6,
+                  opacity: (newProjectName.trim() && !isCreatingProject) ? 1 : 0.6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
                 onMouseEnter={(e) => {
-                  if (newProjectName.trim()) {
+                  if (newProjectName.trim() && !isCreatingProject) {
                     e.currentTarget.style.background = '#00d4b8'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (newProjectName.trim()) {
+                  if (newProjectName.trim() && !isCreatingProject) {
                     e.currentTarget.style.background = '#00bfa5'
                   }
                 }}>
-                创建
+                {isCreatingProject && (
+                  <div className={styles.spinner} />
+                )}
+                {isCreatingProject ? '创建中...' : '创建'}
               </button>
             </div>
           </div>
@@ -1737,10 +1768,10 @@ export default function TextPage() {
               </button>
               <button
                 onClick={handleCreateGraph}
-                disabled={!newGraphName.trim()}
+                disabled={!newGraphName.trim() || isCreatingGraph}
                 style={{
                   padding: '12px 24px',
-                  background: newGraphName.trim()
+                  background: (newGraphName.trim() && !isCreatingGraph)
                     ? '#00bfa5'
                     : '#e0e0e0',
                   border: 'none',
@@ -1748,21 +1779,27 @@ export default function TextPage() {
                   color: 'white',
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: newGraphName.trim() ? 'pointer' : 'not-allowed',
+                  cursor: (newGraphName.trim() && !isCreatingGraph) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
-                  opacity: newGraphName.trim() ? 1 : 0.6,
+                  opacity: (newGraphName.trim() && !isCreatingGraph) ? 1 : 0.6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
                 onMouseEnter={(e) => {
-                  if (newGraphName.trim()) {
+                  if (newGraphName.trim() && !isCreatingGraph) {
                     e.currentTarget.style.transform = 'scale(1.05)'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (newGraphName.trim()) {
+                  if (newGraphName.trim() && !isCreatingGraph) {
                     e.currentTarget.style.transform = 'scale(1)'
                   }
                 }}>
-                创建
+                {isCreatingGraph && (
+                  <div className={styles.spinner} />
+                )}
+                {isCreatingGraph ? '创建中...' : '创建'}
               </button>
             </div>
           </div>
