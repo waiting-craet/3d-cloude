@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "clean": "node -e \"const fs = require('fs'); const path = require('path'); ['.next', 'node_modules/.cache'].forEach(dir => { const p = path.join(process.cwd(), dir); if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true }); });\"",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
