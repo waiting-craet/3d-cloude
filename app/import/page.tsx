@@ -26,9 +26,11 @@ export default function ImportPage() {
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [showNewGraphModal, setShowNewGraphModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showLoadingModal, setShowLoadingModal] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
   const [newGraphName, setNewGraphName] = useState('')
   const [creating, setCreating] = useState(false)
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
 
   useEffect(() => {
     fetchProjects()
@@ -84,12 +86,18 @@ export default function ImportPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          name: newProjectName.trim(),
-          graphName: '默认图谱' // API 需要 graphName 参数
+          name: newProjectName.trim()
+          // 不再自动创建默认图谱
         })
       })
       if (response.ok) {
         const result = await response.json()
+        
+        // 显示警告信息(如果有)
+        if (result.warnings && result.warnings.length > 0) {
+          console.warn('项目创建警告:', result.warnings)
+        }
+        
         await fetchProjects()
         setSelectedProject(result.project.id)
         setShowNewProjectModal(false)
@@ -191,14 +199,31 @@ export default function ImportPage() {
 
   const handleConfirmUpload = async () => {
     setShowConfirmModal(false)
+    setShowLoadingModal(true)
     await handleUpload()
+  }
+
+  const handleCancelUpload = () => {
+    if (abortController) {
+      abortController.abort()
+      setAbortController(null)
+    }
+    setShowLoadingModal(false)
+    setUploading(false)
+    setUploadStatus('已取消生成')
   }
 
   const handleUpload = async () => {
     if (!selectedFile || !selectedProject || !selectedGraph || !fileType) {
       setUploadStatus('请选择项目、图谱和文件')
+      setShowLoadingModal(false)
       return
     }
+    
+    // 创建新的 AbortController
+    const controller = new AbortController()
+    setAbortController(controller)
+    
     setUploading(true)
     setUploadStatus('正在上传...')
     try {
@@ -209,7 +234,8 @@ export default function ImportPage() {
       formData.append('fileType', fileType)
       const response = await fetch('/api/import', {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       })
       
       const result = await response.json()
@@ -223,7 +249,8 @@ export default function ImportPage() {
           successMessage += `\n跳过了 ${result.skippedEdges} 条无效边`
         }
         setUploadStatus(successMessage)
-        setTimeout(() => router.push('/graph'), 2000)
+        setShowLoadingModal(false)
+        router.push(`/graph?projectId=${selectedProject}&graphId=${selectedGraph}`)
       } else {
         let errorMessage = '导入失败：'
         if (result.errors && Array.isArray(result.errors)) {
@@ -237,12 +264,20 @@ export default function ImportPage() {
         }
         
         setUploadStatus(errorMessage)
+        setShowLoadingModal(false)
       }
-    } catch (error) {
-      console.error('Upload failed:', error)
-      setUploadStatus('导入失败，请重试')
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Upload cancelled by user')
+        setUploadStatus('已取消生成')
+      } else {
+        console.error('Upload failed:', error)
+        setUploadStatus('导入失败，请重试')
+      }
+      setShowLoadingModal(false)
     } finally {
       setUploading(false)
+      setAbortController(null)
     }
   }
 
@@ -525,17 +560,6 @@ export default function ImportPage() {
             }}>
               模板下载
             </h2>
-            <div style={{ 
-              padding: '12px',
-              background: 'rgba(0, 191, 165, 0.08)',
-              borderRadius: '8px',
-              marginBottom: '15px',
-              fontSize: '12px',
-              color: '#00bfa5',
-              border: '1px solid rgba(0, 191, 165, 0.2)'
-            }}>
-              统一使用: 3D 图谱模板
-            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button
                 onClick={() => handleDownloadTemplate('excel')}
@@ -562,7 +586,7 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📊</span>
-                <span>Excel模板 (3D)</span>
+                <span>Excel模板</span>
               </button>
               <button
                 onClick={() => handleDownloadTemplate('csv')}
@@ -589,7 +613,7 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📄</span>
-                <span>CSV模板 (3D)</span>
+                <span>CSV模板</span>
               </button>
               <button
                 onClick={() => handleDownloadTemplate('json')}
@@ -616,19 +640,8 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📋</span>
-                <span>JSON模板 (3D)</span>
+                <span>JSON模板</span>
               </button>
-            </div>
-            <div style={{
-              marginTop: '15px',
-              padding: '10px',
-              background: '#fff9e6',
-              borderRadius: '6px',
-              fontSize: '11px',
-              color: '#856404',
-              border: '1px solid #ffeaa7'
-            }}>
-              💡 提示: 所有模板均为3D格式，支持自动转换2D数据
             </div>
           </div>
         </div>
@@ -1023,6 +1036,94 @@ export default function ImportPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 生成中加载模态框 */}
+      {showLoadingModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '40px',
+            width: '400px',
+            maxWidth: '90%',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            textAlign: 'center'
+          }}>
+            {/* 加载动画 */}
+            <div style={{
+              width: '60px',
+              height: '60px',
+              margin: '0 auto 24px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #00bfa5',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '12px'
+            }}>
+              正在生成图谱...
+            </h3>
+            
+            <p style={{
+              fontSize: '14px',
+              color: '#666',
+              marginBottom: '24px',
+              lineHeight: '1.6'
+            }}>
+              {uploadStatus || '正在处理您的数据，请稍候'}
+            </p>
+            
+            <button
+              onClick={handleCancelUpload}
+              style={{
+                padding: '12px 32px',
+                background: '#f5f5f5',
+                border: '2px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                color: '#666',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#e0e0e0'
+                e.currentTarget.style.borderColor = '#bbb'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#f5f5f5'
+                e.currentTarget.style.borderColor = '#ddd'
+              }}
+            >
+              取消生成
+            </button>
+          </div>
+          
+          {/* CSS动画 */}
+          <style jsx>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
       )}
     </main>

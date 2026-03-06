@@ -77,8 +77,8 @@ export default function MyProjectsContent({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          graphName,
-          graphType,
+          name: graphName, // 使用graphName作为项目名称
+          graphName, // 同时创建图谱
         }),
       });
 

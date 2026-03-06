@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import AIPreviewModal, { PreviewData } from '@/components/AIPreviewModal'
 import { MergeDecision } from '@/lib/services/merge-resolution'
+import styles from './page.module.css'
 
 interface Project {
   id: string
@@ -17,7 +18,7 @@ interface Graph {
 
 export default function TextPage() {
   const [inputText, setInputText] = useState('')
-  const [outputFormat, setOutputFormat] = useState<'2d' | '3d'>('2d')
+  const [outputFormat, setOutputFormat] = useState<'2d' | '3d'>('3d')
   const [uploadedFile, setUploadedFile] = useState<{
     name: string
     size: number
@@ -33,6 +34,10 @@ export default function TextPage() {
   const [showNewGraphModal, setShowNewGraphModal] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
   const [newGraphName, setNewGraphName] = useState('')
+  
+  // 创建状态 - 防抖动
+  const [isCreatingProject, setIsCreatingProject] = useState(false)
+  const [isCreatingGraph, setIsCreatingGraph] = useState(false)
   
   // 项目和图谱数据（从API获取）
   const [projects, setProjects] = useState<Project[]>([])
@@ -360,7 +365,7 @@ export default function TextPage() {
     }
   }
 
-  // AI预览保存处理函数
+  // AI预览保存处理函数 - Enhanced for navigation (Task 2.2)
   const handleAISave = async (editedData: PreviewData, mergeDecisions: MergeDecision[]) => {
     try {
       // 调用保存API
@@ -385,10 +390,6 @@ export default function TextPage() {
       if (result.success) {
         console.log('Graph saved successfully:', result.data)
         
-        // 关闭模态框
-        setShowAIPreview(false)
-        setAiGeneratedData(null)
-        
         // 刷新图谱列表
         if (selectedProject) {
           const graphsResponse = await fetch(`/api/projects/${selectedProject}/graphs`)
@@ -398,21 +399,36 @@ export default function TextPage() {
           }
         }
         
-        // 显示成功消息（可选）
-        alert(`图谱保存成功！\n创建节点: ${result.data.nodesCreated}\n更新节点: ${result.data.nodesUpdated}\n创建边: ${result.data.edgesCreated}`)
+        // Return success with graphId for navigation (Task 2.2)
+        return {
+          success: true,
+          graphId: result.data.graphId,
+          graphName: result.data.graphName
+        }
       } else {
-        // 显示错误消息
-        alert(`保存失败: ${result.error}`)
+        // Return error without navigation (Requirement 3.2)
+        return {
+          success: false,
+          error: result.error || '保存失败，请重试'
+        }
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('保存失败，请重试')
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '保存失败，请重试'
+      }
     }
   }
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return
-
+    
+    // 防抖动：如果正在创建中，直接返回
+    if (isCreatingProject) return
+    
+    setIsCreatingProject(true)
+    
     try {
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -431,6 +447,11 @@ export default function TextPage() {
         setShowNewProjectModal(false)
         setNewProjectName('')
         
+        // 显示警告信息（如果有）
+        if (result.warnings && result.warnings.length > 0) {
+          console.warn('项目创建警告:', result.warnings)
+        }
+        
         // 刷新项目列表
         const projectsResponse = await fetch('/api/projects')
         if (projectsResponse.ok) {
@@ -446,11 +467,19 @@ export default function TextPage() {
     } catch (error) {
       console.error('Create project error:', error)
       alert('创建项目失败，请重试')
+    } finally {
+      // 无论成功还是失败，都要重置创建状态
+      setIsCreatingProject(false)
     }
   }
 
   const handleCreateGraph = async () => {
     if (!newGraphName.trim() || !selectedProject) return
+    
+    // 防抖动：如果正在创建中，直接返回
+    if (isCreatingGraph) return
+    
+    setIsCreatingGraph(true)
 
     try {
       const response = await fetch(`/api/projects/${selectedProject}/graphs`, {
@@ -485,6 +514,9 @@ export default function TextPage() {
     } catch (error) {
       console.error('Create graph error:', error)
       alert('创建图谱失败，请重试')
+    } finally {
+      // 无论成功还是失败，都要重置创建状态
+      setIsCreatingGraph(false)
     }
   }
 
@@ -1078,78 +1110,22 @@ export default function TextPage() {
                 fontWeight: '600',
                 marginBottom: '12px',
               }}>
-                选择图谱类型
+                图谱类型
               </label>
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
+                display: 'flex',
+                justifyContent: 'center',
               }}>
-                {/* 2D选项 */}
+                {/* 仅保留3D选项 */}
                 <div
-                  onClick={() => setOutputFormat('2d')}
                   style={{
                     padding: '20px',
-                    background: outputFormat === '2d' ? 'rgba(0, 191, 165, 0.08)' : 'white',
-                    border: outputFormat === '2d' ? '2px solid #00bfa5' : '2px solid #e5e5e5',
+                    background: 'rgba(0, 191, 165, 0.08)',
+                    border: '2px solid #00bfa5',
                     borderRadius: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
                     textAlign: 'center',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (outputFormat !== '2d') {
-                      e.currentTarget.style.borderColor = '#00bfa5'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (outputFormat !== '2d') {
-                      e.currentTarget.style.borderColor = '#e5e5e5'
-                    }
-                  }}>
-                  <div style={{
-                    fontSize: '36px',
-                    marginBottom: '8px',
-                  }}>
-                    📊
-                  </div>
-                  <div style={{
-                    color: '#2c2c2c',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    marginBottom: '4px',
-                  }}>
-                    二维图谱
-                  </div>
-                  <div style={{
-                    color: '#666',
-                    fontSize: '12px',
-                  }}>
-                    平面网络视图
-                  </div>
-                </div>
-
-                {/* 3D选项 */}
-                <div
-                  onClick={() => setOutputFormat('3d')}
-                  style={{
-                    padding: '20px',
-                    background: outputFormat === '3d' ? 'rgba(0, 191, 165, 0.08)' : 'white',
-                    border: outputFormat === '3d' ? '2px solid #00bfa5' : '2px solid #e5e5e5',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'center',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (outputFormat !== '3d') {
-                      e.currentTarget.style.borderColor = '#00bfa5'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (outputFormat !== '3d') {
-                      e.currentTarget.style.borderColor = '#e5e5e5'
-                    }
+                    width: '100%',
+                    maxWidth: '300px',
                   }}>
                   <div style={{
                     fontSize: '36px',
@@ -1614,10 +1590,10 @@ export default function TextPage() {
               </button>
               <button
                 onClick={handleCreateProject}
-                disabled={!newProjectName.trim()}
+                disabled={!newProjectName.trim() || isCreatingProject}
                 style={{
                   padding: '12px 24px',
-                  background: newProjectName.trim()
+                  background: (newProjectName.trim() && !isCreatingProject)
                     ? '#00bfa5'
                     : '#e0e0e0',
                   border: 'none',
@@ -1625,21 +1601,27 @@ export default function TextPage() {
                   color: 'white',
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: newProjectName.trim() ? 'pointer' : 'not-allowed',
+                  cursor: (newProjectName.trim() && !isCreatingProject) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
-                  opacity: newProjectName.trim() ? 1 : 0.6,
+                  opacity: (newProjectName.trim() && !isCreatingProject) ? 1 : 0.6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
                 onMouseEnter={(e) => {
-                  if (newProjectName.trim()) {
+                  if (newProjectName.trim() && !isCreatingProject) {
                     e.currentTarget.style.background = '#00d4b8'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (newProjectName.trim()) {
+                  if (newProjectName.trim() && !isCreatingProject) {
                     e.currentTarget.style.background = '#00bfa5'
                   }
                 }}>
-                创建
+                {isCreatingProject && (
+                  <div className={styles.spinner} />
+                )}
+                {isCreatingProject ? '创建中...' : '创建'}
               </button>
             </div>
           </div>
@@ -1730,10 +1712,10 @@ export default function TextPage() {
               </button>
               <button
                 onClick={handleCreateGraph}
-                disabled={!newGraphName.trim()}
+                disabled={!newGraphName.trim() || isCreatingGraph}
                 style={{
                   padding: '12px 24px',
-                  background: newGraphName.trim()
+                  background: (newGraphName.trim() && !isCreatingGraph)
                     ? '#00bfa5'
                     : '#e0e0e0',
                   border: 'none',
@@ -1741,21 +1723,27 @@ export default function TextPage() {
                   color: 'white',
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: newGraphName.trim() ? 'pointer' : 'not-allowed',
+                  cursor: (newGraphName.trim() && !isCreatingGraph) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.2s ease',
-                  opacity: newGraphName.trim() ? 1 : 0.6,
+                  opacity: (newGraphName.trim() && !isCreatingGraph) ? 1 : 0.6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
                 onMouseEnter={(e) => {
-                  if (newGraphName.trim()) {
+                  if (newGraphName.trim() && !isCreatingGraph) {
                     e.currentTarget.style.transform = 'scale(1.05)'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (newGraphName.trim()) {
+                  if (newGraphName.trim() && !isCreatingGraph) {
                     e.currentTarget.style.transform = 'scale(1)'
                   }
                 }}>
-                创建
+                {isCreatingGraph && (
+                  <div className={styles.spinner} />
+                )}
+                {isCreatingGraph ? '创建中...' : '创建'}
               </button>
             </div>
           </div>
@@ -1879,6 +1867,7 @@ export default function TextPage() {
           data={aiGeneratedData}
           onSave={handleAISave}
           visualizationType={outputFormat}
+          enableAutoNavigation={true}
         />
       )}
     </main>

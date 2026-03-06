@@ -1,0 +1,113 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration test
+  - **Property 1: Fault Condition** - Database Connection Failure Retry
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bug exists (no retry logic, immediate 500 errors)
+  - **Scoped PBT Approach**: Scope the property to concrete failing cases: project creation from text-page with database connection failures
+  - Test that POST /api/projects with valid name from text-page retries connection when database fails (from Fault Condition in design)
+  - The test assertions should match the Expected Behavior Properties from design:
+    - System retries with exponential backoff (up to 3 attempts)
+    - Either succeeds in creating project OR returns descriptive error message
+    - Error message contains "database connection" or similar diagnostic information
+  - Mock Prisma client to simulate connection failures:
+    - Paused database (connection refused error)
+    - Connection timeout error
+    - Prisma client initialization error
+  - Run test on UNFIXED code
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bug exists)
+  - Document counterexamples found:
+    - Returns 500 error immediately without retry attempts
+    - Error message is generic "创建项目失败" without diagnostic information
+    - No explicit connection management ($connect not called)
+  - Mark task complete when test is written, run, and failure is documented
+  - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4_
+
+- [x] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Non-Connection-Failure Behavior
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs (successful connections, validation errors, other pages)
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements:
+    - Successful project creation when database is available (returns 200 with project data)
+    - Validation errors for empty/whitespace names (returns 400 with "项目名称不能为空")
+    - Optional graph creation in transaction (creates both project and graph)
+    - GET /api/projects returns all projects ordered by updatedAt descending
+    - Response format with success, project, graphCreated, graph, warnings fields
+  - Property-based testing generates many test cases for stronger guarantees:
+    - Generate random valid project names (Unicode, special characters, various lengths)
+    - Generate random invalid inputs (empty, whitespace, null)
+    - Generate random project+graph combinations
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+
+- [x] 3. Fix for database connection failure handling
+
+  - [x] 3.1 Add connection health check and retry logic to POST handler
+    - Import retryOperation utility from lib/db-helpers.ts
+    - Add explicit prisma.$connect() call before database operations to wake up paused Neon databases
+    - Wrap entire project creation logic in retryOperation with exponential backoff (3 retries, 1000ms initial delay)
+    - Preserve existing transaction logic for project + optional graph creation
+    - _Bug_Condition: isBugCondition(input) where input.source = "text-page" AND databaseConnectionFailed(input) AND NOT connectionRetryAttempted(input)_
+    - _Expected_Behavior: System retries with exponential backoff, either succeeds or returns descriptive error (Property 1 from design)_
+    - _Preservation: All non-connection-failure behaviors unchanged (Property 2 from design)_
+    - _Requirements: 2.1, 2.2, 2.3, 2.4_
+
+  - [x] 3.2 Improve error handling and logging
+    - Add connection-specific error detection (check for "connection", "connect", "ECONNREFUSED" in error messages)
+    - Use getDescriptiveErrorMessage utility for user-facing error messages
+    - Log detailed error information (error type, message, stack trace) for diagnostics
+    - Add diagnostic metadata in error responses (retry attempts, error type, connection state) when in development mode
+    - Return descriptive error message for connection failures: "数据库连接失败，请稍后重试"
+    - _Bug_Condition: isBugCondition(input) where databaseConnectionFailed(input)_
+    - _Expected_Behavior: Descriptive error messages for connection failures (Property 1 from design)_
+    - _Preservation: Existing error messages for validation errors unchanged (Property 2 from design)_
+    - _Requirements: 2.4, 3.6_
+
+  - [x] 3.3 Add connection configuration to Prisma client
+    - Update lib/prisma.ts to add connection logging when Prisma client is initialized
+    - Configure Prisma client with appropriate connection timeout and pool settings for Neon databases
+    - Add connection lifecycle tracking for diagnostics
+    - _Bug_Condition: isBugCondition(input) where prismaClientError(input)_
+    - _Expected_Behavior: Proper connection management and timeout configuration (Property 1 from design)_
+    - _Preservation: Existing Prisma client behavior unchanged for successful connections (Property 2 from design)_
+    - _Requirements: 2.1, 2.2_
+
+  - [x] 3.4 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - Database Connection Failure Retry
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied:
+      - System retries connection with exponential backoff (up to 3 attempts)
+      - Either succeeds in creating project OR returns descriptive error message
+      - Error message contains diagnostic information about connection failure
+    - Run bug condition exploration test from step 1
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bug is fixed)
+    - _Requirements: 2.1, 2.2, 2.3, 2.4_
+
+  - [x] 3.5 Verify preservation tests still pass
+    - **Property 2: Preservation** - Non-Connection-Failure Behavior
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all preservation behaviors unchanged:
+      - Successful project creation when database is available
+      - Validation errors for empty/whitespace names
+      - Optional graph creation in transaction
+      - GET endpoint returns projects list
+      - Response format unchanged
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+
+- [x] 4. Checkpoint - Ensure all tests pass
+  - Run all unit tests for POST /api/projects endpoint
+  - Run all property-based tests for preservation checking
+  - Run integration tests for full project creation flow with simulated database pause/resume
+  - Verify that:
+    - Bug condition exploration test passes (retry logic works)
+    - Preservation tests pass (no regressions)
+    - Connection health check successfully wakes up paused databases
+    - Descriptive error messages returned for permanent connection failures
+  - Ask the user if questions arise
