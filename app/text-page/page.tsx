@@ -18,7 +18,7 @@ interface Graph {
 
 export default function TextPage() {
   const [inputText, setInputText] = useState('')
-  const [outputFormat, setOutputFormat] = useState<'2d' | '3d'>('2d')
+  const [outputFormat, setOutputFormat] = useState<'2d' | '3d'>('3d')
   const [uploadedFile, setUploadedFile] = useState<{
     name: string
     size: number
@@ -1110,78 +1110,22 @@ export default function TextPage() {
                 fontWeight: '600',
                 marginBottom: '12px',
               }}>
-                选择图谱类型
+                图谱类型
               </label>
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
+                display: 'flex',
+                justifyContent: 'center',
               }}>
-                {/* 2D选项 */}
+                {/* 仅保留3D选项 */}
                 <div
-                  onClick={() => setOutputFormat('2d')}
                   style={{
                     padding: '20px',
-                    background: outputFormat === '2d' ? 'rgba(0, 191, 165, 0.08)' : 'white',
-                    border: outputFormat === '2d' ? '2px solid #00bfa5' : '2px solid #e5e5e5',
+                    background: 'rgba(0, 191, 165, 0.08)',
+                    border: '2px solid #00bfa5',
                     borderRadius: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
                     textAlign: 'center',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (outputFormat !== '2d') {
-                      e.currentTarget.style.borderColor = '#00bfa5'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (outputFormat !== '2d') {
-                      e.currentTarget.style.borderColor = '#e5e5e5'
-                    }
-                  }}>
-                  <div style={{
-                    fontSize: '36px',
-                    marginBottom: '8px',
-                  }}>
-                    📊
-                  </div>
-                  <div style={{
-                    color: '#2c2c2c',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    marginBottom: '4px',
-                  }}>
-                    二维图谱
-                  </div>
-                  <div style={{
-                    color: '#666',
-                    fontSize: '12px',
-                  }}>
-                    平面网络视图
-                  </div>
-                </div>
-
-                {/* 3D选项 */}
-                <div
-                  onClick={() => setOutputFormat('3d')}
-                  style={{
-                    padding: '20px',
-                    background: outputFormat === '3d' ? 'rgba(0, 191, 165, 0.08)' : 'white',
-                    border: outputFormat === '3d' ? '2px solid #00bfa5' : '2px solid #e5e5e5',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'center',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (outputFormat !== '3d') {
-                      e.currentTarget.style.borderColor = '#00bfa5'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (outputFormat !== '3d') {
-                      e.currentTarget.style.borderColor = '#e5e5e5'
-                    }
+                    width: '100%',
+                    maxWidth: '300px',
                   }}>
                   <div style={{
                     fontSize: '36px',
