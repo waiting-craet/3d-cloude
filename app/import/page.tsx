@@ -250,7 +250,7 @@ export default function ImportPage() {
         }
         setUploadStatus(successMessage)
         setShowLoadingModal(false)
-        setTimeout(() => router.push('/graph'), 2000)
+        router.push(`/graph?projectId=${selectedProject}&graphId=${selectedGraph}`)
       } else {
         let errorMessage = '导入失败：'
         if (result.errors && Array.isArray(result.errors)) {
