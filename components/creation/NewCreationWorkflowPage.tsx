@@ -30,7 +30,6 @@ interface Project {
 export default function NewCreationWorkflowPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'graph' | 'document'>('all');
   const [sortBy, setSortBy] = useState<'updateTime' | 'title'>('updateTime');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingProjects, setExistingProjects] = useState<Project[]>([]);
@@ -307,25 +306,6 @@ export default function NewCreationWorkflowPage() {
 
       {/* 右侧主内容区 - 占 5/6 宽度 */}
       <main className={styles.mainContent}>
-        {/* 功能卡片 - 横向排布 */}
-        <div className={styles.actionCards}>
-          {/* AI创建卡片 - 鲜艳红色 */}
-          <div 
-            className={`${styles.actionCard} ${styles.aiCreateCard}`}
-            onClick={handleAICreate}
-          >
-            AI创建
-          </div>
-
-          {/* 导入数据卡片 - 鲜艳绿色 */}
-          <div 
-            className={`${styles.actionCard} ${styles.importDataCard}`}
-            onClick={handleImport}
-          >
-            导入数据
-          </div>
-        </div>
-
         {/* 项目筛选栏 */}
         <div className={styles.filterBar}>
           {/* 左侧：我的项目文本和搜索框 */}
@@ -357,17 +337,6 @@ export default function NewCreationWorkflowPage() {
               onConfirm={handleShowConfirm}
               onCancel={handleCancelBatchDelete}
             />
-            
-            {/* 类型筛选下拉框 */}
-            <select
-              className={styles.filterSelect}
-              value={selectedFilter}
-              onChange={(e) => setSelectedFilter(e.target.value as 'all' | 'graph' | 'document')}
-            >
-              <option value="all">全部类型</option>
-              <option value="graph">图谱</option>
-              <option value="document">文档</option>
-            </select>
 
             {/* 排序方式下拉框 */}
             <select
