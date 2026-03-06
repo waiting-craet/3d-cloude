@@ -586,7 +586,7 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📊</span>
-                <span>Excel模板 (3D)</span>
+                <span>Excel模板</span>
               </button>
               <button
                 onClick={() => handleDownloadTemplate('csv')}
@@ -613,7 +613,7 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📄</span>
-                <span>CSV模板 (3D)</span>
+                <span>CSV模板</span>
               </button>
               <button
                 onClick={() => handleDownloadTemplate('json')}
@@ -640,7 +640,7 @@ export default function ImportPage() {
                 }}
               >
                 <span style={{ fontSize: '16px' }}>📋</span>
-                <span>JSON模板 (3D)</span>
+                <span>JSON模板</span>
               </button>
             </div>
           </div>
