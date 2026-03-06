@@ -152,8 +152,8 @@ model Graph {
   edgeCount Int @default(0)
 
   // 项目关联
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   // 关联关系
   nodes Node[]

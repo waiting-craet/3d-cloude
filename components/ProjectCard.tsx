@@ -44,8 +44,8 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
           <Image
             src="/项目1.png"
             alt="项目图标"
-            width={48}
-            height={48}
+            width={72}
+            height={72}
             className={styles.projectIcon}
             onError={handleImageError}
           />

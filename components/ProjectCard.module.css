@@ -9,7 +9,7 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  height: 140px; /* 缩小卡片高度 */
+  height: 210px; /* 原来 140px × 1.5 = 210px */
   width: 100%;
 }
 
@@ -24,24 +24,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 24px; /* 原来 16px × 1.5 = 24px */
   background: #fafafa;
   border-bottom: 1px solid #f0f0f0;
-  height: 80px;
+  height: 120px; /* 原来 80px × 1.5 = 120px */
 }
 
 .projectIcon {
   border-radius: 8px;
   object-fit: contain;
+  width: 72px !important; /* 原来 48px × 1.5 = 72px */
+  height: 72px !important;
 }
 
 .placeholderIcon {
-  font-size: 32px;
+  font-size: 48px; /* 原来 32px × 1.5 = 48px */
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 72px; /* 原来 48px × 1.5 = 72px */
+  height: 72px;
   background: #f5f5f5;
   border-radius: 8px;
   color: #999;
@@ -49,7 +51,7 @@
 
 /* 卡片内容区域 */
 .cardContent {
-  padding: 12px;
+  padding: 18px; /* 原来 12px × 1.5 = 18px */
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -57,10 +59,10 @@
 }
 
 .projectName {
-  font-size: 13px;
+  font-size: 19.5px; /* 原来 13px × 1.5 = 19.5px */
   font-weight: 600;
   color: #2c2c2c;
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0; /* 原来 8px × 1.5 = 12px */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -75,44 +77,44 @@
 }
 
 .statItem {
-  font-size: 11px;
+  font-size: 16.5px; /* 原来 11px × 1.5 = 16.5px */
   color: #666;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px; /* 原来 4px × 1.5 = 6px */
 }
 
 .statIcon {
-  font-size: 12px;
+  font-size: 18px; /* 原来 12px × 1.5 = 18px */
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .projectCard {
-    height: 120px;
+    height: 180px; /* 原来 120px × 1.5 = 180px */
   }
   
   .iconContainer {
-    height: 70px;
-    padding: 12px;
+    height: 105px; /* 原来 70px × 1.5 = 105px */
+    padding: 18px; /* 原来 12px × 1.5 = 18px */
   }
   
   .projectIcon {
-    width: 36px;
-    height: 36px;
+    width: 54px !important; /* 原来 36px × 1.5 = 54px */
+    height: 54px !important;
   }
   
   .placeholderIcon {
-    width: 36px;
-    height: 36px;
-    font-size: 24px;
+    width: 54px; /* 原来 36px × 1.5 = 54px */
+    height: 54px;
+    font-size: 36px; /* 原来 24px × 1.5 = 36px */
   }
   
   .projectName {
-    font-size: 12px;
+    font-size: 18px; /* 原来 12px × 1.5 = 18px */
   }
   
   .statItem {
-    font-size: 10px;
+    font-size: 15px; /* 原来 10px × 1.5 = 15px */
   }
 }

@@ -598,3 +598,293 @@
     padding: 12px;
   }
 }
+
+/* Screen reader only - for accessibility */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* 批量删除控件样式 */
+.batchDeleteControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selectedCount {
+  font-size: 14px;
+  color: #595959;
+  font-weight: 500;
+}
+
+.batchDeleteActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 批量删除按钮 - 红色 */
+.batchDeleteButton {
+  height: 36px;
+  padding: 8px 16px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.batchDeleteButton:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.batchDeleteButton:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+/* 确定按钮 - 红色 */
+.batchDeleteConfirmButton {
+  height: 36px;
+  padding: 8px 16px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.batchDeleteConfirmButton:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.batchDeleteConfirmButton:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.batchDeleteConfirmButton:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* 取消按钮 - 灰色 */
+.batchDeleteCancelButton {
+  height: 36px;
+  padding: 8px 16px;
+  background: #ffffff;
+  color: #595959;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.batchDeleteCancelButton:hover:not(:disabled) {
+  background: #fafafa;
+  border-color: #1890ff;
+  color: #1890ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.batchDeleteCancelButton:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.batchDeleteCancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 复选框覆盖层 */
+.checkboxOverlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms ease;
+}
+
+.checkboxOverlay:hover .checkbox {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+}
+
+.checkboxChecked {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.checkboxIcon {
+  width: 12px;
+  height: 12px;
+  color: #ffffff;
+}
+
+/* 确认对话框样式 */
+.dialogOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dialogContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 480px;
+  z-index: 1001;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+  animation: slideIn 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.dialogTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 16px 0;
+}
+
+.dialogContent {
+  margin-bottom: 24px;
+}
+
+.dialogText {
+  font-size: 15px;
+  color: #595959;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.dialogHighlight {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.dialogWarning {
+  font-size: 14px;
+  color: #d97706;
+  margin: 0;
+  padding: 12px;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dialogCancelButton {
+  height: 40px;
+  padding: 10px 20px;
+  background: #ffffff;
+  color: #595959;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dialogCancelButton:hover {
+  background: #fafafa;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.dialogConfirmButton {
+  height: 40px;
+  padding: 10px 20px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.dialogConfirmButton:hover {
+  background: #dc2626;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.dialogConfirmButton:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}

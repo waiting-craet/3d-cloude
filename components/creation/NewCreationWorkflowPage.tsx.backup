@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './creation-workflow.module.css';
 import CreateProjectModal from '@/components/CreateProjectModal';
-import BatchDeleteControls from './BatchDeleteControls';
-import ProjectCardCheckbox from './ProjectCardCheckbox';
-import DeleteConfirmDialog from './DeleteConfirmDialog';
 
 interface Graph {
   id: string;
@@ -34,15 +31,10 @@ export default function NewCreationWorkflowPage() {
   const [sortBy, setSortBy] = useState<'updateTime' | 'title'>('updateTime');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingProjects, setExistingProjects] = useState<Project[]>([]);
+  const [graphs, setGraphs] = useState<Graph[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [viewMode, setViewMode] = useState<'projects' | 'graphs'>('projects');
-  
-  // 批量删除状态
-  const [isBatchDeleteMode, setIsBatchDeleteMode] = useState(false);
-  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // 加载项目和图谱列表
   useEffect(() => {
@@ -67,7 +59,26 @@ export default function NewCreationWorkflowPage() {
         
         setProjects(projectList);
         
-        // 注意: graphs 状态已移除,因为图谱数据已包含在 projects 中
+        // 将所有图谱展开为独立的卡片数据（用于图谱视图）
+        const allGraphs: Graph[] = [];
+        projectsWithGraphs.forEach((project: any) => {
+          if (project.graphs && project.graphs.length > 0) {
+            project.graphs.forEach((graph: any) => {
+              allGraphs.push({
+                id: graph.id,
+                name: graph.name,
+                projectId: project.id,
+                projectName: project.name,
+                createdAt: graph.createdAt,
+                updatedAt: graph.updatedAt,
+                nodeCount: graph.nodeCount || 0,
+                edgeCount: graph.edgeCount || 0,
+              });
+            });
+          }
+        });
+        
+        setGraphs(allGraphs);
       }
     } catch (error) {
       console.error('加载项目和图谱列表失败:', error);
@@ -182,10 +193,6 @@ export default function NewCreationWorkflowPage() {
 
   // 处理项目卡片点击 - 进入项目的图谱列表
   const handleProjectCardClick = (project: Project) => {
-    // 在批量删除模式下，阻止导航
-    if (isBatchDeleteMode) {
-      return;
-    }
     setSelectedProject(project);
     setViewMode('graphs');
   };
@@ -207,65 +214,6 @@ export default function NewCreationWorkflowPage() {
 
     // 导航到 graph 页面（3D 编辑器）
     router.push(`/graph?graphId=${graph.id}`);
-  };
-
-  // 批量删除事件处理函数
-  const handleEnterBatchDeleteMode = () => {
-    setIsBatchDeleteMode(true);
-    setSelectedProjectIds(new Set());
-  };
-
-  const handleToggleProjectSelection = (projectId: string) => {
-    setSelectedProjectIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(projectId)) {
-        newSet.delete(projectId);
-      } else {
-        newSet.add(projectId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleCancelBatchDelete = () => {
-    setIsBatchDeleteMode(false);
-    setSelectedProjectIds(new Set());
-    setShowDeleteConfirm(false);
-  };
-
-  const handleShowConfirm = () => {
-    if (selectedProjectIds.size > 0) {
-      setShowDeleteConfirm(true);
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    setIsDeleting(true);
-    setShowDeleteConfirm(false);
-    
-    try {
-      const response = await fetch('/api/projects/batch-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectIds: Array.from(selectedProjectIds)
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
-        alert(`成功删除 ${data.summary.succeeded} 个项目`);
-        await fetchProjectsWithGraphs();
-        handleCancelBatchDelete();
-      } else {
-        alert(data.error || '删除失败');
-      }
-    } catch (error) {
-      alert('删除操作失败，请稍后重试');
-    } finally {
-      setIsDeleting(false);
-    }
   };
 
   return (
@@ -347,17 +295,6 @@ export default function NewCreationWorkflowPage() {
 
           {/* 右侧：两个下拉筛选框 */}
           <div className={styles.filterControls}>
-            {/* 批量删除控件 */}
-            <BatchDeleteControls
-              isBatchDeleteMode={isBatchDeleteMode}
-              selectedCount={selectedProjectIds.size}
-              isDeleting={isDeleting}
-              isProjectView={viewMode === 'projects'}
-              onEnterBatchMode={handleEnterBatchDeleteMode}
-              onConfirm={handleShowConfirm}
-              onCancel={handleCancelBatchDelete}
-            />
-            
             {/* 类型筛选下拉框 */}
             <select
               className={styles.filterSelect}
@@ -443,16 +380,6 @@ export default function NewCreationWorkflowPage() {
                       className={styles.projectCard}
                       onClick={() => handleProjectCardClick(project)}
                     >
-                      {/* 批量删除复选框 */}
-                      {isBatchDeleteMode && (
-                        <ProjectCardCheckbox
-                          projectId={project.id}
-                          projectName={project.name}
-                          isSelected={selectedProjectIds.has(project.id)}
-                          onToggle={handleToggleProjectSelection}
-                        />
-                      )}
-                      
                       <div className={styles.projectCardContent}>
                         <h3 className={styles.projectCardTitle}>项目：{project.name}</h3>
                         <p className={styles.projectCardDescription}>
@@ -546,30 +473,6 @@ export default function NewCreationWorkflowPage() {
         onCreate={handleCreateProject}
         existingProjects={existingProjects}
       />
-
-      {/* 批量删除确认对话框 */}
-      <DeleteConfirmDialog
-        isOpen={showDeleteConfirm}
-        projectCount={selectedProjectIds.size}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelBatchDelete}
-      />
-
-      {/* aria-live 区域用于通知选择模式变化 */}
-      <div 
-        role="status" 
-        aria-live="polite" 
-        aria-atomic="true"
-        style={{ 
-          position: 'absolute', 
-          left: '-10000px', 
-          width: '1px', 
-          height: '1px', 
-          overflow: 'hidden' 
-        }}
-      >
-        {isBatchDeleteMode ? '已进入批量删除模式，请选择要删除的项目' : ''}
-      </div>
     </div>
   );
 }
