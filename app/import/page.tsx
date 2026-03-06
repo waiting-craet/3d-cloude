@@ -13,6 +13,15 @@ interface Graph {
   name: string
 }
 
+interface ImportStats {
+  duplicateNodesCount: number
+  duplicateEdgesCount: number
+  importedNodesCount: number
+  importedEdgesCount: number
+  totalNodesInFile: number
+  totalEdgesInFile: number
+}
+
 export default function ImportPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
@@ -31,6 +40,7 @@ export default function ImportPage() {
   const [newGraphName, setNewGraphName] = useState('')
   const [creating, setCreating] = useState(false)
   const [abortController, setAbortController] = useState<AbortController | null>(null)
+  const [importStats, setImportStats] = useState<ImportStats | null>(null)
 
   useEffect(() => {
     fetchProjects()
@@ -199,6 +209,7 @@ export default function ImportPage() {
 
   const handleConfirmUpload = async () => {
     setShowConfirmModal(false)
+    setImportStats(null) // 重置统计信息
     setShowLoadingModal(true)
     await handleUpload()
   }
@@ -241,6 +252,16 @@ export default function ImportPage() {
       const result = await response.json()
       
       if (response.ok) {
+        // 更新统计信息
+        setImportStats({
+          duplicateNodesCount: result.duplicateNodesCount || 0,
+          duplicateEdgesCount: result.duplicateEdgesCount || 0,
+          importedNodesCount: result.nodesCount || 0,
+          importedEdgesCount: result.edgesCount || 0,
+          totalNodesInFile: result.totalNodesInFile || 0,
+          totalEdgesInFile: result.totalEdgesInFile || 0
+        })
+        
         let successMessage = '导入成功！'
         if (result.warnings && result.warnings.length > 0) {
           successMessage += `\n注意事项：${result.warnings.join('；')}`
@@ -1057,7 +1078,7 @@ export default function ImportPage() {
             background: 'white',
             borderRadius: '16px',
             padding: '40px',
-            width: '400px',
+            width: '450px',
             maxWidth: '90%',
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
             textAlign: 'center'
@@ -1090,6 +1111,119 @@ export default function ImportPage() {
             }}>
               {uploadStatus || '正在处理您的数据，请稍候'}
             </p>
+            
+            {/* 统计信息显示区域 */}
+            {importStats && (
+              <div style={{
+                background: '#f8f9fa',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '24px',
+                textAlign: 'left'
+              }}>
+                <div style={{
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  color: '#333',
+                  marginBottom: '16px',
+                  textAlign: 'center'
+                }}>
+                  📊 导入统计
+                </div>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '12px',
+                  fontSize: '13px'
+                }}>
+                  {/* 节点统计 */}
+                  <div style={{
+                    background: 'white',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e5e5'
+                  }}>
+                    <div style={{ color: '#666', marginBottom: '6px' }}>
+                      文件节点数
+                    </div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+                      {importStats.totalNodesInFile}
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e5e5'
+                  }}>
+                    <div style={{ color: '#666', marginBottom: '6px' }}>
+                      文件边数
+                    </div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+                      {importStats.totalEdgesInFile}
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    background: '#fff3cd',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #ffeaa7'
+                  }}>
+                    <div style={{ color: '#856404', marginBottom: '6px' }}>
+                      冗余节点
+                    </div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#856404' }}>
+                      {importStats.duplicateNodesCount}
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    background: '#fff3cd',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #ffeaa7'
+                  }}>
+                    <div style={{ color: '#856404', marginBottom: '6px' }}>
+                      冗余边
+                    </div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#856404' }}>
+                      {importStats.duplicateEdgesCount}
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    background: '#d4edda',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #c3e6cb'
+                  }}>
+                    <div style={{ color: '#155724', marginBottom: '6px' }}>
+                      导入节点
+                    </div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#155724' }}>
+                      {importStats.importedNodesCount}
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    background: '#d4edda',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #c3e6cb'
+                  }}>
+                    <div style={{ color: '#155724', marginBottom: '6px' }}>
+                      导入边
+                    </div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#155724' }}>
+                      {importStats.importedEdgesCount}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <button
               onClick={handleCancelUpload}

@@ -1,1117 +1,450 @@
 /**
- * Enhanced Duplicate Detection Service
+ * 冗余数据检测服务
  * 
- * Compares AI-generated nodes and edges against existing graph data to identify
- * duplicates and conflicts with advanced classification and confidence scoring.
- * Implements comprehensive conflict detection including orphaned relationships
- * and content conflicts.
+ * 本服务用于检测导入数据中的冗余节点和边,确保不会重复导入已存在的数据。
  * 
- * Requirements: 1.3, 1.4, 1.5, 1.6, 1.7, 5.1, 5.2, 5.3, 5.4, 7.1, 7.2
+ * 冗余判断标准:
+ * - 节点: 基于 name 字段判断(导入模板的 label 字段映射为数据库的 name 字段)
+ * - 边: 基于源节点name、目标节点name和关系类型(label)的组合判断
  */
 
+import type { PrismaClient } from '@prisma/client'
+
+// ============================================================================
+// 类型定义
+// ============================================================================
+
 /**
- * Types of conflicts that can be detected
+ * 节点数据类型(用于导入)
+ * 对应导入模板中的节点结构
  */
-export enum ConflictType {
-  DUPLICATE_NODES = 'duplicate_nodes',
-  CONFLICTING_EDGES = 'conflicting_edges',
-  MISSING_REFERENCES = 'missing_references',
-  CONTENT_CONFLICTS = 'content_conflicts',
-  PROPERTY_MISMATCHES = 'property_mismatches',
-  TYPE_INCONSISTENCIES = 'type_inconsistencies'
+export interface NodeData {
+  id?: string
+  label: string          // 导入时的节点标识,映射到数据库的 name 字段
+  description?: string
+  x?: number
+  y?: number
+  z?: number
+  color?: string
+  size?: number
+  shape?: string
 }
 
 /**
- * Confidence score for conflict detection
+ * 边数据类型(用于导入)
+ * 对应导入模板中的边结构
  */
-export interface ConflictConfidenceScore {
-  overall: number; // 0-1 confidence score
-  factors: {
-    nameSimilarity: number;
-    contentOverlap: number;
-    propertyAlignment: number;
-    contextualRelevance: number;
-  };
-  reasoning: string[];
+export interface EdgeData {
+  source: string         // 源节点的 label/name
+  target: string         // 目标节点的 label/name
+  label?: string         // 关系类型
 }
 
 /**
- * Enhanced conflict information
+ * 数据库中的节点类型(简化版,仅包含检测所需字段)
  */
-export interface DetectedConflict {
-  type: ConflictType;
-  confidence: ConflictConfidenceScore;
-  description: string;
-  affectedItems: {
-    newItem: any;
-    existingItem?: any;
-  };
-  resolutionOptions: ResolutionOption[];
+export interface ExistingNode {
+  name: string
 }
 
 /**
- * Resolution options for conflicts
+ * 数据库中的边类型(简化版,仅包含检测所需字段)
  */
-export interface ResolutionOption {
-  id: string;
-  label: string;
-  description: string;
-  action: 'keep_existing' | 'use_new' | 'merge' | 'skip' | 'manual_review';
-}
-
-/**
- * Orphaned relationship information
- */
-export interface OrphanedRelationship {
-  edgeIndex: number;
-  missingNodeName: string;
-  edgeData: NewEdgeData;
-  reason: 'source_missing' | 'target_missing' | 'both_missing';
-}
-
-/**
- * Content conflict information
- */
-export interface ContentConflict {
-  field: string;
-  conflictType: 'semantic_difference' | 'format_mismatch' | 'value_contradiction';
-  existingContent: any;
-  newContent: any;
-  similarity: number; // 0-1 similarity score
-}
-
-/**
- * Comprehensive conflict analysis result
- */
-export interface ConflictAnalysisResult {
-  analyzedNodes: number;
-  analyzedEdges: number;
-  conflicts: DetectedConflict[];
-  classifiedConflicts: ClassifiedConflicts;
-  summary: {
-    totalConflicts: number;
-    highConfidenceConflicts: number;
-    criticalConflicts: number;
-  };
-}
-
-/**
- * Conflicts organized by type
- */
-export interface ClassifiedConflicts {
-  [ConflictType.DUPLICATE_NODES]: DetectedConflict[];
-  [ConflictType.CONFLICTING_EDGES]: DetectedConflict[];
-  [ConflictType.MISSING_REFERENCES]: DetectedConflict[];
-  [ConflictType.CONTENT_CONFLICTS]: DetectedConflict[];
-  [ConflictType.PROPERTY_MISMATCHES]: DetectedConflict[];
-  [ConflictType.TYPE_INCONSISTENCIES]: DetectedConflict[];
-}
-
-/**
- * Generated graph data structure
- */
-export interface GeneratedGraphData {
-  nodes: NewNodeData[];
-  edges: NewEdgeData[];
-}
-
-/**
- * Existing graph data structure
- */
-export interface ExistingGraphData {
-  nodes: ExistingNodeData[];
-  edges: ExistingEdgeData[];
-}
-
-/**
- * Represents a conflict between property values
- */
-export interface PropertyConflict {
-  property: string;
-  existingValue: any;
-  newValue: any;
-}
-
-/**
- * Information about a detected duplicate node
- */
-export interface DuplicateNodeInfo {
-  newNodeIndex: number;
-  existingNodeId: string;
-  conflicts: PropertyConflict[];
-}
-
-/**
- * Node data from AI analysis
- */
-export interface NewNodeData {
-  name: string;
-  properties: Record<string, any>;
-}
-
-/**
- * Existing node data from database
- */
-export interface ExistingNodeData {
-  id: string;
-  name: string;
-  metadata: string | null;
-}
-
-/**
- * Edge data from AI analysis
- */
-export interface NewEdgeData {
-  from: string;  // Entity name
-  to: string;    // Entity name
-  type: string;
-}
-
-/**
- * Existing edge data from database
- */
-export interface ExistingEdgeData {
-  fromNodeId: string;
-  toNodeId: string;
-  label: string;
-}
-
-/**
- * Enhanced Duplicate Detection Service interface
- */
-export interface DuplicateDetectionService {
-  /**
-   * Detects duplicate nodes by comparing labels (case-insensitive)
-   * 
-   * @param newNodes - Array of AI-generated nodes to check
-   * @param existingNodes - Array of existing nodes from the database
-   * @returns Array of duplicate node information including conflicts
-   */
-  detectDuplicateNodes(
-    newNodes: NewNodeData[],
-    existingNodes: ExistingNodeData[]
-  ): DuplicateNodeInfo[];
-
-  /**
-   * Detects redundant edges by comparing source, target, and relationship type
-   * 
-   * @param newEdges - Array of AI-generated edges to check
-   * @param existingEdges - Array of existing edges from the database
-   * @param nodeMapping - Map of node names to their database IDs
-   * @returns Array of indices of redundant edges
-   */
-  detectRedundantEdges(
-    newEdges: NewEdgeData[],
-    existingEdges: ExistingEdgeData[],
-    nodeMapping: Map<string, string>
-  ): number[];
-
-  /**
-   * Comprehensive conflict analysis with classification and confidence scoring
-   * 
-   * @param generatedGraph - Generated graph data from AI
-   * @param existingGraph - Existing graph data from database
-   * @returns Comprehensive conflict analysis result
-   */
-  analyzeConflicts(
-    generatedGraph: GeneratedGraphData,
-    existingGraph: ExistingGraphData
-  ): ConflictAnalysisResult;
-
-  /**
-   * Classify conflicts into distinct categories
-   * 
-   * @param conflicts - Array of detected conflicts
-   * @returns Conflicts organized by type
-   */
-  classifyConflicts(conflicts: DetectedConflict[]): ClassifiedConflicts;
-
-  /**
-   * Calculate confidence scores for conflict detection
-   * 
-   * @param newItem - New item being analyzed
-   * @param existingItem - Existing item for comparison
-   * @param conflictType - Type of conflict being analyzed
-   * @returns Confidence score with reasoning
-   */
-  calculateConfidenceScore(
-    newItem: any,
-    existingItem: any,
-    conflictType: ConflictType
-  ): ConflictConfidenceScore;
-
-  /**
-   * Detect orphaned relationships where target nodes don't exist
-   * 
-   * @param edges - Array of new edges to check
-   * @param nodeMapping - Map of node names to their database IDs
-   * @returns Array of orphaned relationships
-   */
-  detectOrphanedRelationships(
-    edges: NewEdgeData[],
-    nodeMapping: Map<string, string>
-  ): OrphanedRelationship[];
-
-  /**
-   * Identify content conflicts within node properties
-   * 
-   * @param newNode - New node data
-   * @param existingNode - Existing node data
-   * @returns Array of content conflicts
-   */
-  detectContentConflicts(
-    newNode: NewNodeData,
-    existingNode: ExistingNodeData
-  ): ContentConflict[];
-}
-
-/**
- * Implementation of Duplicate Detection Service
- */
-export class DuplicateDetectionServiceImpl implements DuplicateDetectionService {
-  /**
-   * Detects duplicate nodes using case-insensitive name comparison
-   * and identifies property conflicts
-   */
-  detectDuplicateNodes(
-    newNodes: NewNodeData[],
-    existingNodes: ExistingNodeData[]
-  ): DuplicateNodeInfo[] {
-    const duplicates: DuplicateNodeInfo[] = [];
-
-    // Create a map of lowercase names to existing nodes for efficient lookup
-    const existingNodesMap = new Map<string, ExistingNodeData>();
-    for (const existingNode of existingNodes) {
-      const normalizedName = existingNode.name.toLowerCase().trim();
-      existingNodesMap.set(normalizedName, existingNode);
-    }
-
-    // Check each new node for duplicates
-    for (let i = 0; i < newNodes.length; i++) {
-      const newNode = newNodes[i];
-      const normalizedNewName = newNode.name.toLowerCase().trim();
-      
-      const existingNode = existingNodesMap.get(normalizedNewName);
-      
-      if (existingNode) {
-        // Found a duplicate - now check for property conflicts
-        const conflicts = this.detectPropertyConflicts(
-          newNode.properties,
-          this.parseMetadata(existingNode.metadata)
-        );
-
-        duplicates.push({
-          newNodeIndex: i,
-          existingNodeId: existingNode.id,
-          conflicts,
-        });
-      }
-    }
-
-    return duplicates;
+export interface ExistingEdge {
+  label: string
+  fromNode: {
+    name: string
   }
-
-  /**
-   * Detects property conflicts between new and existing node properties
-   * 
-   * @param newProps - Properties from the new node
-   * @param existingProps - Properties from the existing node
-   * @returns Array of property conflicts
-   */
-  private detectPropertyConflicts(
-    newProps: Record<string, any>,
-    existingProps: Record<string, any>
-  ): PropertyConflict[] {
-    const conflicts: PropertyConflict[] = [];
-
-    // Check each property in the new node
-    for (const [key, newValue] of Object.entries(newProps)) {
-      // Skip if property doesn't exist in existing node
-      if (!(key in existingProps)) {
-        continue;
-      }
-
-      const existingValue = existingProps[key];
-
-      // Compare values - consider them different if they don't match
-      if (!this.areValuesEqual(existingValue, newValue)) {
-        conflicts.push({
-          property: key,
-          existingValue,
-          newValue,
-        });
-      }
-    }
-
-    return conflicts;
+  toNode: {
+    name: string
   }
+}
 
-  /**
-   * Compares two values for equality, handling different types
-   * 
-   * @param value1 - First value to compare
-   * @param value2 - Second value to compare
-   * @returns True if values are equal, false otherwise
-   */
-  private areValuesEqual(value1: any, value2: any): boolean {
-    // Handle null/undefined
-    if (value1 === null || value1 === undefined) {
-      return value2 === null || value2 === undefined;
-    }
-    if (value2 === null || value2 === undefined) {
-      return false;
-    }
+/**
+ * 冗余检测结果
+ */
+export interface DuplicateDetectionResult {
+  duplicateNodes: Set<string>      // 冗余节点的 name 集合
+  duplicateEdges: Set<string>      // 冗余边的唯一键集合
+  duplicateNodeCount: number       // 冗余节点数量
+  duplicateEdgeCount: number       // 冗余边数量
+}
 
-    // Handle primitive types
-    if (typeof value1 !== 'object' && typeof value2 !== 'object') {
-      // For strings, do case-insensitive comparison
-      if (typeof value1 === 'string' && typeof value2 === 'string') {
-        return value1.toLowerCase().trim() === value2.toLowerCase().trim();
-      }
-      return value1 === value2;
-    }
+/**
+ * 过滤后的数据
+ */
+export interface FilteredData {
+  nodes: NodeData[]                // 非冗余节点
+  edges: EdgeData[]                // 非冗余边
+  originalNodeCount: number        // 原始节点数量
+  originalEdgeCount: number        // 原始边数量
+}
 
-    // Handle arrays
-    if (Array.isArray(value1) && Array.isArray(value2)) {
-      if (value1.length !== value2.length) {
-        return false;
-      }
-      for (let i = 0; i < value1.length; i++) {
-        if (!this.areValuesEqual(value1[i], value2[i])) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    // Handle objects
-    if (typeof value1 === 'object' && typeof value2 === 'object') {
-      const keys1 = Object.keys(value1);
-      const keys2 = Object.keys(value2);
-      
-      if (keys1.length !== keys2.length) {
-        return false;
-      }
-      
-      for (const key of keys1) {
-        if (!keys2.includes(key)) {
-          return false;
-        }
-        if (!this.areValuesEqual(value1[key], value2[key])) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    // Different types
-    return false;
+/**
+ * 解析后的图谱数据(与 graph-import.ts 保持一致)
+ */
+export interface ParsedGraphData {
+  nodes: NodeData[]
+  edges: EdgeData[]
+  metadata?: {
+    format: 'edge-list' | 'matrix-list' | 'unknown'
+    version?: string
   }
+}
 
-  /**
-   * Parses metadata JSON string into an object
-   * 
-   * @param metadata - JSON string or null
-   * @returns Parsed object or empty object if parsing fails
-   */
-  private parseMetadata(metadata: string | null): Record<string, any> {
-    if (!metadata) {
-      return {};
-    }
+// ============================================================================
+// 核心检测函数
+// ============================================================================
 
-    try {
-      const parsed = JSON.parse(metadata);
-      return typeof parsed === 'object' && parsed !== null ? parsed : {};
-    } catch (error) {
-      console.warn('[Duplicate Detection] Failed to parse metadata:', error);
-      return {};
-    }
-  }
+/**
+ * 检测冗余节点
+ * 
+ * 基于节点的 name 字段判断是否冗余。
+ * 使用 Set 数据结构实现 O(1) 查找性能。
+ * 
+ * @param uploadNodes - 上传文件中的节点
+ * @param existingNodes - 数据库中已存在的节点
+ * @returns 冗余节点的 name 集合
+ */
+export function detectDuplicateNodes(
+  uploadNodes: NodeData[],
+  existingNodes: ExistingNode[]
+): Set<string> {
+  // 创建现有节点 name 的 Set,用于 O(1) 查找
+  const existingNodeNames = new Set<string>(
+    existingNodes.map(node => node.name)
+  )
 
-  /**
-   * Detects redundant edges by comparing source, target, and relationship type
-   */
-  detectRedundantEdges(
-    newEdges: NewEdgeData[],
-    existingEdges: ExistingEdgeData[],
-    nodeMapping: Map<string, string>
-  ): number[] {
-    const redundantIndices: number[] = [];
-
-    // Create a set of existing edge signatures for efficient lookup
-    // Signature format: "fromNodeId|toNodeId|label"
-    const existingEdgeSignatures = new Set<string>();
+  // 检测上传节点中的冗余项
+  const duplicates = new Set<string>()
+  
+  for (const node of uploadNodes) {
+    // 导入模板中的 label 字段对应数据库的 name 字段
+    const nodeName = node.label
     
-    for (const edge of existingEdges) {
-      const signature = this.createEdgeSignature(
-        edge.fromNodeId,
-        edge.toNodeId,
+    if (existingNodeNames.has(nodeName)) {
+      duplicates.add(nodeName)
+    }
+  }
+
+  return duplicates
+}
+
+/**
+ * 生成边的唯一键
+ * 
+ * 格式: ${sourceName}|${targetName}|${label}
+ * 
+ * @param source - 源节点 name
+ * @param target - 目标节点 name
+ * @param label - 关系类型
+ * @returns 边的唯一键
+ */
+export function generateEdgeKey(
+  source: string,
+  target: string,
+  label: string
+): string {
+  return `${source}|${target}|${label}`
+}
+
+/**
+ * 检测冗余边
+ * 
+ * 基于源节点name、目标节点name和关系类型的组合判断是否冗余。
+ * 使用唯一键格式: ${sourceName}|${targetName}|${label}
+ * 
+ * @param uploadEdges - 上传文件中的边
+ * @param existingEdges - 数据库中已存在的边
+ * @returns 冗余边的唯一键集合
+ */
+export function detectDuplicateEdges(
+  uploadEdges: EdgeData[],
+  existingEdges: ExistingEdge[]
+): Set<string> {
+  // 创建现有边的唯一键 Set,用于 O(1) 查找
+  const existingEdgeKeys = new Set<string>(
+    existingEdges.map(edge =>
+      generateEdgeKey(
+        edge.fromNode.name,
+        edge.toNode.name,
         edge.label
-      );
-      existingEdgeSignatures.add(signature);
+      )
+    )
+  )
+
+  // 检测上传边中的冗余项
+  const duplicates = new Set<string>()
+  
+  for (const edge of uploadEdges) {
+    const edgeKey = generateEdgeKey(
+      edge.source,
+      edge.target,
+      edge.label || ''  // 如果没有 label,使用空字符串
+    )
+    
+    if (existingEdgeKeys.has(edgeKey)) {
+      duplicates.add(edgeKey)
     }
+  }
 
-    // Check each new edge for redundancy
-    for (let i = 0; i < newEdges.length; i++) {
-      const newEdge = newEdges[i];
-      
-      // Get the node IDs from the mapping
-      const fromId = nodeMapping.get(newEdge.from.toLowerCase().trim());
-      const toId = nodeMapping.get(newEdge.to.toLowerCase().trim());
+  return duplicates
+}
 
-      // Skip if we can't find the node IDs (shouldn't happen if data is valid)
-      if (!fromId || !toId) {
-        continue;
-      }
+/**
+ * 过滤冗余数据
+ * 
+ * 从原始数据中移除冗余的节点和边,返回过滤后的数据和统计信息。
+ * 
+ * @param nodes - 原始节点数据
+ * @param edges - 原始边数据
+ * @param duplicateNodes - 冗余节点的 name 集合
+ * @param duplicateEdges - 冗余边的唯一键集合
+ * @returns 过滤后的数据和统计信息
+ */
+export function filterNonDuplicateData(
+  nodes: NodeData[],
+  edges: EdgeData[],
+  duplicateNodes: Set<string>,
+  duplicateEdges: Set<string>
+): FilteredData {
+  // 过滤非冗余节点
+  const filteredNodes = nodes.filter(
+    node => !duplicateNodes.has(node.label)
+  )
 
-      // Create signature for the new edge
-      const signature = this.createEdgeSignature(fromId, toId, newEdge.type);
+  // 过滤非冗余边
+  const filteredEdges = edges.filter(edge => {
+    const edgeKey = generateEdgeKey(
+      edge.source,
+      edge.target,
+      edge.label || ''
+    )
+    return !duplicateEdges.has(edgeKey)
+  })
 
-      // Check if this edge already exists
-      if (existingEdgeSignatures.has(signature)) {
-        redundantIndices.push(i);
-      }
+  return {
+    nodes: filteredNodes,
+    edges: filteredEdges,
+    originalNodeCount: nodes.length,
+    originalEdgeCount: edges.length
+  }
+}
+
+// ============================================================================
+// 数据库查询函数
+// ============================================================================
+
+/**
+ * 查询项目和图谱中的现有节点
+ * 
+ * 只查询 name 字段以优化性能。
+ * 
+ * @param prisma - Prisma 客户端实例
+ * @param projectId - 项目 ID
+ * @param graphId - 图谱 ID
+ * @returns 现有节点列表
+ */
+export async function fetchExistingNodes(
+  prisma: PrismaClient,
+  projectId: string,
+  graphId: string
+): Promise<ExistingNode[]> {
+  return await prisma.node.findMany({
+    where: {
+      projectId,
+      graphId
+    },
+    select: {
+      name: true
     }
+  })
+}
 
-    return redundantIndices;
-  }
-
-  /**
-   * Creates a unique signature for an edge
-   * Uses case-insensitive label comparison
-   * 
-   * @param fromNodeId - Source node ID
-   * @param toNodeId - Target node ID
-   * @param label - Edge label/type
-   * @returns Unique signature string
-   */
-  private createEdgeSignature(
-    fromNodeId: string,
-    toNodeId: string,
-    label: string
-  ): string {
-    // Normalize label to lowercase for case-insensitive comparison
-    const normalizedLabel = label.toLowerCase().trim();
-    return `${fromNodeId}|${toNodeId}|${normalizedLabel}`;
-  }
-
-  /**
-   * Comprehensive conflict analysis with classification and confidence scoring
-   */
-  analyzeConflicts(
-    generatedGraph: GeneratedGraphData,
-    existingGraph: ExistingGraphData
-  ): ConflictAnalysisResult {
-    const conflicts: DetectedConflict[] = [];
-
-    // Create node mapping for efficient lookups
-    const nodeMapping = this.createNodeMapping(generatedGraph.nodes, existingGraph.nodes);
-
-    // Analyze node conflicts
-    const nodeConflicts = this.analyzeNodeConflicts(generatedGraph.nodes, existingGraph.nodes);
-    conflicts.push(...nodeConflicts);
-
-    // Analyze edge conflicts
-    const edgeConflicts = this.analyzeEdgeConflicts(generatedGraph.edges, existingGraph.edges, nodeMapping);
-    conflicts.push(...edgeConflicts);
-
-    // Detect orphaned relationships
-    const orphanedRelationships = this.detectOrphanedRelationships(generatedGraph.edges, nodeMapping);
-    const orphanedConflicts = orphanedRelationships.map(orphaned => this.createOrphanedConflict(orphaned));
-    conflicts.push(...orphanedConflicts);
-
-    // Classify conflicts
-    const classifiedConflicts = this.classifyConflicts(conflicts);
-
-    // Generate summary
-    const summary = this.generateConflictSummary(conflicts);
-
-    return {
-      analyzedNodes: generatedGraph.nodes.length,
-      analyzedEdges: generatedGraph.edges.length,
-      conflicts,
-      classifiedConflicts,
-      summary
-    };
-  }
-
-  /**
-   * Classify conflicts into distinct categories
-   */
-  classifyConflicts(conflicts: DetectedConflict[]): ClassifiedConflicts {
-    const classified: ClassifiedConflicts = {
-      [ConflictType.DUPLICATE_NODES]: [],
-      [ConflictType.CONFLICTING_EDGES]: [],
-      [ConflictType.MISSING_REFERENCES]: [],
-      [ConflictType.CONTENT_CONFLICTS]: [],
-      [ConflictType.PROPERTY_MISMATCHES]: [],
-      [ConflictType.TYPE_INCONSISTENCIES]: []
-    };
-
-    for (const conflict of conflicts) {
-      classified[conflict.type].push(conflict);
-    }
-
-    return classified;
-  }
-
-  /**
-   * Calculate confidence scores for conflict detection
-   */
-  calculateConfidenceScore(
-    newItem: any,
-    existingItem: any,
-    conflictType: ConflictType
-  ): ConflictConfidenceScore {
-    const factors = {
-      nameSimilarity: this.calculateNameSimilarity(newItem, existingItem),
-      contentOverlap: this.calculateContentOverlap(newItem, existingItem),
-      propertyAlignment: this.calculatePropertyAlignment(newItem, existingItem),
-      contextualRelevance: this.calculateContextualRelevance(newItem, existingItem, conflictType)
-    };
-
-    // Calculate overall confidence based on conflict type
-    const overall = this.calculateOverallConfidence(factors, conflictType);
-
-    const reasoning = this.generateConfidenceReasoning(factors, conflictType);
-
-    return {
-      overall,
-      factors,
-      reasoning
-    };
-  }
-
-  /**
-   * Detect orphaned relationships where target nodes don't exist
-   */
-  detectOrphanedRelationships(
-    edges: NewEdgeData[],
-    nodeMapping: Map<string, string>
-  ): OrphanedRelationship[] {
-    const orphaned: OrphanedRelationship[] = [];
-
-    for (let i = 0; i < edges.length; i++) {
-      const edge = edges[i];
-      const fromExists = nodeMapping.has(edge.from.toLowerCase().trim());
-      const toExists = nodeMapping.has(edge.to.toLowerCase().trim());
-
-      if (!fromExists || !toExists) {
-        let reason: 'source_missing' | 'target_missing' | 'both_missing';
-        let missingNodeName: string;
-
-        if (!fromExists && !toExists) {
-          reason = 'both_missing';
-          missingNodeName = `${edge.from}, ${edge.to}`;
-        } else if (!fromExists) {
-          reason = 'source_missing';
-          missingNodeName = edge.from;
-        } else {
-          reason = 'target_missing';
-          missingNodeName = edge.to;
+/**
+ * 查询项目和图谱中的现有边
+ * 
+ * 只查询必要字段(label, fromNode.name, toNode.name)以优化性能。
+ * 
+ * @param prisma - Prisma 客户端实例
+ * @param projectId - 项目 ID
+ * @param graphId - 图谱 ID
+ * @returns 现有边列表
+ */
+export async function fetchExistingEdges(
+  prisma: PrismaClient,
+  projectId: string,
+  graphId: string
+): Promise<ExistingEdge[]> {
+  return await prisma.edge.findMany({
+    where: {
+      projectId,
+      graphId
+    },
+    select: {
+      label: true,
+      fromNode: {
+        select: {
+          name: true
         }
-
-        orphaned.push({
-          edgeIndex: i,
-          missingNodeName,
-          edgeData: edge,
-          reason
-        });
-      }
-    }
-
-    return orphaned;
-  }
-
-  /**
-   * Identify content conflicts within node properties
-   */
-  detectContentConflicts(
-    newNode: NewNodeData,
-    existingNode: ExistingNodeData
-  ): ContentConflict[] {
-    const conflicts: ContentConflict[] = [];
-    const existingProps = this.parseMetadata(existingNode.metadata);
-
-    for (const [field, newContent] of Object.entries(newNode.properties)) {
-      if (field in existingProps) {
-        const existingContent = existingProps[field];
-        const conflict = this.analyzeContentConflict(field, existingContent, newContent);
-        
-        if (conflict) {
-          conflicts.push(conflict);
+      },
+      toNode: {
+        select: {
+          name: true
         }
       }
     }
+  })
+}
 
-    return conflicts;
-  }
+// ============================================================================
+// 主检测流程
+// ============================================================================
 
-  // Private helper methods for enhanced functionality
-
-  private createNodeMapping(newNodes: NewNodeData[], existingNodes: ExistingNodeData[]): Map<string, string> {
-    const mapping = new Map<string, string>();
-
-    // Add existing nodes to mapping
-    for (const node of existingNodes) {
-      mapping.set(node.name.toLowerCase().trim(), node.id);
+/**
+ * 执行完整的冗余检测流程
+ * 
+ * 1. 从数据库查询现有节点和边
+ * 2. 检测上传数据中的冗余项
+ * 3. 过滤冗余数据
+ * 4. 返回检测结果和过滤后的数据
+ * 
+ * @param prisma - Prisma 客户端实例
+ * @param uploadData - 上传的图谱数据
+ * @param projectId - 项目 ID
+ * @param graphId - 图谱 ID
+ * @returns 检测结果和过滤后的数据
+ */
+export async function detectAndFilterDuplicates(
+  prisma: PrismaClient,
+  uploadData: ParsedGraphData,
+  projectId: string,
+  graphId: string
+): Promise<{
+  filtered: FilteredData
+  detection: DuplicateDetectionResult
+}> {
+  try {
+    // 验证上传数据格式
+    if (!uploadData.nodes || !Array.isArray(uploadData.nodes)) {
+      const error = new Error('数据格式错误: 缺少有效的节点数组')
+      console.error('Data format validation error:', {
+        type: 'data_format_error',
+        projectId,
+        graphId,
+        error: error.message,
+        context: 'nodes array missing or invalid',
+        timestamp: new Date().toISOString()
+      })
+      throw error
     }
 
-    // Add new nodes that don't conflict (they would get new IDs)
-    for (const node of newNodes) {
-      const normalizedName = node.name.toLowerCase().trim();
-      if (!mapping.has(normalizedName)) {
-        // Generate a temporary ID for new nodes
-        mapping.set(normalizedName, `temp_${Date.now()}_${Math.random()}`);
+    if (!uploadData.edges || !Array.isArray(uploadData.edges)) {
+      const error = new Error('数据格式错误: 缺少有效的边数组')
+      console.error('Data format validation error:', {
+        type: 'data_format_error',
+        projectId,
+        graphId,
+        error: error.message,
+        context: 'edges array missing or invalid',
+        timestamp: new Date().toISOString()
+      })
+      throw error
+    }
+
+    // 验证节点数据格式
+    for (let i = 0; i < uploadData.nodes.length; i++) {
+      const node = uploadData.nodes[i]
+      if (!node.label || typeof node.label !== 'string') {
+        const error = new Error(`数据格式错误: 节点 ${i} 缺少必要的 label 字段`)
+        console.error('Data format validation error:', {
+          type: 'data_format_error',
+          projectId,
+          graphId,
+          error: error.message,
+          context: `node at index ${i}`,
+          nodeData: node,
+          timestamp: new Date().toISOString()
+        })
+        throw error
       }
     }
 
-    return mapping;
-  }
-
-  private analyzeNodeConflicts(newNodes: NewNodeData[], existingNodes: ExistingNodeData[]): DetectedConflict[] {
-    const conflicts: DetectedConflict[] = [];
-    const duplicates = this.detectDuplicateNodes(newNodes, existingNodes);
-
-    for (const duplicate of duplicates) {
-      const newNode = newNodes[duplicate.newNodeIndex];
-      const existingNode = existingNodes.find(n => n.id === duplicate.existingNodeId);
-
-      if (existingNode) {
-        const confidence = this.calculateConfidenceScore(newNode, existingNode, ConflictType.DUPLICATE_NODES);
-        const contentConflicts = this.detectContentConflicts(newNode, existingNode);
-
-        // Create duplicate node conflict
-        conflicts.push({
-          type: ConflictType.DUPLICATE_NODES,
-          confidence,
-          description: `节点 "${newNode.name}" 与现有节点冲突`,
-          affectedItems: {
-            newItem: newNode,
-            existingItem: existingNode
-          },
-          resolutionOptions: this.generateNodeResolutionOptions(newNode, existingNode)
-        });
-
-        // Create content conflicts if any
-        for (const contentConflict of contentConflicts) {
-          conflicts.push({
-            type: ConflictType.CONTENT_CONFLICTS,
-            confidence: this.calculateConfidenceScore(
-              contentConflict.newContent,
-              contentConflict.existingContent,
-              ConflictType.CONTENT_CONFLICTS
-            ),
-            description: `节点 "${newNode.name}" 的 ${contentConflict.field} 字段内容冲突`,
-            affectedItems: {
-              newItem: { field: contentConflict.field, content: contentConflict.newContent },
-              existingItem: { field: contentConflict.field, content: contentConflict.existingContent }
-            },
-            resolutionOptions: this.generateContentResolutionOptions(contentConflict)
-          });
-        }
-      }
-    }
-
-    return conflicts;
-  }
-
-  private analyzeEdgeConflicts(
-    newEdges: NewEdgeData[],
-    existingEdges: ExistingEdgeData[],
-    nodeMapping: Map<string, string>
-  ): DetectedConflict[] {
-    const conflicts: DetectedConflict[] = [];
-    const redundantIndices = this.detectRedundantEdges(newEdges, existingEdges, nodeMapping);
-
-    for (const index of redundantIndices) {
-      const newEdge = newEdges[index];
-      const confidence = this.calculateConfidenceScore(newEdge, null, ConflictType.CONFLICTING_EDGES);
-
-      conflicts.push({
-        type: ConflictType.CONFLICTING_EDGES,
-        confidence,
-        description: `关系 "${newEdge.from}" -> "${newEdge.to}" (${newEdge.type}) 已存在`,
-        affectedItems: {
-          newItem: newEdge
-        },
-        resolutionOptions: this.generateEdgeResolutionOptions(newEdge)
-      });
-    }
-
-    return conflicts;
-  }
-
-  private createOrphanedConflict(orphaned: OrphanedRelationship): DetectedConflict {
-    const confidence = this.calculateConfidenceScore(orphaned.edgeData, null, ConflictType.MISSING_REFERENCES);
-
-    return {
-      type: ConflictType.MISSING_REFERENCES,
-      confidence,
-      description: `关系引用了不存在的节点: ${orphaned.missingNodeName}`,
-      affectedItems: {
-        newItem: orphaned.edgeData
-      },
-      resolutionOptions: this.generateOrphanedResolutionOptions(orphaned)
-    };
-  }
-
-  private generateConflictSummary(conflicts: DetectedConflict[]) {
-    const highConfidenceConflicts = conflicts.filter(c => c.confidence.overall >= 0.8).length;
-    const criticalConflicts = conflicts.filter(c => 
-      c.type === ConflictType.MISSING_REFERENCES || 
-      (c.type === ConflictType.DUPLICATE_NODES && c.confidence.overall >= 0.9)
-    ).length;
-
-    return {
-      totalConflicts: conflicts.length,
-      highConfidenceConflicts,
-      criticalConflicts
-    };
-  }
-
-  // Confidence calculation helper methods
-
-  private calculateNameSimilarity(newItem: any, existingItem: any): number {
-    if (!newItem?.name || !existingItem?.name) return 0;
+    // 1. 查询现有数据
+    let existingNodes: ExistingNode[]
+    let existingEdges: ExistingEdge[]
     
-    const name1 = newItem.name.toLowerCase().trim();
-    const name2 = existingItem.name.toLowerCase().trim();
-    
-    if (name1 === name2) return 1.0;
-    
-    // Simple Levenshtein distance-based similarity
-    const distance = this.levenshteinDistance(name1, name2);
-    const maxLength = Math.max(name1.length, name2.length);
-    return maxLength === 0 ? 1.0 : 1.0 - (distance / maxLength);
-  }
-
-  private calculateContentOverlap(newItem: any, existingItem: any): number {
-    if (!newItem?.properties || !existingItem) return 0;
-    
-    const existingProps = typeof existingItem.metadata === 'string' 
-      ? this.parseMetadata(existingItem.metadata)
-      : existingItem.properties || {};
-    
-    const newProps = newItem.properties;
-    const commonKeys = Object.keys(newProps).filter(key => key in existingProps);
-    
-    if (commonKeys.length === 0) return 0;
-    
-    let totalSimilarity = 0;
-    for (const key of commonKeys) {
-      const similarity = this.calculateValueSimilarity(newProps[key], existingProps[key]);
-      totalSimilarity += similarity;
-    }
-    
-    return totalSimilarity / commonKeys.length;
-  }
-
-  private calculatePropertyAlignment(newItem: any, existingItem: any): number {
-    if (!newItem?.properties || !existingItem) return 0;
-    
-    const existingProps = typeof existingItem.metadata === 'string' 
-      ? this.parseMetadata(existingItem.metadata)
-      : existingItem.properties || {};
-    
-    const newKeys = Object.keys(newItem.properties);
-    const existingKeys = Object.keys(existingProps);
-    const allKeys = new Set([...newKeys, ...existingKeys]);
-    
-    if (allKeys.size === 0) return 1.0;
-    
-    const commonKeys = newKeys.filter(key => existingKeys.includes(key));
-    return commonKeys.length / allKeys.size;
-  }
-
-  private calculateContextualRelevance(newItem: any, existingItem: any, conflictType: ConflictType): number {
-    // Context-specific relevance based on conflict type
-    switch (conflictType) {
-      case ConflictType.DUPLICATE_NODES:
-        return this.calculateNameSimilarity(newItem, existingItem) * 0.8 + 
-               this.calculateContentOverlap(newItem, existingItem) * 0.2;
+    try {
+      [existingNodes, existingEdges] = await Promise.all([
+        fetchExistingNodes(prisma, projectId, graphId),
+        fetchExistingEdges(prisma, projectId, graphId)
+      ])
+    } catch (error) {
+      // 记录数据库查询错误
+      console.error('Database query error:', {
+        type: 'database_query_error',
+        projectId,
+        graphId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        context: 'fetching existing nodes and edges',
+        timestamp: new Date().toISOString()
+      })
       
-      case ConflictType.CONFLICTING_EDGES:
-        return 0.9; // High relevance for edge conflicts
-      
-      case ConflictType.MISSING_REFERENCES:
-        return 1.0; // Critical relevance for missing references
-      
-      case ConflictType.CONTENT_CONFLICTS:
-        return this.calculateContentOverlap(newItem, existingItem);
-      
-      default:
-        return 0.5;
+      // 重新抛出带有描述性消息的错误
+      throw new Error(`数据库查询错误: ${error instanceof Error ? error.message : String(error)}`)
     }
-  }
 
-  private calculateOverallConfidence(factors: any, conflictType: ConflictType): number {
-    // Weighted average based on conflict type
-    switch (conflictType) {
-      case ConflictType.DUPLICATE_NODES:
-        return factors.nameSimilarity * 0.4 + 
-               factors.contentOverlap * 0.3 + 
-               factors.propertyAlignment * 0.2 + 
-               factors.contextualRelevance * 0.1;
-      
-      case ConflictType.CONFLICTING_EDGES:
-        return factors.contextualRelevance * 0.6 + 
-               factors.nameSimilarity * 0.4;
-      
-      case ConflictType.MISSING_REFERENCES:
-        return 1.0; // Always high confidence for missing references
-      
-      case ConflictType.CONTENT_CONFLICTS:
-        return factors.contentOverlap * 0.5 + 
-               factors.contextualRelevance * 0.5;
-      
-      default:
-        return (factors.nameSimilarity + factors.contentOverlap + 
-                factors.propertyAlignment + factors.contextualRelevance) / 4;
-    }
-  }
-
-  private generateConfidenceReasoning(factors: any, conflictType: ConflictType): string[] {
-    const reasoning: string[] = [];
+    // 2. 检测冗余数据
+    const duplicateNodes = detectDuplicateNodes(
+      uploadData.nodes,
+      existingNodes
+    )
     
-    if (factors.nameSimilarity > 0.8) {
-      reasoning.push('节点名称高度相似');
-    } else if (factors.nameSimilarity > 0.5) {
-      reasoning.push('节点名称部分相似');
-    }
-    
-    if (factors.contentOverlap > 0.7) {
-      reasoning.push('内容重叠度较高');
-    } else if (factors.contentOverlap > 0.3) {
-      reasoning.push('存在部分内容重叠');
-    }
-    
-    if (factors.propertyAlignment > 0.8) {
-      reasoning.push('属性结构高度一致');
-    }
-    
-    if (conflictType === ConflictType.MISSING_REFERENCES) {
-      reasoning.push('引用的节点不存在');
-    }
-    
-    return reasoning;
-  }
+    const duplicateEdges = detectDuplicateEdges(
+      uploadData.edges,
+      existingEdges
+    )
 
-  // Resolution options generators
+    // 3. 过滤冗余数据
+    const filtered = filterNonDuplicateData(
+      uploadData.nodes,
+      uploadData.edges,
+      duplicateNodes,
+      duplicateEdges
+    )
 
-  private generateNodeResolutionOptions(newNode: NewNodeData, existingNode: ExistingNodeData): ResolutionOption[] {
-    return [
-      {
-        id: 'keep_existing',
-        label: '保留现有节点',
-        description: '忽略新节点，保持现有节点不变',
-        action: 'keep_existing'
-      },
-      {
-        id: 'use_new',
-        label: '使用新节点',
-        description: '用新节点替换现有节点',
-        action: 'use_new'
-      },
-      {
-        id: 'merge',
-        label: '合并节点',
-        description: '将新节点的属性合并到现有节点',
-        action: 'merge'
-      },
-      {
-        id: 'manual_review',
-        label: '手动审查',
-        description: '标记为需要手动审查的冲突',
-        action: 'manual_review'
-      }
-    ];
-  }
-
-  private generateEdgeResolutionOptions(newEdge: NewEdgeData): ResolutionOption[] {
-    return [
-      {
-        id: 'skip',
-        label: '跳过重复关系',
-        description: '忽略这个重复的关系',
-        action: 'skip'
-      },
-      {
-        id: 'use_new',
-        label: '更新关系属性',
-        description: '用新关系的属性更新现有关系',
-        action: 'use_new'
-      },
-      {
-        id: 'manual_review',
-        label: '手动审查',
-        description: '标记为需要手动审查的关系冲突',
-        action: 'manual_review'
-      }
-    ];
-  }
-
-  private generateContentResolutionOptions(contentConflict: ContentConflict): ResolutionOption[] {
-    return [
-      {
-        id: 'keep_existing',
-        label: '保留现有内容',
-        description: `保持 ${contentConflict.field} 字段的现有值`,
-        action: 'keep_existing'
-      },
-      {
-        id: 'use_new',
-        label: '使用新内容',
-        description: `用新值替换 ${contentConflict.field} 字段`,
-        action: 'use_new'
-      },
-      {
-        id: 'merge',
-        label: '合并内容',
-        description: `尝试合并 ${contentConflict.field} 字段的内容`,
-        action: 'merge'
-      }
-    ];
-  }
-
-  private generateOrphanedResolutionOptions(orphaned: OrphanedRelationship): ResolutionOption[] {
-    return [
-      {
-        id: 'skip',
-        label: '跳过此关系',
-        description: '忽略这个引用不存在节点的关系',
-        action: 'skip'
-      },
-      {
-        id: 'manual_review',
-        label: '手动创建节点',
-        description: '标记为需要手动创建缺失的节点',
-        action: 'manual_review'
-      }
-    ];
-  }
-
-  // Content analysis helper methods
-
-  private analyzeContentConflict(field: string, existingContent: any, newContent: any): ContentConflict | null {
-    if (this.areValuesEqual(existingContent, newContent)) {
-      return null; // No conflict
-    }
-
-    const similarity = this.calculateValueSimilarity(existingContent, newContent);
-    let conflictType: 'semantic_difference' | 'format_mismatch' | 'value_contradiction';
-
-    if (typeof existingContent !== typeof newContent) {
-      conflictType = 'format_mismatch';
-    } else if (similarity < 0.3) {
-      conflictType = 'value_contradiction';
-    } else {
-      conflictType = 'semantic_difference';
+    // 4. 构建检测结果
+    const detection: DuplicateDetectionResult = {
+      duplicateNodes,
+      duplicateEdges,
+      duplicateNodeCount: duplicateNodes.size,
+      duplicateEdgeCount: duplicateEdges.size
     }
 
     return {
-      field,
-      conflictType,
-      existingContent,
-      newContent,
-      similarity
-    };
-  }
-
-  private calculateValueSimilarity(value1: any, value2: any): number {
-    if (value1 === value2) return 1.0;
-    if (typeof value1 !== typeof value2) return 0.0;
-
-    if (typeof value1 === 'string' && typeof value2 === 'string') {
-      return this.calculateStringSimilarity(value1, value2);
+      filtered,
+      detection
+    }
+  } catch (error) {
+    // 如果错误已经被记录过(有特定类型),直接重新抛出
+    if (error instanceof Error && 
+        (error.message.includes('数据格式错误') || 
+         error.message.includes('数据库查询错误'))) {
+      throw error
     }
 
-    if (typeof value1 === 'number' && typeof value2 === 'number') {
-      const diff = Math.abs(value1 - value2);
-      const max = Math.max(Math.abs(value1), Math.abs(value2));
-      return max === 0 ? 1.0 : Math.max(0, 1.0 - (diff / max));
-    }
+    // 记录未预期的错误
+    console.error('Unexpected duplicate detection error:', {
+      type: 'unexpected_error',
+      projectId,
+      graphId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    })
 
-    if (Array.isArray(value1) && Array.isArray(value2)) {
-      const commonElements = value1.filter(item => value2.includes(item));
-      const totalElements = new Set([...value1, ...value2]).size;
-      return totalElements === 0 ? 1.0 : commonElements.length / totalElements;
-    }
-
-    return 0.5; // Default similarity for complex objects
+    // 重新抛出错误,让调用方处理
+    throw error
   }
-
-  private calculateStringSimilarity(str1: string, str2: string): number {
-    const s1 = str1.toLowerCase().trim();
-    const s2 = str2.toLowerCase().trim();
-    
-    if (s1 === s2) return 1.0;
-    
-    const distance = this.levenshteinDistance(s1, s2);
-    const maxLength = Math.max(s1.length, s2.length);
-    return maxLength === 0 ? 1.0 : 1.0 - (distance / maxLength);
-  }
-
-  private levenshteinDistance(str1: string, str2: string): number {
-    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
-
-    for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
-    for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
-
-    for (let j = 1; j <= str2.length; j++) {
-      for (let i = 1; i <= str1.length; i++) {
-        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-        matrix[j][i] = Math.min(
-          matrix[j][i - 1] + 1,     // deletion
-          matrix[j - 1][i] + 1,     // insertion
-          matrix[j - 1][i - 1] + indicator // substitution
-        );
-      }
-    }
-
-    return matrix[str2.length][str1.length];
-  }
-}
-
-/**
- * Enhanced Duplicate Detection Service interface for external use
- */
-export interface EnhancedDuplicateDetectionService extends DuplicateDetectionService {
-  // All methods are already included in the base interface
-}
-
-/**
- * Factory function to create Enhanced Duplicate Detection Service instance
- */
-export function createDuplicateDetectionService(): DuplicateDetectionService {
-  return new DuplicateDetectionServiceImpl();
-}
-
-/**
- * Factory function to create Enhanced Duplicate Detection Service instance
- */
-export function createEnhancedDuplicateDetectionService(): EnhancedDuplicateDetectionService {
-  return new DuplicateDetectionServiceImpl();
-}
-
-/**
- * Default singleton instance for convenience
- */
-let defaultInstance: DuplicateDetectionService | null = null;
-
-export function getDuplicateDetectionService(): DuplicateDetectionService {
-  if (!defaultInstance) {
-    defaultInstance = createDuplicateDetectionService();
-  }
-  return defaultInstance;
-}
-
-/**
- * Get enhanced duplicate detection service instance
- */
-export function getEnhancedDuplicateDetectionService(): EnhancedDuplicateDetectionService {
-  if (!defaultInstance) {
-    defaultInstance = createEnhancedDuplicateDetectionService();
-  }
-  return defaultInstance as EnhancedDuplicateDetectionService;
 }

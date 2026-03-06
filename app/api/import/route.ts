@@ -6,6 +6,7 @@ import {
   type ParsedGraphData
 } from '@/lib/services/graph-import'
 import { retryOperation, getDescriptiveErrorMessage } from '@/lib/db-helpers'
+import { detectAndFilterDuplicates } from '@/lib/services/duplicate-detection'
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,8 +58,57 @@ export async function POST(request: NextRequest) {
     const parsedData = importResult.data!
     const validatedData = importResult.validatedData!
 
-    // 为没有坐标的节点生成布局 - 统一使用3D模式
-    const nodesWithLayout = generateLayout(validatedData.nodes, validatedData.edges)
+    // 执行冗余检测和数据过滤
+    let filtered, detection
+    try {
+      const result = await detectAndFilterDuplicates(
+        prisma,
+        validatedData,
+        projectId,
+        graphId
+      )
+      filtered = result.filtered
+      detection = result.detection
+    } catch (error) {
+      // 记录冗余检测错误
+      console.error('Duplicate detection failed:', {
+        type: 'duplicate_detection_failure',
+        projectId,
+        graphId,
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      })
+
+      // 检测错误类型并返回描述性消息
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      const isDbError = 
+        errorMessage.toLowerCase().includes('prisma') ||
+        errorMessage.toLowerCase().includes('database') ||
+        errorMessage.toLowerCase().includes('connection') ||
+        errorMessage.toLowerCase().includes('query')
+      
+      const isDataFormatError =
+        errorMessage.toLowerCase().includes('format') ||
+        errorMessage.toLowerCase().includes('invalid') ||
+        errorMessage.toLowerCase().includes('missing')
+
+      let descriptiveMessage = '冗余检测失败'
+      if (isDbError) {
+        descriptiveMessage = '查询现有数据失败，请检查数据库连接'
+      } else if (isDataFormatError) {
+        descriptiveMessage = '数据格式错误，请检查上传文件的数据格式'
+      } else {
+        descriptiveMessage = `冗余检测失败: ${errorMessage}`
+      }
+
+      return NextResponse.json(
+        { message: descriptiveMessage },
+        { status: 500 }
+      )
+    }
+
+    // 为没有坐标的节点生成布局 - 统一使用3D模式，使用过滤后的数据
+    const nodesWithLayout = generateLayout(filtered.nodes, filtered.edges)
 
     // 创建节点映射（label/id -> database id）
     const nodeMap = new Map<string, string>()
@@ -94,7 +144,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 批量创建边 - 过滤无效边并使用事务，添加重试机制
-    const validEdges = validatedData.edges.filter((edgeData: { source: string; target: string; label?: string }) => {
+    const validEdges = filtered.edges.filter((edgeData: { source: string; target: string; label?: string }) => {
       const sourceId = nodeMap.get(edgeData.source)
       const targetId = nodeMap.get(edgeData.target)
       
@@ -147,6 +197,10 @@ export async function POST(request: NextRequest) {
       message: '导入成功',
       nodesCount: createdNodes.length,
       edgesCount: createdEdges.length,
+      duplicateNodesCount: detection.duplicateNodeCount,
+      duplicateEdgesCount: detection.duplicateEdgeCount,
+      totalNodesInFile: filtered.originalNodeCount,
+      totalEdgesInFile: filtered.originalEdgeCount,
       coordinateSystem: '3D', // 系统已统一为3D
       skippedEdges: validatedData.edges.length - createdEdges.length,
       warnings: importResult.warnings
