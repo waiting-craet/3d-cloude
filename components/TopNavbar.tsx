@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useGraphStore } from '@/lib/store'
 import { useUserStore } from '@/lib/userStore'
 import { getThemeConfig } from '@/lib/theme'
@@ -9,6 +10,8 @@ import DeleteButton from './DeleteButton'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 
 export default function TopNavbar() {
+  const router = useRouter()
+  
   const { 
     nodes, 
     projects, 
@@ -206,6 +209,11 @@ export default function TopNavbar() {
   }
 
   const handleSwitchGraph = (projectId: string, graphId: string) => {
+    // 更新 URL 参数，避免与 TopNavbar 的 useEffect 冲突
+    const url = new URL(window.location.href)
+    url.searchParams.set('graphId', graphId)
+    window.history.replaceState({}, '', url.toString())
+    
     switchGraph(projectId, graphId)
     setShowProjectMenu(false)
     setHoveredProjectId(null)
@@ -474,7 +482,14 @@ export default function TopNavbar() {
       }}>
         {/* 返回按钮 */}
         <button
-          onClick={() => window.history.back()}
+          onClick={() => {
+            // 如果当前在graph页面，直接返回到creation页面
+            if (window.location.pathname === '/graph') {
+              router.push('/creation')
+            } else {
+              window.history.back()
+            }
+          }}
           style={{
             padding: '8px 12px',
             background: 'transparent',
@@ -878,6 +893,42 @@ export default function TopNavbar() {
 
         {/* 右侧按钮区域 */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* 管理员专属：快速创建按钮 */}
+          {isLoggedIn && (
+            <button
+              onClick={() => router.push('/workflow')}
+              style={{
+                padding: '10px 18px',
+                background: 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                boxShadow: '0 2px 8px rgba(74, 158, 255, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)'
+                e.currentTarget.style.background = 'linear-gradient(135deg, #5AA9FF 0%, #4A98FF 100%)'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 158, 255, 0.4)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.background = 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)'
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(74, 158, 255, 0.3)'
+              }}
+              title="快速创建二维图谱"
+            >
+              <span style={{ fontSize: '16px' }}>⚡</span>
+              快速创建
+            </button>
+          )}
+
           {/* 管理员专属：新建图谱按钮 */}
           {isLoggedIn && (
             <button

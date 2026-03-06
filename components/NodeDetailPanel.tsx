@@ -27,13 +27,37 @@ export default function NodeDetailPanel() {
   const [editedShape, setEditedShape] = useState('sphere')
   const [editedSize, setEditedSize] = useState(1)
 
+  // 保存原始值用于比较
+  const [originalValues, setOriginalValues] = useState({
+    name: '',
+    description: '',
+    imageUrl: '',
+    color: '',
+    textColor: '',
+    shape: '',
+    size: 1
+  })
+
   // 使用 ref 来跟踪最新的编辑状态
   const editStateRef = useRef({
     name: '',
     description: '',
     imageUrl: '',
+    color: '',
+    textColor: '',
+    shape: '',
+    size: 1,
     nodeId: '',
     isDeleting: false,
+    originalValues: {
+      name: '',
+      description: '',
+      imageUrl: '',
+      color: '',
+      textColor: '',
+      shape: '',
+      size: 1
+    }
   })
 
   // 更新 ref 以跟踪最新状态
@@ -42,20 +66,52 @@ export default function NodeDetailPanel() {
       name: editedName,
       description: editedDescription,
       imageUrl: editedImageUrl,
+      color: editedColor,
+      textColor: editedTextColor,
+      shape: editedShape,
+      size: editedSize,
       nodeId: selectedNode?.id || '',
       isDeleting: isDeleting,
+      originalValues: originalValues
     }
-  }, [editedName, editedDescription, editedImageUrl, selectedNode?.id, isDeleting])
+  }, [editedName, editedDescription, editedImageUrl, editedColor, editedTextColor, editedShape, editedSize, selectedNode?.id, isDeleting, originalValues])
 
   useEffect(() => {
     if (selectedNode) {
+      const originalColor = selectedNode.color || '#6BB6FF'
+      const originalTextColor = selectedNode.textColor || '#FFFFFF'
+      const originalShape = selectedNode.shape || 'sphere'
+      const originalSize = selectedNode.size || 1
+      
+      console.log('📋 [NodeDetailPanel] 节点选中，初始化编辑状态:', {
+        nodeId: selectedNode.id,
+        name: selectedNode.name,
+        color: originalColor,
+        textColor: originalTextColor,
+        shape: originalShape,
+        size: originalSize
+      })
+      
+      // 设置编辑值
       setEditedName(selectedNode.name || '')
       setEditedDescription(selectedNode.description || '')
       setEditedImageUrl(selectedNode.imageUrl || '')
-      setEditedColor(selectedNode.color || '#6BB6FF')
-      setEditedTextColor(selectedNode.textColor || '#FFFFFF')
-      setEditedShape(selectedNode.shape || 'sphere')
-      setEditedSize(selectedNode.size || 1)
+      setEditedColor(originalColor)
+      setEditedTextColor(originalTextColor)
+      setEditedShape(originalShape)
+      setEditedSize(originalSize)
+      
+      // 保存原始值用于比较
+      setOriginalValues({
+        name: selectedNode.name || '',
+        description: selectedNode.description || '',
+        imageUrl: selectedNode.imageUrl || '',
+        color: originalColor,
+        textColor: originalTextColor,
+        shape: originalShape,
+        size: originalSize
+      })
+      
       setColorMode('node')
       setIsEditMode(false)
     }
@@ -82,10 +138,34 @@ export default function NodeDetailPanel() {
   const hasChanges = (): boolean => {
     if (!selectedNode) return false
     return (
-      editedName !== selectedNode.name ||
-      editedDescription !== (selectedNode.description || '') ||
-      editedImageUrl !== (selectedNode.imageUrl || '')
+      editedName !== originalValues.name ||
+      editedDescription !== originalValues.description ||
+      editedImageUrl !== originalValues.imageUrl
     )
+  }
+
+  const hasAppearanceChanges = (): boolean => {
+    if (!selectedNode) return false
+    const hasChanges = (
+      editedColor !== originalValues.color ||
+      editedTextColor !== originalValues.textColor ||
+      editedShape !== originalValues.shape ||
+      editedSize !== originalValues.size
+    )
+    
+    console.log('🔍 [NodeDetailPanel] 检查外观修改:', {
+      editedColor,
+      originalColor: originalValues.color,
+      editedTextColor,
+      originalTextColor: originalValues.textColor,
+      editedShape,
+      originalShape: originalValues.shape,
+      editedSize,
+      originalSize: originalValues.size,
+      hasChanges
+    })
+    
+    return hasChanges
   }
 
   const validateInput = (): { valid: boolean; error?: string } => {
@@ -99,6 +179,56 @@ export default function NodeDetailPanel() {
       return { valid: false, error: '节点描述不能超过1000个字符' }
     }
     return { valid: true }
+  }
+
+  const saveAppearanceChanges = async (): Promise<boolean> => {
+    if (!selectedNode || !hasAppearanceChanges()) return true
+
+    console.log('🎨 [NodeDetailPanel] 开始保存外观修改:', {
+      nodeId: selectedNode.id,
+      color: editedColor,
+      textColor: editedTextColor,
+      shape: editedShape,
+      size: editedSize
+    })
+
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/nodes/${selectedNode.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          color: editedColor,
+          textColor: editedTextColor,
+          shape: editedShape,
+          size: editedSize,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('❌ [NodeDetailPanel] 保存外观失败:', errorData)
+        throw new Error('保存外观失败')
+      }
+
+      console.log('✅ [NodeDetailPanel] 外观保存成功')
+
+      // 更新 store 中的节点数据
+      await updateNode(selectedNode.id, {
+        color: editedColor,
+        textColor: editedTextColor,
+        shape: editedShape,
+        size: editedSize,
+      })
+
+      return true
+    } catch (error) {
+      console.error('❌ [NodeDetailPanel] 保存外观失败:', error)
+      alert('保存外观失败，请重试')
+      return false
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const saveChanges = async (): Promise<boolean> => {
@@ -146,11 +276,23 @@ export default function NodeDetailPanel() {
   }
 
   const handleClose = async () => {
-    // 如果有修改，自动保存
+    console.log('🔄 [NodeDetailPanel] 开始关闭弹窗，检查修改...')
+    
+    // 如果有基本信息修改，自动保存
     if (hasChanges()) {
+      console.log('📝 [NodeDetailPanel] 检测到基本信息修改，开始保存...')
       const saved = await saveChanges()
       if (!saved) return // 如果保存失败，不关闭弹窗
     }
+    
+    // 如果有外观修改，自动保存
+    if (hasAppearanceChanges()) {
+      console.log('🎨 [NodeDetailPanel] 检测到外观修改，开始保存...')
+      const saved = await saveAppearanceChanges()
+      if (!saved) return // 如果保存失败，不关闭弹窗
+    }
+    
+    console.log('✅ [NodeDetailPanel] 弹窗关闭完成')
     setSelectedNode(null)
   }
 
@@ -179,12 +321,21 @@ export default function NodeDetailPanel() {
 
       // 如果有节点 ID 且有修改，自动保存
       if (state.nodeId && previousNode) {
-        const hasChanges = 
-          state.name !== previousNode.name ||
-          state.description !== (previousNode.description || '') ||
-          state.imageUrl !== (previousNode.imageUrl || '')
+        // 检查基本信息修改
+        const hasBasicChanges = 
+          state.name !== state.originalValues.name ||
+          state.description !== state.originalValues.description ||
+          state.imageUrl !== state.originalValues.imageUrl
 
-        if (hasChanges) {
+        // 检查外观修改
+        const hasAppearanceChanges = 
+          state.color !== state.originalValues.color ||
+          state.textColor !== state.originalValues.textColor ||
+          state.shape !== state.originalValues.shape ||
+          state.size !== state.originalValues.size
+
+        // 保存基本信息修改
+        if (hasBasicChanges) {
           // 验证输入
           if (!state.name.trim()) {
             console.warn('节点名称不能为空，跳过保存')
@@ -195,7 +346,7 @@ export default function NodeDetailPanel() {
             return
           }
 
-          // 异步保存，不阻塞关闭
+          // 异步保存基本信息，不阻塞关闭
           fetch(`/api/nodes/${state.nodeId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -207,16 +358,36 @@ export default function NodeDetailPanel() {
           })
           .then(response => {
             if (response.ok) {
-              // 保存成功后，更新 store 中的节点数据
-              // 注意：这里不能直接调用 updateNode，因为它会触发 API 请求
-              // 我们需要直接更新本地状态
-              console.log('自动保存成功')
-              // 触发图谱数据刷新
+              console.log('基本信息自动保存成功')
               fetchGraph()
             }
           })
           .catch(error => {
-            console.error('自动保存失败:', error)
+            console.error('基本信息自动保存失败:', error)
+          })
+        }
+
+        // 保存外观修改
+        if (hasAppearanceChanges) {
+          // 异步保存外观，不阻塞关闭
+          fetch(`/api/nodes/${state.nodeId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              color: state.color,
+              textColor: state.textColor,
+              shape: state.shape,
+              size: state.size,
+            }),
+          })
+          .then(response => {
+            if (response.ok) {
+              console.log('外观自动保存成功')
+              fetchGraph()
+            }
+          })
+          .catch(error => {
+            console.error('外观自动保存失败:', error)
           })
         }
       }
@@ -228,6 +399,7 @@ export default function NodeDetailPanel() {
   }
 
   const handleColorChange = (color: string) => {
+    console.log('🎨 [NodeDetailPanel] 颜色修改:', { colorMode, color })
     if (colorMode === 'node') {
       setEditedColor(color)
       if (selectedNode) {
@@ -242,6 +414,7 @@ export default function NodeDetailPanel() {
   }
 
   const handleShapeChange = (shape: string) => {
+    console.log('🔷 [NodeDetailPanel] 形状修改:', { shape })
     setEditedShape(shape)
     if (selectedNode) {
       updateNodeLocal(selectedNode.id, { shape })
@@ -249,13 +422,15 @@ export default function NodeDetailPanel() {
   }
 
   const handleSizeChange = (size: number) => {
+    console.log('📏 [NodeDetailPanel] 大小修改:', { size })
     setEditedSize(size)
     if (selectedNode) {
       updateNodeLocal(selectedNode.id, { size })
     }
   }
 
-  const handleResetAppearance = () => {
+  const handleResetAppearance = async () => {
+    console.log('↺ [NodeDetailPanel] 重置外观')
     const defaultColor = '#6BB6FF'
     const defaultTextColor = '#FFFFFF'
     const defaultShape = 'sphere'
@@ -274,6 +449,34 @@ export default function NodeDetailPanel() {
         size: defaultSize,
         isGlowing: defaultIsGlowing
       })
+      
+      // 立即保存重置的外观
+      try {
+        const response = await fetch(`/api/nodes/${selectedNode.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            color: defaultColor,
+            textColor: defaultTextColor,
+            shape: defaultShape,
+            size: defaultSize,
+          }),
+        })
+        
+        if (response.ok) {
+          console.log('✅ [NodeDetailPanel] 重置外观保存成功')
+          await updateNode(selectedNode.id, {
+            color: defaultColor,
+            textColor: defaultTextColor,
+            shape: defaultShape,
+            size: defaultSize,
+          })
+        } else {
+          console.error('❌ [NodeDetailPanel] 重置外观保存失败')
+        }
+      } catch (error) {
+        console.error('❌ [NodeDetailPanel] 重置外观保存错误:', error)
+      }
     }
     setIsEditMode(false)
   }

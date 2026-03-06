@@ -19,6 +19,9 @@ interface Graph {
 interface Project {
   id: string;
   name: string;
+  description?: string;
+  graphs?: Graph[];
+  graphCount?: number;
 }
 
 export default function NewCreationWorkflowPage() {
@@ -28,23 +31,35 @@ export default function NewCreationWorkflowPage() {
   const [sortBy, setSortBy] = useState<'updateTime' | 'title'>('updateTime');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingProjects, setExistingProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [graphs, setGraphs] = useState<Graph[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [viewMode, setViewMode] = useState<'projects' | 'graphs'>('projects');
 
-  // 加载图谱列表（而不是项目列表）
+  // 加载项目和图谱列表
   useEffect(() => {
-    fetchAllGraphs();
+    fetchProjectsWithGraphs();
   }, []);
 
-  const fetchAllGraphs = async () => {
+  const fetchProjectsWithGraphs = async () => {
     try {
       const response = await fetch('/api/projects/with-graphs');
       if (response.ok) {
         const data = await response.json();
         const projectsWithGraphs = data.projects || [];
         
-        // 将所有图谱展开为独立的卡片数据
+        // 设置项目列表（包含图谱信息）
+        const projectList: Project[] = projectsWithGraphs.map((project: any) => ({
+          id: project.id,
+          name: project.name,
+          description: project.description || '',
+          graphs: project.graphs || [],
+          graphCount: project.graphs ? project.graphs.length : 0,
+        }));
+        
+        setProjects(projectList);
+        
+        // 将所有图谱展开为独立的卡片数据（用于图谱视图）
         const allGraphs: Graph[] = [];
         projectsWithGraphs.forEach((project: any) => {
           if (project.graphs && project.graphs.length > 0) {
@@ -64,17 +79,9 @@ export default function NewCreationWorkflowPage() {
         });
         
         setGraphs(allGraphs);
-        
-        // 设置项目列表（用于下拉框）
-        setProjects(projectsWithGraphs.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-        })));
-        
-        // 不再自动选中第一个项目，保持默认的 'all'
       }
     } catch (error) {
-      console.error('加载图谱列表失败:', error);
+      console.error('加载项目和图谱列表失败:', error);
     }
   };
 
@@ -168,8 +175,8 @@ export default function NewCreationWorkflowPage() {
         console.log('图谱创建成功:', graphData);
       }
 
-      // 创建成功后刷新图谱列表
-      await fetchAllGraphs();
+      // 创建成功后刷新项目和图谱列表
+      await fetchProjectsWithGraphs();
     } catch (error) {
       console.error('创建失败:', error);
       throw error;
@@ -182,6 +189,18 @@ export default function NewCreationWorkflowPage() {
 
   const handleAICreate = () => {
     router.push('/text-page');
+  };
+
+  // 处理项目卡片点击 - 进入项目的图谱列表
+  const handleProjectCardClick = (project: Project) => {
+    setSelectedProject(project);
+    setViewMode('graphs');
+  };
+
+  // 处理返回按钮点击 - 返回项目列表
+  const handleBackToProjects = () => {
+    setSelectedProject(null);
+    setViewMode('projects');
   };
 
   // 处理图谱卡片点击 - 导航到 3D 图谱编辑器
@@ -236,20 +255,6 @@ export default function NewCreationWorkflowPage() {
 
       {/* 右侧主内容区 - 占 5/6 宽度 */}
       <main className={styles.mainContent}>
-        {/* 搜索框 - 右上角 */}
-        <div className={styles.searchContainer}>
-          <div style={{ position: 'relative' }}>
-            <span className={styles.searchIcon}>🔍</span>
-            <input
-              type="text"
-              className={styles.searchBar}
-              placeholder="搜索项目..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
         {/* 功能卡片 - 横向排布 */}
         <div className={styles.actionCards}>
           {/* AI创建卡片 - 鲜艳红色 */}
@@ -271,30 +276,21 @@ export default function NewCreationWorkflowPage() {
 
         {/* 项目筛选栏 */}
         <div className={styles.filterBar}>
-          {/* 左侧：我的项目文本和项目选择下拉框 */}
+          {/* 左侧：我的项目文本和搜索框 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <h2 className={styles.myProjectsText}>我的项目</h2>
             
-            {/* 项目选择下拉框 */}
-            {projects.length > 0 ? (
-              <select
-                className={styles.filterSelect}
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                style={{ minWidth: '200px' }}
-              >
-                <option value="all">全部项目</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <span style={{ fontSize: '14px', color: '#999' }}>
-                暂无项目
-              </span>
-            )}
+            {/* 搜索框（从右上角移动过来） */}
+            <div style={{ position: 'relative' }}>
+              <span className={styles.searchIcon}>🔍</span>
+              <input
+                type="text"
+                className={styles.searchBar}
+                placeholder="搜索项目..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
 
           {/* 右侧：两个下拉筛选框 */}
@@ -322,67 +318,150 @@ export default function NewCreationWorkflowPage() {
           </div>
         </div>
 
+        {/* 返回按钮（仅在图谱视图时显示） */}
+        {viewMode === 'graphs' && (
+          <div style={{ 
+            marginBottom: '20px', 
+            display: 'flex', 
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <button
+              onClick={handleBackToProjects}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '14px',
+                color: '#333'
+              }}
+            >
+              ← 返回项目列表
+            </button>
+            <span style={{ fontSize: '16px', fontWeight: '500', color: '#333' }}>
+              项目：{selectedProject?.name}
+            </span>
+          </div>
+        )}
+
         {/* 项目列表区域 */}
         <div className={styles.projectGrid}>
-          {graphs.length === 0 ? (
-            <div style={{ 
-              padding: '40px', 
-              textAlign: 'center', 
-              color: '#999',
-              background: '#fff',
-              borderRadius: '8px'
-            }}>
-              暂无图谱，点击"新建"按钮创建您的第一个图谱
-            </div>
-          ) : (
-            graphs
-              .filter(graph => {
-                // 搜索过滤
-                if (searchQuery && !graph.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-                  return false;
-                }
-                // 项目过滤 - 如果选择了 'all'，显示所有图谱
-                if (selectedProjectId && selectedProjectId !== 'all' && graph.projectId !== selectedProjectId) {
-                  return false;
-                }
-                return true;
-              })
-              .map((graph) => (
-                <div
-                  key={graph.id}
-                  className={styles.projectCard}
-                  onClick={() => handleGraphCardClick(graph)}
-                >
-                  <div className={styles.projectCardContent}>
-                    <h3 className={styles.projectCardTitle}>{graph.projectName || '未知项目'}</h3>
-                    <p className={styles.projectCardDescription}>
-                      图谱：{graph.name}
-                    </p>
-                    <div className={styles.projectCardFooter}>
-                      <span className={styles.projectCardDate}>
-                        {graph.createdAt 
-                          ? new Date(graph.createdAt).toLocaleDateString('zh-CN')
-                          : '未知日期'
-                        }
-                      </span>
-                      {(graph.nodeCount !== undefined || graph.edgeCount !== undefined) && (
-                        <div className={styles.projectCardStats}>
-                          {graph.nodeCount !== undefined && (
+
+          {/* 项目视图 */}
+          {viewMode === 'projects' && (
+            <>
+              {projects.length === 0 ? (
+                <div style={{ 
+                  padding: '40px', 
+                  textAlign: 'center', 
+                  color: '#999',
+                  background: '#fff',
+                  borderRadius: '8px'
+                }}>
+                  暂无项目，点击"新建"按钮创建您的第一个项目
+                </div>
+              ) : (
+                projects
+                  .filter(project => {
+                    // 搜索过滤
+                    if (searchQuery && !project.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((project) => (
+                    <div
+                      key={project.id}
+                      className={styles.projectCard}
+                      onClick={() => handleProjectCardClick(project)}
+                    >
+                      <div className={styles.projectCardContent}>
+                        <h3 className={styles.projectCardTitle}>项目：{project.name}</h3>
+                        <p className={styles.projectCardDescription}>
+                          {project.description || '暂无描述'}
+                        </p>
+                        <div className={styles.projectCardFooter}>
+                          <span className={styles.projectCardDate}>
+                            包含 {project.graphCount || 0} 个图谱
+                          </span>
+                          <div className={styles.projectCardStats}>
                             <span className={styles.projectCardStat}>
-                              📊 {graph.nodeCount} 节点
+                              📊 点击查看图谱
                             </span>
-                          )}
-                          {graph.edgeCount !== undefined && (
-                            <span className={styles.projectCardStat}>
-                              🔗 {graph.edgeCount} 边
-                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </>
+          )}
+
+          {/* 图谱视图 */}
+          {viewMode === 'graphs' && selectedProject && (
+            <>
+              {selectedProject.graphs && selectedProject.graphs.length === 0 ? (
+                <div style={{ 
+                  padding: '40px', 
+                  textAlign: 'center', 
+                  color: '#999',
+                  background: '#fff',
+                  borderRadius: '8px'
+                }}>
+                  该项目暂无图谱，点击"新建"按钮创建图谱
+                </div>
+              ) : (
+                selectedProject.graphs
+                  ?.filter(graph => {
+                    // 搜索过滤
+                    if (searchQuery && !graph.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((graph) => (
+                    <div
+                      key={graph.id}
+                      className={styles.projectCard}
+                      onClick={() => handleGraphCardClick(graph)}
+                    >
+                      <div className={styles.projectCardContent}>
+                        <h3 className={styles.projectCardTitle}>图谱：{graph.name}</h3>
+                        <p className={styles.projectCardDescription}>
+                          所属项目：{selectedProject.name}
+                        </p>
+                        <div className={styles.projectCardFooter}>
+                          <span className={styles.projectCardDate}>
+                            {graph.createdAt 
+                              ? new Date(graph.createdAt).toLocaleDateString('zh-CN')
+                              : '未知日期'
+                            }
+                          </span>
+                          {(graph.nodeCount !== undefined || graph.edgeCount !== undefined) && (
+                            <div className={styles.projectCardStats}>
+                              {graph.nodeCount !== undefined && (
+                                <span className={styles.projectCardStat}>
+                                  📊 {graph.nodeCount} 节点
+                                </span>
+                              )}
+                              {graph.edgeCount !== undefined && (
+                                <span className={styles.projectCardStat}>
+                                  🔗 {graph.edgeCount} 边
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))
+                  ))
+              )}
+            </>
           )}
         </div>
       </main>

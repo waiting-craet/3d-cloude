@@ -17,10 +17,22 @@ export async function GET() {
         edgeCount: true,
         createdAt: true,
         updatedAt: true,
+        _count: {
+          select: {
+            graphs: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json({ projects });
+    // 将 _count.graphs 转换为 graphCount
+    const projectsWithGraphCount = projects.map(project => ({
+      ...project,
+      graphCount: project._count.graphs,
+      _count: undefined,
+    }));
+
+    return NextResponse.json({ projects: projectsWithGraphCount });
   } catch (error) {
     console.error('获取项目列表失败:', error);
     return NextResponse.json(

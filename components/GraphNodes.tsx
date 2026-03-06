@@ -79,9 +79,13 @@ function getTextYPosition(shape: string, size: number): number {
     case 'frustum':
       return size * 0.8 + 1.2
     case 'torus':
-      return size * 0.5 + 1.2
+      // 圆环需要更高的位置，特别是大尺寸时
+      // 使用二次函数确保大尺寸时有足够的间距
+      return size * 1.3 + size * 0.2 + 1.8
     case 'arrow':
-      return size * 1.0 + 1.2
+      // 箭头需要更高的位置，考虑箭头头部的高度
+      // 使用类似圆环的计算方式确保大尺寸时有足够间距
+      return size * 1.5 + size * 0.3 + 1.8
     default:
       return size + 1.2
   }
@@ -108,6 +112,8 @@ function createGeometry(shape: string, size: number) {
     case 'torus':
       return <torusGeometry args={[size * 0.8, size * 0.3, 16, 32]} />
     case 'arrow':
+      // 箭头的主体部分 - 使用圆柱体作为箭杆
+      return <cylinderGeometry args={[size * 0.3, size * 0.3, size * 1.2, 16]} />
     default:
       return <sphereGeometry args={[size, 32, 32]} />
   }
@@ -371,8 +377,8 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       </mesh>
 
       {shape === 'arrow' && (
-        <mesh position={[0, size * 0.6 + size * 0.5, 0]}>
-          <coneGeometry args={[size * 0.6, size * 1.0, 32]} />
+        <mesh position={[0, size * 0.6 + size * 0.4, 0]}>
+          <coneGeometry args={[size * 0.6, size * 0.8, 16]} />
           <meshStandardMaterial
             color={node.color || '#6BB6FF'}
             transparent
