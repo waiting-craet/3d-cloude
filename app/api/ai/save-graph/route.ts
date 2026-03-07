@@ -8,15 +8,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db';
 import { 
   getMergeResolutionService, 
   MergeDecision,
   NodeToCreate,
   NodeToUpdate 
 } from '@/lib/services/merge-resolution';
-
-const prisma = new PrismaClient();
 
 /**
  * Request body interface

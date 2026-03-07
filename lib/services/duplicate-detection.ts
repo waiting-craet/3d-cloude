@@ -250,15 +250,63 @@ export async function fetchExistingNodes(
   projectId: string,
   graphId: string
 ): Promise<ExistingNode[]> {
-  return await prisma.node.findMany({
-    where: {
-      projectId,
-      graphId
-    },
-    select: {
-      name: true
+  // Connection validation with retry logic
+  const maxRetries = 2
+  const timeout = 5000 // 5 seconds
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Validate Prisma client connection
+      await prisma.$connect()
+      
+      // Execute query with timeout
+      const result = await Promise.race([
+        prisma.node.findMany({
+          where: {
+            projectId,
+            graphId
+          },
+          select: {
+            name: true
+          }
+        }),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Query timeout')), timeout)
+        )
+      ])
+      
+      return result
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      
+      // Log the error
+      console.error(`fetchExistingNodes attempt ${attempt + 1}/${maxRetries + 1} failed:`, errorMessage)
+      
+      // Check if it's a timeout error
+      if (errorMessage.includes('timeout')) {
+        console.warn(`Database query timeout in fetchExistingNodes (attempt ${attempt + 1})`)
+      }
+      
+      // Check if it's a connection error
+      if (errorMessage.includes('connection') || errorMessage.includes('connect')) {
+        console.warn(`Database connection error in fetchExistingNodes (attempt ${attempt + 1})`)
+      }
+      
+      // If this is the last attempt, return empty array for graceful degradation
+      if (isLastAttempt) {
+        console.error('fetchExistingNodes failed after all retries, returning empty array for graceful degradation')
+        return []
+      }
+      
+      // Wait before retry with exponential backoff
+      const delayMs = 500 * Math.pow(2, attempt)
+      await new Promise(resolve => setTimeout(resolve, delayMs))
     }
-  })
+  }
+  
+  // Fallback (should never reach here due to return in last attempt)
+  return []
 }
 
 /**
@@ -276,25 +324,248 @@ export async function fetchExistingEdges(
   projectId: string,
   graphId: string
 ): Promise<ExistingEdge[]> {
-  return await prisma.edge.findMany({
-    where: {
-      projectId,
-      graphId
-    },
-    select: {
-      label: true,
-      fromNode: {
-        select: {
-          name: true
+  // Connection validation with retry logic
+  const maxRetries = 2
+  const timeout = 5000 // 5 seconds
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Validate Prisma client connection
+      await prisma.$connect()
+      
+      // Execute query with timeout
+      const result = await Promise.race([
+        prisma.edge.findMany({
+          where: {
+            projectId,
+            graphId
+          },
+          select: {
+            label: true,
+            fromNode: {
+              select: {
+                name: true
+              }
+            },
+            toNode: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Query timeout')), timeout)
+        )
+      ])
+      
+      return result
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      
+      // Log the error
+      console.error(`fetchExistingEdges attempt ${attempt + 1}/${maxRetries + 1} failed:`, errorMessage)
+      
+      // Check if it's a timeout error
+      if (errorMessage.includes('timeout')) {
+        console.warn(`Database query timeout in fetchExistingEdges (attempt ${attempt + 1})`)
+      }
+      
+      // Check if it's a connection error
+      if (errorMessage.includes('connection') || errorMessage.includes('connect')) {
+        console.warn(`Database connection error in fetchExistingEdges (attempt ${attempt + 1})`)
+      }
+      
+      // If this is the last attempt, return empty array for graceful degradation
+      if (isLastAttempt) {
+        console.error('fetchExistingEdges failed after all retries, returning empty array for graceful degradation')
+        return []
+      }
+      
+      // Wait before retry with exponential backoff
+      const delayMs = 500 * Math.pow(2, attempt)
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+    }
+  }
+  
+  // Fallback (should never reach here due to return in last attempt)
+  return []
+}
+
+// ============================================================================
+// AI Analysis Duplicate Detection (for /api/ai/analyze)
+// ============================================================================
+
+/**
+ * AI Entity type (from AI analysis)
+ */
+export interface AIEntity {
+  name: string
+  properties: Record<string, any>
+}
+
+/**
+ * AI Relationship type (from AI analysis)
+ */
+export interface AIRelationship {
+  from: string
+  to: string
+  type: string
+}
+
+/**
+ * Existing node type for AI duplicate detection
+ */
+export interface ExistingNodeForAI {
+  id: string
+  name: string
+  metadata?: any
+}
+
+/**
+ * Existing edge type for AI duplicate detection
+ */
+export interface ExistingEdgeForAI {
+  fromNodeId: string
+  toNodeId: string
+  label: string
+}
+
+/**
+ * Duplicate node information with conflicts
+ */
+export interface DuplicateNodeInfo {
+  newNodeIndex: number
+  existingNodeId: string
+  conflicts: Array<{
+    property: string
+    existingValue: any
+    newValue: any
+  }>
+}
+
+/**
+ * Duplicate Detection Service for AI Analysis
+ */
+export interface DuplicateDetectionService {
+  detectDuplicateNodes(
+    entities: AIEntity[],
+    existingNodes: ExistingNodeForAI[]
+  ): DuplicateNodeInfo[]
+
+  detectRedundantEdges(
+    relationships: AIRelationship[],
+    existingEdges: ExistingEdgeForAI[],
+    nodeMapping: Map<string, string>
+  ): number[]
+}
+
+/**
+ * Implementation of Duplicate Detection Service for AI Analysis
+ */
+class DuplicateDetectionServiceImpl implements DuplicateDetectionService {
+  /**
+   * Detect duplicate nodes in AI-generated entities
+   * Returns information about duplicates including property conflicts
+   */
+  detectDuplicateNodes(
+    entities: AIEntity[],
+    existingNodes: ExistingNodeForAI[]
+  ): DuplicateNodeInfo[] {
+    const duplicates: DuplicateNodeInfo[] = []
+
+    // Create a map of existing nodes by normalized name
+    const existingNodeMap = new Map<string, ExistingNodeForAI>()
+    for (const node of existingNodes) {
+      const normalizedName = node.name.toLowerCase().trim()
+      existingNodeMap.set(normalizedName, node)
+    }
+
+    // Check each entity for duplicates
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i]
+      const normalizedName = entity.name.toLowerCase().trim()
+      const existingNode = existingNodeMap.get(normalizedName)
+
+      if (existingNode) {
+        // Found a duplicate - check for property conflicts
+        const conflicts: Array<{
+          property: string
+          existingValue: any
+          newValue: any
+        }> = []
+
+        // Compare properties
+        const existingMetadata = existingNode.metadata || {}
+        for (const [key, newValue] of Object.entries(entity.properties)) {
+          const existingValue = existingMetadata[key]
+          
+          // If property exists in both and values differ, it's a conflict
+          if (existingValue !== undefined && existingValue !== newValue) {
+            conflicts.push({
+              property: key,
+              existingValue,
+              newValue
+            })
+          }
         }
-      },
-      toNode: {
-        select: {
-          name: true
+
+        duplicates.push({
+          newNodeIndex: i,
+          existingNodeId: existingNode.id,
+          conflicts
+        })
+      }
+    }
+
+    return duplicates
+  }
+
+  /**
+   * Detect redundant edges in AI-generated relationships
+   * Returns indices of redundant edges
+   */
+  detectRedundantEdges(
+    relationships: AIRelationship[],
+    existingEdges: ExistingEdgeForAI[],
+    nodeMapping: Map<string, string>
+  ): number[] {
+    const redundantIndices: number[] = []
+
+    // Create a set of existing edge keys for O(1) lookup
+    const existingEdgeKeys = new Set<string>()
+    for (const edge of existingEdges) {
+      const key = `${edge.fromNodeId}|${edge.toNodeId}|${edge.label}`
+      existingEdgeKeys.add(key)
+    }
+
+    // Check each relationship for redundancy
+    for (let i = 0; i < relationships.length; i++) {
+      const rel = relationships[i]
+      
+      // Get node IDs from mapping (handles both new and duplicate nodes)
+      const fromNodeId = nodeMapping.get(rel.from.toLowerCase().trim())
+      const toNodeId = nodeMapping.get(rel.to.toLowerCase().trim())
+
+      if (fromNodeId && toNodeId) {
+        const edgeKey = `${fromNodeId}|${toNodeId}|${rel.type}`
+        
+        if (existingEdgeKeys.has(edgeKey)) {
+          redundantIndices.push(i)
         }
       }
     }
-  })
+
+    return redundantIndices
+  }
+}
+
+/**
+ * Factory function to get duplicate detection service instance
+ */
+export function getDuplicateDetectionService(): DuplicateDetectionService {
+  return new DuplicateDetectionServiceImpl()
 }
 
 // ============================================================================

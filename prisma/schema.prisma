@@ -75,6 +75,7 @@ model Node {
   @@index([createdAt])
   @@index([projectId])
   @@index([graphId])
+  @@index([name])
 }
 
 // 边模型 - 节点之间的关系

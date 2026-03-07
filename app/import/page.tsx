@@ -284,8 +284,13 @@ export default function ImportPage() {
           errorMessage += '\n\n警告：' + result.warnings.join('；')
         }
         
+        // 显示错误消息并保持模态框打开一段时间，让用户看到错误
         setUploadStatus(errorMessage)
-        setShowLoadingModal(false)
+        
+        // 延迟关闭模态框，让用户有时间看到错误信息
+        setTimeout(() => {
+          setShowLoadingModal(false)
+        }, 3000)
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -295,7 +300,11 @@ export default function ImportPage() {
         console.error('Upload failed:', error)
         setUploadStatus('导入失败，请重试')
       }
-      setShowLoadingModal(false)
+      
+      // 延迟关闭模态框，让用户有时间看到错误信息
+      setTimeout(() => {
+        setShowLoadingModal(false)
+      }, 2000)
     } finally {
       setUploading(false)
       setAbortController(null)
@@ -1105,9 +1114,11 @@ export default function ImportPage() {
             
             <p style={{
               fontSize: '14px',
-              color: '#666',
+              color: uploadStatus.includes('失败') || uploadStatus.includes('错误') ? '#d32f2f' : '#666',
               marginBottom: '24px',
-              lineHeight: '1.6'
+              lineHeight: '1.6',
+              fontWeight: uploadStatus.includes('失败') || uploadStatus.includes('错误') ? '600' : 'normal',
+              whiteSpace: 'pre-line'
             }}>
               {uploadStatus || '正在处理您的数据，请稍候'}
             </p>
