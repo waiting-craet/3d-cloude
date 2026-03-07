@@ -1,303 +1,118 @@
-'use client'
-
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useUserStore } from '@/lib/userStore'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import styles from './HeroSection.module.css'
 
-// TypeScript interfaces for the component
 export interface HeroSectionProps {
-  title?: string
-  subtitle?: string
-  primaryAction?: {
-    text: string
-    onClick: () => void
-    disabled?: boolean
-  }
-  secondaryAction?: {
-    text: string
-    onClick: () => void
-  }
-  searchQuery?: string
-  onSearchChange?: (query: string) => void
-  onSearchSubmit?: () => void
-  backgroundType?: 'gradient' | 'image' | 'pattern' | 'solid'
-  backgroundImage?: string
-  theme?: 'light' | 'dark'
-  className?: string
-  showSearch?: boolean
-  animated?: boolean
+  title: string
+  subtitle: string
+  onSearch?: (query: string) => void
 }
 
-interface SearchBarProps {
-  query: string
-  onChange: (query: string) => void
-  onSubmit: () => void
-  placeholder?: string
-  theme?: 'light' | 'dark'
-}
+/**
+ * HeroSection Component
+ * 
+ * The primary content area displaying the main title, subtitle, and search functionality.
+ * Features a subtle gradient background and centered layout with generous spacing.
+ * 
+ * Performance optimizations:
+ * - Debounced search input (300ms delay) to reduce unnecessary function calls
+ * - Memoized event handlers with useCallback
+ * - Component memoization to prevent re-renders when props don't change
+ * 
+ * @param title - Main heading text
+ * @param subtitle - Descriptive subtitle text
+ * @param onSearch - Optional callback when search is triggered (debounced)
+ */
+const HeroSectionComponent = ({ title, subtitle, onSearch }: HeroSectionProps) => {
+  const [searchQuery, setSearchQuery] = useState('')
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-// 搜索栏组件
-const SearchBar: React.FC<SearchBarProps> = ({ 
-  query, 
-  onChange, 
-  onSubmit, 
-  placeholder = "搜索知识图谱",
-  theme = 'light'
-}) => {
-  const [isFocused, setIsFocused] = useState(false)
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      onSubmit()
-    }
-  }
-
-  return (
-    <div className={styles.searchWrapper}>
-      <div
-        className={`
-          ${styles.searchBox} 
-          ${theme === 'dark' ? styles.searchBoxDark : styles.searchBoxLight}
-          ${isFocused ? styles.searchBoxFocused : ''}
-          ${isFocused && theme === 'dark' ? styles.searchBoxFocusedDark : ''}
-          ${isFocused && theme === 'light' ? styles.searchBoxFocusedLight : ''}
-        `}
-      >
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyPress}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          placeholder={placeholder}
-          className={`
-            ${styles.searchInput} 
-            ${theme === 'dark' ? styles.searchInputDark : styles.searchInputLight}
-          `}
-        />
-        <button
-          onClick={onSubmit}
-          className={styles.searchButton}
-          aria-label="搜索"
-        >
-          🔍
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// 主要 HeroSection 组件
-const HeroSection: React.FC<HeroSectionProps> = ({
-  title = "知识图谱作品广场",
-  subtitle = "发现、创建和分享知识的无限可能",
-  primaryAction,
-  secondaryAction,
-  searchQuery = '',
-  onSearchChange,
-  onSearchSubmit,
-  backgroundType = 'gradient',
-  backgroundImage,
-  theme = 'light',
-  className = '',
-  showSearch = true,
-  animated = true
-}) => {
-  const router = useRouter()
-  const { isLoggedIn } = useUserStore()
-  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery)
-  const [isVisible, setIsVisible] = useState(false)
-
-  // 动画效果
+  // Cleanup debounce timer on unmount
   useEffect(() => {
-    if (animated) {
-      const timer = setTimeout(() => setIsVisible(true), 100)
-      return () => clearTimeout(timer)
-    } else {
-      setIsVisible(true)
-    }
-  }, [animated])
-
-  // 更新本地搜索查询
-  useEffect(() => {
-    setLocalSearchQuery(searchQuery)
-  }, [searchQuery])
-
-  const handleSearchChange = (query: string) => {
-    setLocalSearchQuery(query)
-    onSearchChange?.(query)
-  }
-
-  const handleSearchSubmit = () => {
-    onSearchSubmit?.()
-  }
-
-  // 默认主要操作
-  const defaultPrimaryAction = {
-    text: "开始创作",
-    onClick: () => {
-      if (!isLoggedIn) {
-        alert('请先登录后再开始创作')
-        return
-      }
-      router.push('/creation')
-    },
-    disabled: !isLoggedIn
-  }
-
-  // 默认次要操作
-  const defaultSecondaryAction = secondaryAction !== null ? {
-    text: "浏览作品",
-    onClick: () => {
-      // 滚动到作品区域
-      const worksSection = document.querySelector('[data-works-section]')
-      if (worksSection) {
-        worksSection.scrollIntoView({ behavior: 'smooth' })
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
       }
     }
-  } : null
+  }, [])
 
-  const finalPrimaryAction = primaryAction || defaultPrimaryAction
-  const finalSecondaryAction = secondaryAction || defaultSecondaryAction
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
 
-  // 背景样式配置
-  const getBackgroundClasses = () => {
-    const baseClass = styles.heroSection
+    // Debounce search callback
+    if (onSearch) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        if (value.trim()) {
+          onSearch(value.trim())
+        }
+      }, 300) // 300ms debounce delay
+    }
+  }, [onSearch])
+
+  const handleSearchSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
     
-    switch (backgroundType) {
-      case 'gradient':
-        return `${baseClass} ${theme === 'dark' ? styles.backgroundGradientDark : styles.backgroundGradient}`
-      case 'pattern':
-        return `${baseClass} ${theme === 'dark' ? styles.backgroundPatternDark : styles.backgroundPattern}`
-      case 'solid':
-      default:
-        return `${baseClass} ${theme === 'dark' ? styles.backgroundSolidDark : styles.backgroundSolid}`
+    // Clear any pending debounced calls
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
     }
-  }
 
-  const getBackgroundStyle = () => {
-    if (backgroundType === 'image' && backgroundImage) {
-      return {
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }
+    // Immediately trigger search on form submit
+    if (onSearch && searchQuery.trim()) {
+      onSearch(searchQuery.trim())
     }
-    return {}
-  }
+  }, [onSearch, searchQuery])
 
   return (
-    <section
-      className={`${getBackgroundClasses()} ${className}`}
-      style={getBackgroundStyle()}
-    >
-      {/* 背景装饰元素 */}
-      {backgroundType === 'gradient' && animated && (
-        <>
-          <div className={styles.floatingElement1} />
-          <div className={styles.floatingElement2} />
-          <div className={styles.floatingElement3} />
-        </>
-      )}
-
-      {/* 主要内容 */}
-      <div
-        className={`
-          ${styles.heroContent} 
-          ${isVisible ? styles.heroContentVisible : styles.heroContentHidden}
-        `}
-      >
-        {/* 主标题 */}
-        <h1
-          className={`
-            ${styles.heroTitle}
-            ${backgroundType === 'gradient' ? styles.heroTitleGradient : ''}
-            ${theme === 'dark' ? styles.heroTitleDark : styles.heroTitleLight}
-          `}
-        >
-          {title}
-        </h1>
-
-        {/* 副标题 */}
-        <p
-          className={`
-            ${styles.heroSubtitle}
-            ${theme === 'dark' ? styles.heroSubtitleDark : styles.heroSubtitleLight}
-          `}
-        >
-          {subtitle}
-        </p>
-
-        {/* 搜索栏 */}
-        {showSearch && (
-          <div className={styles.searchContainer}>
-            <SearchBar
-              query={localSearchQuery}
-              onChange={handleSearchChange}
-              onSubmit={handleSearchSubmit}
-              theme={theme}
-            />
-          </div>
-        )}
-
-        {/* 行动按钮 */}
-        <div className={styles.buttonContainer}>
-          {/* 主要按钮 */}
-          <button
-            onClick={finalPrimaryAction.onClick}
-            disabled={finalPrimaryAction.disabled}
-            className={`
-              ${styles.primaryButton}
-              ${finalPrimaryAction.disabled ? styles.primaryButtonDisabled : ''}
-            `}
+    <section className={styles.hero}>
+      <div className={styles.container}>
+        <h1 className={styles.title}>{title}</h1>
+        <p className={styles.subtitle}>{subtitle}</p>
+        <form className={styles.searchContainer} onSubmit={handleSearchSubmit}>
+          <svg 
+            className={styles.searchIcon} 
+            width="20" 
+            height="20" 
+            viewBox="0 0 20 20" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
           >
-            <span style={{ position: 'relative', zIndex: 1 }}>
-              {finalPrimaryAction.text}
-            </span>
-            {/* 按钮光效 */}
-            {!finalPrimaryAction.disabled && (
-              <div className={styles.buttonShimmer} />
-            )}
-          </button>
-
-          {/* 次要按钮 */}
-          {finalSecondaryAction && finalSecondaryAction.text && (
-            <button
-              onClick={finalSecondaryAction.onClick}
-              className={styles.secondaryButton}
-            >
-              {finalSecondaryAction.text}
-            </button>
-          )}
-        </div>
-
-        {/* 特性标签 */}
-        <div className={styles.featuresContainer}>
-          {[
-            { icon: '🎯', text: '3D可视化' },
-            { icon: '🚀', text: '快速创建' },
-            { icon: '🤝', text: '协作分享' },
-            { icon: '📊', text: '数据驱动' }
-          ].map((feature, index) => (
-            <div
-              key={index}
-              className={`
-                ${styles.featureItem}
-                ${theme === 'dark' ? styles.featureItemDark : styles.featureItemLight}
-              `}
-            >
-              <span className={styles.featureIcon}>{feature.icon}</span>
-              <span>{feature.text}</span>
-            </div>
-          ))}
-        </div>
+            <path 
+              d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+          <input
+            type="text"
+            placeholder="搜索知识图谱..."
+            className={styles.searchInput}
+            value={searchQuery}
+            onChange={handleSearchChange}
+            aria-label="搜索知识图谱"
+          />
+        </form>
       </div>
     </section>
   )
 }
+
+// Memoize component to prevent unnecessary re-renders
+const HeroSection = React.memo(HeroSectionComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.subtitle === nextProps.subtitle
+    // Note: onSearch is intentionally not compared as it's typically a stable callback
+  )
+})
+
+HeroSection.displayName = 'HeroSection'
 
 export default HeroSection

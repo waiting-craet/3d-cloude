@@ -1,0 +1,103 @@
+/* PaperGallerySection - Gallery container with heading and view all link */
+
+.section {
+  width: 100%;
+  padding: 48px 0;
+  background: #FFFFFF;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.heading {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333333;
+  margin: 0;
+  line-height: 1.3;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.viewAllLink {
+  font-size: 14px;
+  color: #6b8e85;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+
+.viewAllLink:hover {
+  color: #8ba9a0;
+  text-decoration: underline;
+}
+
+.viewAllLink:focus {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.viewAllLink:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.viewAllLink:focus-visible {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+/* Tablet: 768px - 1199px */
+@media (max-width: 1199px) {
+  .section {
+    padding: 40px 0;
+  }
+
+  .container {
+    padding: 0 24px;
+  }
+
+  .heading {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  .viewAllLink {
+    font-size: 13px;
+  }
+}
+
+/* Mobile: < 768px */
+@media (max-width: 767px) {
+  .section {
+    padding: 32px 0;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .header {
+    margin-bottom: 20px;
+  }
+
+  .heading {
+    font-size: 17px;
+  }
+
+  .viewAllLink {
+    font-size: 12px;
+  }
+}

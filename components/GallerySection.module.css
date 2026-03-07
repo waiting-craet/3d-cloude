@@ -1,0 +1,59 @@
+/**
+ * GallerySection Styles
+ * 
+ * Provides consistent spacing and layout for the gallery section.
+ * Uses ink-wash design tokens for typography and spacing.
+ */
+
+.section {
+  width: 100%;
+  padding: 64px 0;
+  background: #ffffff;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.heading {
+  font-size: 28px;
+  font-weight: 600;
+  color: #2c2c2c;
+  margin: 0 0 32px 0;
+  line-height: 1.2;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Tablet: 768px - 1199px */
+@media (max-width: 1199px) {
+  .section {
+    padding: 48px 0;
+  }
+
+  .container {
+    padding: 0 24px;
+  }
+
+  .heading {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+}
+
+/* Mobile: < 768px */
+@media (max-width: 767px) {
+  .section {
+    padding: 32px 0;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .heading {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+}
