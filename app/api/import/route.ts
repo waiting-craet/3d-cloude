@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     const validatedData = importResult.validatedData!
 
     // 为没有坐标的节点生成布局 - 统一使用3D模式
-    const nodesWithLayout = generateLayout(validatedData.nodes, validatedData.edges)
+    const nodesWithLayout = generateLayout(validatedData.node, validatedData.edge)
 
     // 创建节点映射（label/id -> database id）
     const nodeMap = new Map<string, string>()
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 批量创建边 - 过滤无效边并使用事务，添加重试机制
-    const validEdges = validatedData.edges.filter((edgeData: { source: string; target: string; label?: string }) => {
+    const validEdges = validatedData.edge.filter((edgeData: { source: string; target: string; label?: string }) => {
       const sourceId = nodeMap.get(edgeData.source)
       const targetId = nodeMap.get(edgeData.target)
       
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       nodesCount: createdNodes.length,
       edgesCount: createdEdges.length,
       coordinateSystem: '3D', // 系统已统一为3D
-      skippedEdges: validatedData.edges.length - createdEdges.length,
+      skippedEdges: validatedData.edge.length - createdEdges.length,
       warnings: importResult.warnings
     })
 

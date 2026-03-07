@@ -9,7 +9,11 @@ import CreateProjectModal from './CreateProjectModal'
 import DeleteButton from './DeleteButton'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 
-export default function TopNavbar() {
+interface TopNavbarProps {
+  mode?: 'full' | 'readonly'
+}
+
+export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
   const router = useRouter()
   
   const { 
@@ -519,7 +523,8 @@ export default function TopNavbar() {
           <span>返回</span>
         </button>
 
-        {/* 左侧:现有图谱下拉菜单 */}
+        {/* 左侧:现有图谱下拉菜单 - 仅在完整模式下显示 */}
+        {mode === 'full' && (
         <div ref={projectMenuRef} style={{ position: 'relative' }}>
           <button
             onClick={() => setShowProjectMenu(!showProjectMenu)}
@@ -755,8 +760,10 @@ export default function TopNavbar() {
             </div>
           )}
         </div>
+        )}
 
-        {/* 搜索框 */}
+        {/* 搜索框 - 仅在完整模式下显示 */}
+        {mode === 'full' && (
         <div style={{ position: 'relative', flex: '0 0 400px' }}>
           <input
             type="text"
@@ -890,11 +897,12 @@ export default function TopNavbar() {
             </div>
           )}
         </div>
+        )}
 
         {/* 右侧按钮区域 */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* 管理员专属：快速创建按钮 */}
-          {isLoggedIn && (
+          {/* 管理员专属：快速创建按钮 - 仅在完整模式下显示 */}
+          {mode === 'full' && isLoggedIn && (
             <button
               onClick={() => router.push('/workflow')}
               style={{
@@ -929,8 +937,8 @@ export default function TopNavbar() {
             </button>
           )}
 
-          {/* 管理员专属：新建图谱按钮 */}
-          {isLoggedIn && (
+          {/* 管理员专属：新建图谱按钮 - 仅在完整模式下显示 */}
+          {mode === 'full' && isLoggedIn && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               style={{

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     const body: SaveGraphRequest = await request.json();
     
     // Validate required fields
-    if (!body.nodes || !Array.isArray(body.nodes)) {
+    if (!body.node || !Array.isArray(body.node)) {
       return NextResponse.json(
         {
           success: false,
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!body.edges || !Array.isArray(body.edges)) {
+    if (!body.edge || !Array.isArray(body.edge)) {
       return NextResponse.json(
         {
           success: false,
@@ -101,8 +101,8 @@ export async function POST(request: NextRequest) {
       projectId: body.projectId,
       graphId: body.graphId,
       graphName: body.graphName,
-      nodeCount: body.nodes.length,
-      edgeCount: body.edges.length,
+      nodeCount: body.node.length,
+      edgeCount: body.edge.length,
       mergeDecisionCount: body.mergeDecisions?.length || 0,
     });
 
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         graph = await tx.graph.findUnique({
           where: { id: body.graphId },
           include: {
-            nodes: {
+    nodes: {
               select: {
                 id: true,
                 name: true,
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
             edgeCount: 0,
           },
           include: {
-            nodes: {
+    nodes: {
               select: {
                 id: true,
                 name: true,
@@ -158,12 +158,12 @@ export async function POST(request: NextRequest) {
       const mergeService = getMergeResolutionService();
       
       // Get redundant edge indices (edges marked as redundant)
-      const redundantEdgeIndices = body.edges
+      const redundantEdgeIndices = body.edge
         .map((edge, index) => edge.isRedundant ? index : -1)
         .filter(index => index !== -1);
 
       // Prepare new nodes data
-      const newNodes = body.nodes.map(n => ({
+      const newNodes = body.node.map(n => ({
         tempId: n.id,
         name: n.name,
         type: n.type,
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
 
       // Create existing nodes map
       const existingNodesMap = new Map(
-        graph.nodes.map(n => [n.id, { name: n.name, metadata: n.metadata }])
+        graph.node.map(n => [n.id, { name: n.name, metadata: n.metadata }])
       );
 
       // Process nodes and get merge results
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
 
       // Step 5: Process edges with node ID mapping
       const processedEdges = mergeService.processEdges(
-        body.edges.map(e => ({
+        body.edge.map(e => ({
           id: e.id,
           fromNodeId: e.fromNodeId,
           toNodeId: e.toNodeId,

@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { retryOperation, getDescriptiveErrorMessage } from '@/lib/db-helpers';
+import { getCurrentUserId } from '@/lib/auth';
 
-// GET - 获取所有项目
-export async function GET() {
+// GET - 获取当前用户的项目列表
+export async function GET(request: NextRequest) {
   try {
+    // 获取当前用户ID
+    const userId = await getCurrentUserId(request, { required: false });
+    
+    // 如果用户未登录，返回空列表
+    if (!userId) {
+      return NextResponse.json({ projects: [] });
+    }
+
     const projects = await prisma.project.findMany({
+      where: {
+        userId: userId, // 只返回当前用户的项目
+      },
       orderBy: {
         updatedAt: 'desc',
       },
@@ -15,6 +27,7 @@ export async function GET() {
         description: true,
         nodeCount: true,
         edgeCount: true,
+        userId: true,
         createdAt: true,
         updatedAt: true,
         _count: {
@@ -27,9 +40,15 @@ export async function GET() {
 
     // 将 _count.graphs 转换为 graphCount
     const projectsWithGraphCount = projects.map(project => ({
-      ...project,
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      nodeCount: project.nodeCount,
+      edgeCount: project.edgeCount,
+      userId: project.userId,
       graphCount: project._count.graphs,
-      _count: undefined,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
     }));
 
     return NextResponse.json({ projects: projectsWithGraphCount });
@@ -42,9 +61,19 @@ export async function GET() {
   }
 }
 
-// POST - 创建新项目，可选择是否创建图谱
+// POST - 创建新项目，自动关联当前用户
 export async function POST(request: NextRequest) {
   try {
+    // 获取当前用户ID（必须登录）
+    const userId = await getCurrentUserId(request, { required: true });
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: '用户未登录' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { name, graphName } = body;
 
@@ -70,10 +99,11 @@ export async function POST(request: NextRequest) {
 
       // 使用事务创建项目，可选择创建图谱
       return await prisma.$transaction(async (tx) => {
-        // 创建项目
+        // 创建项目并关联当前用户
         const project = await tx.project.create({
           data: {
             name: name.trim(),
+            userId: userId, // 关联当前用户
           },
         });
 

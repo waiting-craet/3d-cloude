@@ -68,11 +68,23 @@ export async function POST(request: NextRequest) {
       createdAt: newUser.createdAt
     };
 
-    return NextResponse.json({
+    // 创建响应并设置cookie
+    const response = NextResponse.json({
       success: true,
       user: userInfo,
       message: '注册成功'
     });
+
+    // 设置userId cookie（HttpOnly for security）
+    response.cookies.set('userId', newUser.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30天
+      path: '/'
+    });
+
+    return response;
 
   } catch (error) {
     console.error('注册错误:', error);

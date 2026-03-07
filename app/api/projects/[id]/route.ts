@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { del, list } from '@vercel/blob'
+import { getCurrentUserId, verifyProjectOwnership } from '@/lib/auth'
 
 // 使用 Node.js Runtime
 export const runtime = 'nodejs'
@@ -18,10 +19,10 @@ export async function GET(
     const project = await prisma.project.findUnique({
       where: { id },
       include: {
-        nodes: {
+    nodes: {
           orderBy: { createdAt: 'desc' },
         },
-        edges: {
+        edge: {
           orderBy: { createdAt: 'desc' },
         },
       },
@@ -54,6 +55,7 @@ export async function GET(
 /**
  * DELETE /api/projects/[id] - 删除项目及其所有关联数据
  * 包括：节点、边、Blob 存储文件
+ * 需要验证用户所有权
  */
 export async function DELETE(
   request: NextRequest,
@@ -61,6 +63,26 @@ export async function DELETE(
 ) {
   try {
     const { id } = params
+    
+    // 获取当前用户ID
+    const userId = await getCurrentUserId(request, { required: true });
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: '用户未登录' },
+        { status: 401 }
+      );
+    }
+    
+    // 验证项目所有权
+    const isOwner = await verifyProjectOwnership({ projectId: id, userId });
+    
+    if (!isOwner) {
+      return NextResponse.json(
+        { error: '无权限操作此项目' },
+        { status: 403 }
+      );
+    }
     
     console.log(`🗑️ [projects/${id}] 开始删除项目...`)
     console.log(`🗑️ [projects/${id}] 项目ID: ${id}`)
@@ -162,6 +184,7 @@ export async function DELETE(
 
 /**
  * PATCH /api/projects/[id] - 更新项目信息
+ * 需要验证用户所有权
  */
 export async function PATCH(
   request: NextRequest,
@@ -169,6 +192,27 @@ export async function PATCH(
 ) {
   try {
     const { id } = params
+    
+    // 获取当前用户ID
+    const userId = await getCurrentUserId(request, { required: true });
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: '用户未登录' },
+        { status: 401 }
+      );
+    }
+    
+    // 验证项目所有权
+    const isOwner = await verifyProjectOwnership({ projectId: id, userId });
+    
+    if (!isOwner) {
+      return NextResponse.json(
+        { error: '无权限操作此项目' },
+        { status: 403 }
+      );
+    }
+    
     const body = await request.json()
     const { name, description } = body
 

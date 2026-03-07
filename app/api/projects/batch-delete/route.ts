@@ -16,7 +16,7 @@ export interface ProjectDeleteResult {
   success: boolean;
   error?: string;
   deletedCounts?: {
-    graphs: number;
+    graph: number;
     nodes: number;
     edges: number;
     files: number;
@@ -130,10 +130,10 @@ async function deleteProject(projectId: string): Promise<ProjectDeleteResult> {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
-        graphs: {
+    graphs: {
           select: { id: true, name: true },
         },
-        nodes: {
+        node: {
           select: {
             id: true,
             imageUrl: true,
@@ -142,7 +142,7 @@ async function deleteProject(projectId: string): Promise<ProjectDeleteResult> {
             videoUrl: true,
           },
         },
-        edges: {
+        edge: {
           select: { id: true },
         },
       },
@@ -220,7 +220,7 @@ async function deleteProject(projectId: string): Promise<ProjectDeleteResult> {
       projectName,
       success: true,
       deletedCounts: {
-        graphs: graphCount,
+        graph: graphCount,
         nodes: nodeCount,
         edges: edgeCount,
         files: deletedFileCount,

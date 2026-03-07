@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // 构建搜索建议
     const suggestions = [
-      ...graphs.map((graph) => ({
+      ...graph.map((graph) => ({
         id: graph.id,
         type: 'graph' as const,
         title: graph.name,

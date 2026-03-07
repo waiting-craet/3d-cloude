@@ -1,0 +1,118 @@
+-- 最小化版本 - 逐个创建表
+-- 请确保已选择 neondb 数据库
+
+-- 1. 先删除所有表
+DROP TABLE IF EXISTS SearchHistory;
+DROP TABLE IF EXISTS User;
+DROP TABLE IF EXISTS Edge;
+DROP TABLE IF EXISTS Node;
+DROP TABLE IF EXISTS Graph;
+DROP TABLE IF EXISTS Project;
+
+-- 2. 创建 Project 表
+CREATE TABLE Project (
+    id VARCHAR(191) NOT NULL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    settings TEXT,
+    nodeCount INT NOT NULL DEFAULT 0,
+    edgeCount INT NOT NULL DEFAULT 0,
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 3. 创建 Graph 表
+CREATE TABLE Graph (
+    id VARCHAR(191) NOT NULL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    settings TEXT,
+    isPublic TINYINT(1) NOT NULL DEFAULT 0,
+    nodeCount INT NOT NULL DEFAULT 0,
+    edgeCount INT NOT NULL DEFAULT 0,
+    projectId VARCHAR(191),
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (projectId) REFERENCES Project(id) ON DELETE CASCADE
+);
+
+-- 4. 创建 Node 表
+CREATE TABLE Node (
+    id VARCHAR(191) NOT NULL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    description TEXT,
+    content LONGTEXT,
+    metadata TEXT,
+    x DOUBLE NOT NULL DEFAULT 0,
+    y DOUBLE NOT NULL DEFAULT 0,
+    z DOUBLE NOT NULL DEFAULT 0,
+    color VARCHAR(50) NOT NULL DEFAULT '#3b82f6',
+    textColor VARCHAR(50) NOT NULL DEFAULT '#FFFFFF',
+    shape VARCHAR(50) NOT NULL DEFAULT 'sphere',
+    size DOUBLE NOT NULL DEFAULT 1.0,
+    opacity DOUBLE NOT NULL DEFAULT 1.0,
+    isGlowing TINYINT(1) NOT NULL DEFAULT 0,
+    imageUrl TEXT,
+    videoUrl TEXT,
+    iconUrl TEXT,
+    image TEXT,
+    video TEXT,
+    documentId VARCHAR(191),
+    chunkIndex INT,
+    coverUrl TEXT,
+    embedding TEXT,
+    tags TEXT,
+    category VARCHAR(100),
+    projectId VARCHAR(191),
+    graphId VARCHAR(191),
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (projectId) REFERENCES Project(id) ON DELETE CASCADE,
+    FOREIGN KEY (graphId) REFERENCES Graph(id) ON DELETE CASCADE,
+    FOREIGN KEY (documentId) REFERENCES Node(id) ON DELETE CASCADE
+);
+
+-- 5. 创建 Edge 表
+CREATE TABLE Edge (
+    id VARCHAR(191) NOT NULL PRIMARY KEY,
+    fromNodeId VARCHAR(191) NOT NULL,
+    toNodeId VARCHAR(191) NOT NULL,
+    label VARCHAR(100) NOT NULL,
+    weight DOUBLE NOT NULL DEFAULT 1.0,
+    properties TEXT,
+    bidirectional TINYINT(1) NOT NULL DEFAULT 0,
+    color VARCHAR(50),
+    style VARCHAR(50),
+    projectId VARCHAR(191),
+    graphId VARCHAR(191),
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (projectId) REFERENCES Project(id) ON DELETE CASCADE,
+    FOREIGN KEY (graphId) REFERENCES Graph(id) ON DELETE CASCADE,
+    FOREIGN KEY (fromNodeId) REFERENCES Node(id) ON DELETE CASCADE,
+    FOREIGN KEY (toNodeId) REFERENCES Node(id) ON DELETE CASCADE
+);
+
+-- 6. 创建 User 表
+CREATE TABLE User (
+    id VARCHAR(191) NOT NULL PRIMARY KEY,
+    email VARCHAR(191) UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    username VARCHAR(191) NOT NULL UNIQUE,
+    name VARCHAR(255),
+    avatar TEXT,
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 7. 创建 SearchHistory 表
+CREATE TABLE SearchHistory (
+    id VARCHAR(191) NOT NULL PRIMARY KEY,
+    query VARCHAR(500) NOT NULL,
+    results TEXT,
+    userId VARCHAR(191),
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. 验证表是否创建成功
+SHOW TABLES;

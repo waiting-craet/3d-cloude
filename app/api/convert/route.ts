@@ -121,7 +121,7 @@ export async function POST(request: Request) {
     // 3. 清理无效数据
     const cleaned = cleanWorkflowData(nodes, connections || [])
     
-    if (cleaned.nodes.length === 0) {
+    if (cleaned.node.length === 0) {
       return NextResponse.json(
         {
           success: false,
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
     }
 
     // 4. 坐标转换（使用增强的配置并应用最小距离强制）
-    const nodes2d = cleaned.nodes.map(node => ({
+    const nodes2d = cleaned.node.map(node => ({
       id: node.id,
       label: node.label,
       description: node.description,
@@ -180,7 +180,7 @@ export async function POST(request: Request) {
     const centeredPositions = centerLayout(layoutedPositions)
     
     // 组合原始ID和布局后的坐标
-    const convertedNodes = cleaned.nodes.map((node, index) => ({
+    const convertedNodes = cleaned.node.map((node, index) => ({
       label: node.label,
       description: node.description || '',
       x2d: node.x,

@@ -8,6 +8,22 @@ import TopNavbar from '@/components/TopNavbar'
 import NodeDetailPanel from '@/components/NodeDetailPanel'
 import FloatingAddButton from '@/components/FloatingAddButton'
 
+// 导航模式类型
+type NavigationMode = 'full' | 'readonly'
+
+// 根据来源确定导航模式
+function determineNavigationMode(referrer: string | undefined): NavigationMode {
+  // 如果没有referrer或者来自首页相关页面，使用只读模式
+  const isFromHomepage = 
+    !referrer || 
+    referrer === '/' || 
+    referrer.includes('homepage') ||
+    referrer.includes('gallery') ||
+    referrer.endsWith('/'); // 根路径
+  
+  return isFromHomepage ? 'readonly' : 'full';
+}
+
 export default function GraphPage() {
   const searchParams = useSearchParams()
   const graphId = searchParams.get('graphId')
@@ -15,6 +31,18 @@ export default function GraphPage() {
   const { theme, setTheme, loadGraphById, currentGraph } = useGraphStore()
   const [isInitializing, setIsInitializing] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [navigationMode, setNavigationMode] = useState<NavigationMode>('full')
+
+  // 检测导航来源并设置模式
+  useEffect(() => {
+    // 获取referrer（来源页面）
+    const referrer = document.referrer
+    const mode = determineNavigationMode(referrer)
+    setNavigationMode(mode)
+    
+    console.log('🔍 [GraphPage] Referrer:', referrer)
+    console.log('🔍 [GraphPage] Navigation Mode:', mode)
+  }, [])
 
   // 强制使用明亮主题
   useEffect(() => {
@@ -59,7 +87,7 @@ export default function GraphPage() {
   if (isInitializing) {
     return (
       <main>
-        <TopNavbar />
+        <TopNavbar mode={navigationMode} />
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -80,7 +108,7 @@ export default function GraphPage() {
   if (error) {
     return (
       <main>
-        <TopNavbar />
+        <TopNavbar mode={navigationMode} />
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -114,7 +142,7 @@ export default function GraphPage() {
 
   return (
     <main>
-      <TopNavbar />
+      <TopNavbar mode={navigationMode} />
       <KnowledgeGraph />
       <NodeDetailPanel />
       <FloatingAddButton />

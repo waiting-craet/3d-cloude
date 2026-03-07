@@ -1,0 +1,146 @@
+// MySQL 版本的 Prisma Schema（备份）
+// 使用此配置切换到 MySQL 数据库
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model edge {
+  id                         String   @id @default(uuid())
+  fromNodeId                 String
+  toNodeId                   String
+  label                      String   @db.VarChar(100)
+  weight                     Float    @default(1)
+  properties                 String?  @db.Text
+  bidirectional              Boolean  @default(false)
+  color                      String?  @db.VarChar(50)
+  style                      String?  @db.VarChar(50)
+  projectId                  String?
+  graphId                    String?
+  createdAt                  DateTime @default(now()) @db.DateTime(0)
+  node_edge_fromNodeIdTonode node     @relation("edge_fromNodeIdTonode", fields: [fromNodeId], references: [id], onDelete: Cascade, map: "Edge_fromNodeId_fkey")
+  graph                      graph?   @relation(fields: [graphId], references: [id], onDelete: Cascade, map: "Edge_graphId_fkey")
+  project                    project? @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "Edge_projectId_fkey")
+  node_edge_toNodeIdTonode   node     @relation("edge_toNodeIdTonode", fields: [toNodeId], references: [id], onDelete: Cascade, map: "Edge_toNodeId_fkey")
+
+  @@index([fromNodeId], map: "Edge_fromNodeId_idx")
+  @@index([graphId], map: "Edge_graphId_idx")
+  @@index([label], map: "Edge_label_idx")
+  @@index([projectId], map: "Edge_projectId_idx")
+  @@index([toNodeId], map: "Edge_toNodeId_idx")
+}
+
+model graph {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  settings    String?  @db.Text
+  isPublic    Boolean  @default(false)
+  nodeCount   Int      @default(0)
+  edgeCount   Int      @default(0)
+  projectId   String?
+  createdAt   DateTime @default(now()) @db.DateTime(0)
+  updatedAt   DateTime @default(now()) @db.DateTime(0)
+  edge        edge[]
+  project     project? @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "Graph_projectId_fkey")
+  node        node[]
+
+  @@index([createdAt], map: "Graph_createdAt_idx")
+  @@index([projectId], map: "Graph_projectId_idx")
+}
+
+model node {
+  id                         String   @id @default(uuid())
+  name                       String   @db.VarChar(255)
+  type                       String   @db.VarChar(100)
+  description                String?  @db.Text
+  content                    String?  @db.LongText
+  metadata                   String?  @db.Text
+  x                          Float    @default(0)
+  y                          Float    @default(0)
+  z                          Float    @default(0)
+  color                      String   @default("#3b82f6") @db.VarChar(50)
+  textColor                  String   @default("#FFFFFF") @db.VarChar(50)
+  shape                      String   @default("sphere") @db.VarChar(50)
+  size                       Float    @default(1)
+  opacity                    Float    @default(1)
+  isGlowing                  Boolean  @default(false)
+  imageUrl                   String?  @db.Text
+  videoUrl                   String?  @db.Text
+  iconUrl                    String?  @db.Text
+  image                      String?  @db.Text
+  video                      String?  @db.Text
+  documentId                 String?
+  chunkIndex                 Int?
+  coverUrl                   String?  @db.Text
+  embedding                  String?  @db.Text
+  tags                       String?  @db.Text
+  category                   String?  @db.VarChar(100)
+  projectId                  String?
+  graphId                    String?
+  createdAt                  DateTime @default(now()) @db.DateTime(0)
+  updatedAt                  DateTime @default(now()) @db.DateTime(0)
+  edge_edge_fromNodeIdTonode edge[]   @relation("edge_fromNodeIdTonode")
+  edge_edge_toNodeIdTonode   edge[]   @relation("edge_toNodeIdTonode")
+  node                       node?    @relation("nodeTonode", fields: [documentId], references: [id], onDelete: Cascade, map: "Node_documentId_fkey")
+  other_node                 node[]   @relation("nodeTonode")
+  graph                      graph?   @relation(fields: [graphId], references: [id], onDelete: Cascade, map: "Node_graphId_fkey")
+  project                    project? @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "Node_projectId_fkey")
+
+  @@index([category], map: "Node_category_idx")
+  @@index([createdAt], map: "Node_createdAt_idx")
+  @@index([documentId], map: "Node_documentId_idx")
+  @@index([graphId], map: "Node_graphId_idx")
+  @@index([projectId], map: "Node_projectId_idx")
+  @@index([type], map: "Node_type_idx")
+}
+
+model project {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  settings    String?  @db.Text
+  nodeCount   Int      @default(0)
+  edgeCount   Int      @default(0)
+  userId      String   // 新增：项目所有者ID
+  createdAt   DateTime @default(now()) @db.DateTime(0)
+  updatedAt   DateTime @default(now()) @db.DateTime(0)
+  edge        edge[]
+  graph       graph[]
+  node        node[]
+  user        user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Project_userId_fkey")
+
+  @@index([createdAt], map: "Project_createdAt_idx")
+  @@index([userId], map: "Project_userId_idx")
+}
+
+model searchhistory {
+  id        String   @id @default(uuid())
+  query     String   @db.VarChar(500)
+  results   String?  @db.Text
+  userId    String?
+  createdAt DateTime @default(now()) @db.DateTime(0)
+
+  @@index([createdAt], map: "SearchHistory_createdAt_idx")
+  @@index([userId], map: "SearchHistory_userId_idx")
+}
+
+model user {
+  id        String    @id @default(uuid())
+  email     String?   @unique(map: "User_email_key")
+  password  String    @db.VarChar(255)
+  username  String    @unique(map: "User_username_key")
+  name      String?   @db.VarChar(255)
+  avatar    String?   @db.Text
+  createdAt DateTime  @default(now()) @db.DateTime(0)
+  updatedAt DateTime  @default(now()) @db.DateTime(0)
+  projects  project[] // 新增：用户的项目列表
+
+  @@index([email], map: "User_email_idx")
+  @@index([username], map: "User_username_idx")
+}

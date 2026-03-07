@@ -2,11 +2,16 @@ import { NextResponse } from 'next/server'
 
 export async function POST() {
   try {
-    // 临时实现：简单返回成功
-    // TODO: 实现真实的会话清除逻辑
-    return NextResponse.json({
+    // 创建响应
+    const response = NextResponse.json({
       success: true,
-    })
+      message: '登出成功'
+    });
+
+    // 清除userId cookie
+    response.cookies.delete('userId');
+
+    return response;
   } catch (error) {
     console.error('Logout API error:', error)
     return NextResponse.json(

@@ -115,8 +115,8 @@ describe('POST /api/ai/analyze', () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.data).toBeDefined();
-      expect(data.data.nodes).toHaveLength(3);
-      expect(data.data.edges).toHaveLength(2);
+      expect(data.data.node).toHaveLength(3);
+      expect(data.data.edge).toHaveLength(2);
       expect(data.data.stats).toEqual({
         totalNodes: 3,
         totalEdges: 2,
@@ -126,15 +126,15 @@ describe('POST /api/ai/analyze', () => {
       });
 
       // Verify nodes have temporary IDs
-      expect(data.data.nodes[0].id).toBeDefined();
-      expect(data.data.nodes[0].name).toBe('John');
-      expect(data.data.nodes[0].type).toBe('person');
-      expect(data.data.nodes[0].properties).toEqual({ role: 'employee' });
+      expect(data.data.node[0].id).toBeDefined();
+      expect(data.data.node[0].name).toBe('John');
+      expect(data.data.node[0].type).toBe('person');
+      expect(data.data.node[0].properties).toEqual({ role: 'employee' });
 
       // Verify edges reference node IDs
-      expect(data.data.edges[0].fromNodeId).toBeDefined();
-      expect(data.data.edges[0].toNodeId).toBeDefined();
-      expect(data.data.edges[0].label).toBe('works_at');
+      expect(data.data.edge[0].fromNodeId).toBeDefined();
+      expect(data.data.edge[0].toNodeId).toBeDefined();
+      expect(data.data.edge[0].label).toBe('works_at');
     });
 
     it('should successfully analyze with 3d visualization type', async () => {
@@ -159,7 +159,7 @@ describe('POST /api/ai/analyze', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.data.nodes).toHaveLength(1);
+      expect(data.data.node).toHaveLength(1);
     });
   });
 
@@ -225,7 +225,7 @@ describe('POST /api/ai/analyze', () => {
       expect(data.data.stats.conflicts).toBe(1);
 
       // Verify duplicate node is marked
-      const duplicateNode = data.data.nodes.find((n: any) => n.name === 'John');
+      const duplicateNode = data.data.node.find((n: any) => n.name === 'John');
       expect(duplicateNode.isDuplicate).toBe(true);
       expect(duplicateNode.duplicateOf).toBe('node-1');
       expect(duplicateNode.conflicts).toHaveLength(1);
@@ -295,7 +295,7 @@ describe('POST /api/ai/analyze', () => {
       expect(data.data.stats.redundantEdges).toBe(1);
 
       // Verify redundant edge is marked
-      const redundantEdge = data.data.edges[0];
+      const redundantEdge = data.data.edge[0];
       expect(redundantEdge.isRedundant).toBe(true);
     });
 
@@ -540,8 +540,8 @@ describe('POST /api/ai/analyze', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.data.nodes).toHaveLength(0);
-      expect(data.data.edges).toHaveLength(0);
+      expect(data.data.node).toHaveLength(0);
+      expect(data.data.edge).toHaveLength(0);
       expect(data.data.stats.totalNodes).toBe(0);
     });
 
@@ -570,8 +570,8 @@ describe('POST /api/ai/analyze', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.data.nodes).toHaveLength(2);
-      expect(data.data.edges).toHaveLength(0);
+      expect(data.data.node).toHaveLength(2);
+      expect(data.data.edge).toHaveLength(0);
     });
 
     it('should handle graph with no existing nodes', async () => {

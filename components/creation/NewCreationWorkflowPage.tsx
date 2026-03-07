@@ -23,6 +23,8 @@ interface Project {
   id: string;
   name: string;
   description?: string;
+  createdAt?: string;
+  updatedAt?: string;
   graphs?: Graph[];
   graphCount?: number;
 }
@@ -60,6 +62,8 @@ export default function NewCreationWorkflowPage() {
           id: project.id,
           name: project.name,
           description: project.description || '',
+          createdAt: project.createdAt,
+          updatedAt: project.updatedAt,
           graphs: project.graphs || [],
           graphCount: project.graphs ? project.graphs.length : 0,
         }));
@@ -406,6 +410,19 @@ export default function NewCreationWorkflowPage() {
                     }
                     return true;
                   })
+                  .sort((a, b) => {
+                    // 排序逻辑
+                    if (sortBy === 'title') {
+                      // 按标题排序（字母顺序）
+                      return a.name.localeCompare(b.name, 'zh-CN');
+                    } else {
+                      // 按更新时间排序（最新的在前）
+                      // 注意：如果项目没有 updatedAt，使用 createdAt
+                      const aTime = (a as any).updatedAt || (a as any).createdAt || '';
+                      const bTime = (b as any).updatedAt || (b as any).createdAt || '';
+                      return new Date(bTime).getTime() - new Date(aTime).getTime();
+                    }
+                  })
                   .map((project) => (
                     <div
                       key={project.id}
@@ -465,6 +482,18 @@ export default function NewCreationWorkflowPage() {
                       return false;
                     }
                     return true;
+                  })
+                  .sort((a, b) => {
+                    // 排序逻辑
+                    if (sortBy === 'title') {
+                      // 按标题排序（字母顺序）
+                      return a.name.localeCompare(b.name, 'zh-CN');
+                    } else {
+                      // 按更新时间排序（最新的在前）
+                      const aTime = a.updatedAt || a.createdAt || '';
+                      const bTime = b.updatedAt || b.createdAt || '';
+                      return new Date(bTime).getTime() - new Date(aTime).getTime();
+                    }
                   })
                   .map((graph) => (
                     <div

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { del, list } from '@vercel/blob'
+import { getCurrentUserId, verifyGraphOwnership } from '@/lib/auth'
 
 // 使用 Node.js Runtime
 export const runtime = 'nodejs'
@@ -25,10 +26,10 @@ export async function GET(
             description: true,
           },
         },
-        nodes: {
+        node: {
           orderBy: { createdAt: 'desc' },
         },
-        edges: {
+        edge: {
           orderBy: { createdAt: 'desc' },
         },
       },
@@ -43,8 +44,8 @@ export async function GET(
     
     return NextResponse.json({
       graph,
-      nodes: graph.nodes,
-      edges: graph.edges,
+      nodes: graph.node,
+      edges: graph.edge,
     })
   } catch (error) {
     console.error('获取图谱详情失败:', error)
@@ -67,6 +68,25 @@ export async function PATCH(
 ) {
   try {
     const { id } = params
+    
+    // 验证用户登录
+    const userId = await getCurrentUserId(request, { required: true })
+    if (!userId) {
+      return NextResponse.json(
+        { error: '用户未登录' },
+        { status: 401 }
+      )
+    }
+    
+    // 验证图谱所有权
+    const isOwner = await verifyGraphOwnership({ graphId: id, userId })
+    if (!isOwner) {
+      return NextResponse.json(
+        { error: '无权限操作此图谱' },
+        { status: 403 }
+      )
+    }
+    
     const body = await request.json()
     const { name, description, isPublic, settings } = body
     
@@ -127,11 +147,29 @@ export async function DELETE(
     
     console.log(`[DELETE] 开始删除图谱 ID: ${id}`)
     
+    // 验证用户登录
+    const userId = await getCurrentUserId(request, { required: true })
+    if (!userId) {
+      return NextResponse.json(
+        { error: '用户未登录' },
+        { status: 401 }
+      )
+    }
+    
+    // 验证图谱所有权
+    const isOwner = await verifyGraphOwnership({ graphId: id, userId })
+    if (!isOwner) {
+      return NextResponse.json(
+        { error: '无权限操作此图谱' },
+        { status: 403 }
+      )
+    }
+    
     // 查询图谱及其节点（获取图片 URL）
     const graph = await prisma.graph.findUnique({
       where: { id },
       include: {
-        nodes: {
+        node: {
           select: {
             id: true,
             imageUrl: true,
@@ -139,7 +177,7 @@ export async function DELETE(
             coverUrl: true,
           },
         },
-        edges: {
+        edge: {
           select: { id: true },
         },
       },
@@ -153,11 +191,11 @@ export async function DELETE(
       )
     }
     
-    console.log(`[DELETE] 找到图谱，节点数: ${graph.nodes.length}, 边数: ${graph.edges.length}`)
+    console.log(`[DELETE] 找到图谱，节点数: ${graph.node.length}, 边数: ${graph.edge.length}`)
     
     // 收集所有需要删除的图片 URL
     const imageUrls: string[] = []
-    graph.nodes.forEach(node => {
+    graph.node.forEach(node => {
       if (node.imageUrl) imageUrls.push(node.imageUrl)
       if (node.iconUrl) imageUrls.push(node.iconUrl)
       if (node.coverUrl) imageUrls.push(node.coverUrl)
@@ -204,8 +242,8 @@ export async function DELETE(
     console.log(`[DELETE] 删除完成`)
     return NextResponse.json({
       success: true,
-      deletedNodeCount: graph.nodes.length,
-      deletedEdgeCount: graph.edges.length,
+      deletedNodeCount: graph.node.length,
+      deletedEdgeCount: graph.edge.length,
       deletedFileCount,
     })
   } catch (error) {

@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
-        nodes: {
+        node: {
           select: {
             id: true,
             imageUrl: true,
@@ -96,8 +96,8 @@ export async function GET(request: NextRequest) {
       }
 
       // 如果没有缩略图，尝试从节点的图片获取
-      if (!thumbnail && graph.nodes.length > 0) {
-        thumbnail = graph.nodes[0].imageUrl || graph.nodes[0].coverUrl || ''
+      if (!thumbnail && graph.node.length > 0) {
+        thumbnail = graph.node[0].imageUrl || graph.node[0].coverUrl || ''
       }
 
       return {
