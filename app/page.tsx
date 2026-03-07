@@ -3,12 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
 import LoginModal from '@/components/LoginModal'
-import InkWashNavbar from '@/components/InkWashNavbar'
-import HeroSection from '@/components/HeroSection'
-import StatisticsDisplay from '@/components/StatisticsDisplay'
-import { GallerySection } from '@/components/GallerySection'
-import { WorkCardGrid } from '@/components/WorkCardGrid'
-import InkWashWorkCard from '@/components/InkWashWorkCard'
+import PaperNavbar from '@/components/PaperNavbar'
+import PaperHeroSection from '@/components/PaperHeroSection'
+import { PaperGallerySection } from '@/components/PaperGallerySection'
+import { PaperWorkGrid } from '@/components/PaperWorkGrid'
+import PaperWorkCard from '@/components/PaperWorkCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorMessage from '@/components/ErrorMessage'
 import { useUserStore } from '@/lib/userStore'
@@ -147,7 +146,7 @@ export default function LandingPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#fafafa',
+      background: '#FAFAF8',
       color: '#333'
     }}>
       {/* Skip to main content link for keyboard navigation */}
@@ -158,7 +157,7 @@ export default function LandingPage() {
           left: '-9999px',
           zIndex: 999,
           padding: '1rem',
-          background: '#5a9a8f',
+          background: '#6b8e85',
           color: 'white',
           textDecoration: 'none',
           borderRadius: '4px'
@@ -174,8 +173,8 @@ export default function LandingPage() {
         跳转到主内容
       </a>
 
-      {/* Ink-Wash Navigation Bar */}
-      <InkWashNavbar
+      {/* Paper Navigation Bar */}
+      <PaperNavbar
         isLoggedIn={isLoggedIn}
         onStartCreating={handleStartCreating}
         onLogin={handleLogin}
@@ -183,25 +182,26 @@ export default function LandingPage() {
       />
 
       {/* Add padding to account for fixed navbar */}
-      <div id="main-content" style={{ paddingTop: '70px' }}>
+      <div id="main-content" style={{ paddingTop: '64px' }}>
         {/* Hero Section */}
-        <HeroSection
+        <PaperHeroSection
           title="构建与发现知识的无尽脉络"
           subtitle="在这里，每一个想法都能找到它的位置，每一条知识都能连接成网络"
           onSearch={handleSearch}
         />
 
-        {/* Statistics Display */}
-        {!loading && !error && (
+        {/* Statistics Display - Hidden by default */}
+        {/* Uncomment to enable statistics display */}
+        {/* {!loading && !error && (
           <StatisticsDisplay
             projectsCount={statistics.projectsCount}
             knowledgeGraphsCount={statistics.knowledgeGraphsCount}
             totalGraphsCount={statistics.totalGraphsCount}
           />
-        )}
+        )} */}
 
         {/* Gallery Section */}
-        <GallerySection heading="推荐广场">
+        <PaperGallerySection heading="推荐广场">
           {loading && (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
               <LoadingSpinner />
@@ -227,27 +227,27 @@ export default function LandingPage() {
               >
                 📊
               </div>
-              <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#2c2c2c' }}>
+              <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#333333' }}>
                 暂无项目
               </h3>
-              <p style={{ fontSize: '14px', color: '#737373' }}>
+              <p style={{ fontSize: '14px', color: '#999999' }}>
                 还没有创建任何项目，点击"开始创作"来创建你的第一个项目吧！
               </p>
             </div>
           )}
 
           {!loading && !error && displayProjects.length > 0 && (
-            <WorkCardGrid columns={6} gap="24px">
+            <PaperWorkGrid columns={4} gap="20px">
               {displayProjects.map(project => (
-                <InkWashWorkCard
+                <PaperWorkCard
                   key={project.id}
                   project={project}
                   onClick={handleProjectClick}
                 />
               ))}
-            </WorkCardGrid>
+            </PaperWorkGrid>
           )}
-        </GallerySection>
+        </PaperGallerySection>
       </div>
 
       {/* 登录弹窗 */}

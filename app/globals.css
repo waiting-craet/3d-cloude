@@ -1,5 +1,19 @@
-/* Ink-Wash Design System CSS Custom Properties */
+/* Paper Design System CSS Custom Properties (Exact Replica) */
 :root {
+  /* Paper Colors */
+  --paper-white: #FAFAF8;
+  --paper-sky-blue: #6b8e85;
+  --paper-sky-blue-light: #8ba9a0;
+  --paper-sky-blue-dark: #567169;
+  --paper-text-primary: #333333;
+  --paper-text-secondary: #666666;
+  --paper-text-tertiary: #999999;
+  --paper-border: #E8E8E6;
+  --paper-border-light: #F0F0EE;
+  --paper-card-bg: #FFFFFF;
+  --paper-icon-placeholder: #CCCCCC;
+  
+  /* Ink-Wash Design System CSS Custom Properties (Previous Design) */
   /* Primary Colors */
   --primary-main: #5a9a8f;
   --primary-light: #7db3a8;
@@ -110,7 +124,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #2a2a2a;
+  background: #FAFAF8;
 }
 
 #canvas-container {
