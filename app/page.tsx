@@ -5,8 +5,6 @@ import { useState, useEffect, useCallback } from 'react'
 import LoginModal from '@/components/LoginModal'
 import PaperNavbar from '@/components/PaperNavbar'
 import PaperHeroSection from '@/components/PaperHeroSection'
-import StatisticsDisplay from '@/components/StatisticsDisplay'
-import IconButtonGroup from '@/components/IconButtonGroup'
 import { PaperGallerySection } from '@/components/PaperGallerySection'
 import { PaperWorkGrid } from '@/components/PaperWorkGrid'
 import PaperWorkCard from '@/components/PaperWorkCard'
@@ -130,21 +128,6 @@ export default function LandingPage() {
     console.log('Search query:', query)
   }, [])
 
-  const handleShare = useCallback(() => {
-    // TODO: Implement share functionality
-    console.log('Share button clicked')
-  }, [])
-
-  const handleGraph = useCallback(() => {
-    // TODO: Implement graph functionality
-    console.log('Graph button clicked')
-  }, [])
-
-  const handleSettings = useCallback(() => {
-    // TODO: Implement settings functionality
-    console.log('Settings button clicked')
-  }, [])
-
   // Retry loading projects
   const handleRetry = useCallback(() => {
     window.location.reload()
@@ -200,17 +183,6 @@ export default function LandingPage() {
           onSearch={handleSearch}
         />
 
-        {/* Statistics Display */}
-        {!loading && !error && (
-          <StatisticsDisplay
-            statistics={[
-              { value: '2.4千', label: '公开图谱项目' },
-              { value: '15 M+', label: '连接的节点' },
-              { value: '8,600', label: '活跃创作者' }
-            ]}
-          />
-        )}
-
         {/* Gallery Section */}
         <PaperGallerySection heading="推荐广场">
           {loading && (
@@ -260,13 +232,6 @@ export default function LandingPage() {
           )}
         </PaperGallerySection>
       </div>
-
-      {/* Icon Button Group - Fixed on right side */}
-      <IconButtonGroup
-        onShare={handleShare}
-        onGraph={handleGraph}
-        onSettings={handleSettings}
-      />
 
       {/* 登录弹窗 */}
       <LoginModal
