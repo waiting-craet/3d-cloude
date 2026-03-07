@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle, useMemo } from 'react'
 import { useGraphStore } from '@/lib/store'
 import { getWorkflowThemeConfig } from '@/lib/theme'
 
@@ -42,6 +42,7 @@ interface ConnectionPointPosition {
 
 export interface WorkflowCanvasRef {
   saveAndConvert: () => Promise<void>
+  savePositions: () => Promise<void>  // 新增：仅保存位置
   isConverting: boolean
   conversionError: string | null
   conversionSuccess: boolean
@@ -82,6 +83,9 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
 
   // 媒体上传状态
   const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)
+
+  // 跟踪上次保存的位置（用于增量更新）
+  const lastSavedPositions = useRef<Map<string, { x: number; y: number }>>(new Map())
 
   // 从store获取当前图谱
   const { currentGraph, currentProject, nodes: storeNodes, edges: storeEdges, refreshProjects } = useGraphStore()
@@ -142,6 +146,33 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     }
   }
 
+  // 恢复节点位置
+  const restorePositions = useCallback((savedPositions: any) => {
+    if (!savedPositions || !savedPositions.nodes || savedPositions.nodes.length === 0) {
+      return
+    }
+
+    const positionMap = new Map(
+      savedPositions.nodes.map((n: any) => [n.id, { x: n.x, y: n.y }])
+    )
+
+    setNodes(prevNodes => 
+      prevNodes.map(node => {
+        const savedPos = positionMap.get(node.id)
+        return savedPos ? { ...node, ...savedPos } : node
+      })
+    )
+
+    if (savedPositions.metadata) {
+      if (savedPositions.metadata.scale) {
+        setScale(savedPositions.metadata.scale)
+      }
+      if (savedPositions.metadata.offset) {
+        setOffset(savedPositions.metadata.offset)
+      }
+    }
+  }, [])
+
   // 加载当前图谱的数据
   useEffect(() => {
     if (!currentGraph) {
@@ -150,21 +181,62 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     }
 
     console.log('🔄 2D视图: 加载图谱数据:', currentGraph.name)
+    console.log('📊 currentGraph.settings:', currentGraph.settings)
+
+    // 检查是否有保存的位置数据
+    let savedPositionsMap: Map<string, { x: number; y: number }> | null = null
+    let savedMetadata: { scale?: number; offset?: { x: number; y: number } } | null = null
+    
+    if (currentGraph.settings) {
+      try {
+        const settings = typeof currentGraph.settings === 'string'
+          ? JSON.parse(currentGraph.settings)
+          : currentGraph.settings
+        
+        console.log('📊 解析后的settings:', settings)
+        
+        if (settings.workflowPositions && settings.workflowPositions.nodes) {
+          console.log('🔄 发现保存的位置数据，节点数量:', settings.workflowPositions.nodes.length)
+          savedPositionsMap = new Map(
+            settings.workflowPositions.nodes.map((n: any) => [n.id, { x: n.x, y: n.y }])
+          )
+          savedMetadata = settings.workflowPositions.metadata
+          console.log('📊 保存的位置映射:', Array.from(savedPositionsMap.entries()))
+        } else {
+          console.log('⚠️ settings中没有workflowPositions数据')
+        }
+      } catch (error) {
+        console.error('解析保存的位置失败:', error)
+      }
+    } else {
+      console.log('⚠️ currentGraph.settings为null')
+    }
 
     // 将3D节点转换为2D节点
-    const converted2DNodes: Node[] = storeNodes.map((node, index) => ({
-      id: node.id,
-      label: node.name,
-      description: node.description || '',
-      x: node.x * 50 + 300, // 转换坐标
-      y: node.y * 50 + 300,
-      width: 200,
-      height: 100,
-      isEditing: false,
-      imageUrl: node.imageUrl,
-      videoUrl: node.videoUrl,
-      mediaType: node.imageUrl ? 'image' : node.videoUrl ? 'video' : null,
-    }))
+    const converted2DNodes: Node[] = storeNodes.map((node, index) => {
+      // 如果有保存的位置，使用保存的位置；否则使用转换后的位置
+      const savedPos = savedPositionsMap?.get(node.id)
+      
+      const nodeData = {
+        id: node.id,
+        label: node.name,
+        description: node.description || '',
+        x: savedPos ? savedPos.x : node.x * 50 + 300, // 优先使用保存的位置
+        y: savedPos ? savedPos.y : node.y * 50 + 300,
+        width: 200,
+        height: 100,
+        isEditing: false,
+        imageUrl: node.imageUrl,
+        videoUrl: node.videoUrl,
+        mediaType: node.imageUrl ? 'image' : node.videoUrl ? 'video' : null,
+      }
+      
+      if (savedPos) {
+        console.log(`  ✅ 节点 ${node.id} 使用保存的位置: (${savedPos.x}, ${savedPos.y})`)
+      }
+      
+      return nodeData
+    })
 
     // 将3D边转换为2D连接
     const converted2DConnections: Connection[] = storeEdges.map(edge => ({
@@ -175,9 +247,25 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     }))
 
     console.log('✅ 2D视图: 加载了', converted2DNodes.length, '个节点和', converted2DConnections.length, '条连接')
+    
+    if (savedPositionsMap) {
+      console.log('✅ 已应用保存的节点位置')
+    }
 
     setNodes(converted2DNodes)
     setConnections(converted2DConnections)
+
+    // 恢复保存的画布metadata（scale和offset）
+    if (savedMetadata) {
+      if (savedMetadata.scale) {
+        setScale(savedMetadata.scale)
+        console.log('✅ 已恢复画布缩放:', savedMetadata.scale)
+      }
+      if (savedMetadata.offset) {
+        setOffset(savedMetadata.offset)
+        console.log('✅ 已恢复画布偏移:', savedMetadata.offset)
+      }
+    }
   }, [currentGraph, storeNodes, storeEdges])
 
   // NEW: ResizeObserver to track node dimension changes
@@ -275,16 +363,20 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         nodes.forEach(node => {
           if (node.id === connectingFrom) return // 跳过起点节点
           
+          // 使用实际渲染尺寸计算连接点位置
+          const actualWidth = node.actualWidth || node.width
+          const actualHeight = node.actualHeight || node.height
+          
           // 计算到右侧连接点的距离
-          const rightPointX = node.x + node.width
-          const rightPointY = node.y + node.height / 2
+          const rightPointX = node.x + actualWidth
+          const rightPointY = node.y + actualHeight / 2
           const rightDist = Math.sqrt(
             Math.pow(mouseX - rightPointX, 2) + Math.pow(mouseY - rightPointY, 2)
           )
           
           // 计算到左侧连接点的距离
           const leftPointX = node.x
-          const leftPointY = node.y + node.height / 2
+          const leftPointY = node.y + actualHeight / 2
           const leftDist = Math.sqrt(
             Math.pow(mouseX - leftPointX, 2) + Math.pow(mouseY - leftPointY, 2)
           )
@@ -305,6 +397,8 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   }, [isDragging, dragStart, draggedNode, nodeDragStart, scale, isDraggingConnection, connectingFrom, offset, nodes])
 
   const handleMouseUp = useCallback(() => {
+    const wasDraggingNode = draggedNode !== null
+    
     setIsDragging(false)
     setDraggedNode(null)
     
@@ -336,7 +430,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       setConnectingFrom(null)
       setHoveredNode(null)
     }
-  }, [isDraggingConnection, connectingFrom, hoveredNode])
+  }, [isDraggingConnection, connectingFrom, hoveredNode, draggedNode])
 
   // 处理缩放
   const handleWheel = (e: React.WheelEvent) => {
@@ -668,10 +762,119 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     }
   }
 
+  // 保存节点位置
+  const savePositions = useCallback(async () => {
+    if (!currentGraph) {
+      console.warn('未选择图谱，跳过位置保存')
+      return
+    }
+
+    try {
+      // 检查是否有位置变化（增量更新优化）
+      const changedNodes = nodes.filter(node => {
+        const last = lastSavedPositions.current.get(node.id)
+        return !last || last.x !== node.x || last.y !== node.y
+      })
+
+      if (changedNodes.length === 0) {
+        console.log('⏭️ 节点位置无变化，跳过保存')
+        return
+      }
+
+      console.log('💾 准备保存位置，变化的节点数:', changedNodes.length)
+      setSavingStatus('正在保存位置...')
+      
+      const positionData = nodes.map(node => ({
+        id: node.id,
+        x: node.x,
+        y: node.y
+      }))
+
+      console.log('📤 发送位置数据:', {
+        graphId: currentGraph.id,
+        nodeCount: positionData.length,
+        positions: positionData
+      })
+
+      const response = await fetch('/api/graphs/save-positions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          graphId: currentGraph.id,
+          nodes: positionData,
+          metadata: {
+            scale,
+            offset
+          }
+        })
+      })
+
+      console.log('📥 API响应状态:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('❌ API返回错误:', errorData)
+        throw new Error(errorData.error || '保存位置失败')
+      }
+
+      const result = await response.json()
+      console.log('📥 API响应数据:', result)
+
+      // 更新跟踪记录
+      nodes.forEach(node => {
+        lastSavedPositions.current.set(node.id, { x: node.x, y: node.y })
+      })
+
+      // 刷新currentGraph以包含更新后的settings
+      if (result.graph && result.graph.settings) {
+        console.log('🔄 更新currentGraph的settings字段')
+        useGraphStore.setState(state => ({
+          currentGraph: state.currentGraph ? {
+            ...state.currentGraph,
+            settings: result.graph.settings
+          } : null
+        }))
+      }
+
+      setSavingStatus('位置保存成功')
+      console.log('✅ 节点位置已保存')
+      
+      // 2秒后清除成功消息
+      setTimeout(() => {
+        setSavingStatus('')
+      }, 2000)
+    } catch (error) {
+      console.error('保存位置失败:', error)
+      const errorMessage = error instanceof Error ? error.message : '保存位置失败'
+      setSavingStatus(`位置保存失败: ${errorMessage}`)
+      
+      // 5秒后清除错误消息
+      setTimeout(() => {
+        setSavingStatus('')
+      }, 5000)
+    }
+  }, [currentGraph, nodes, scale, offset])
+
+  // 创建防抖版本的保存函数（用于拖拽时自动保存）
+  const debouncedSavePositions = useMemo(() => {
+    let timeoutId: NodeJS.Timeout | null = null
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      timeoutId = setTimeout(() => {
+        savePositions()
+      }, 1000) // 1秒延迟
+    }
+  }, [savePositions])
+
   // 保存并转换为三维图谱
   const saveAndConvert = async () => {
     try {
-      // 0. 检查是否选择了图谱
+      // 0. 先保存位置
+      await savePositions()
+      
+      // 1. 检查是否选择了图谱
       if (!currentGraph || !currentProject) {
         setConversionError('请先选择一个图谱')
         setTimeout(() => setConversionError(null), 3000)
@@ -732,7 +935,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       console.log('✅ 同步成功:', result)
       console.log('📊 统计:', result.stats)
       
-      // 4. 等待刷新项目列表完成（关键修改）
+      // 4. 等待刷新项目列表完成
       setSavingStatus('保存成功！正在刷新数据...')
       console.log('🔄 刷新项目列表...')
       try {
@@ -743,16 +946,12 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         // 即使刷新失败，也继续跳转，因为数据已经保存到数据库
       }
       
-      // 5. 保存当前选择到 localStorage
-      localStorage.setItem('currentProjectId', currentProject.id)
-      localStorage.setItem('currentGraphId', currentGraph.id)
-      
-      // 6. 显示成功并跳转（使用查询参数）
+      // 5. 显示成功并跳转到3D编辑器
       setSavingStatus('即将跳转到3D视图...')
       setConversionSuccess(true)
       
-      // 使用查询参数确保状态能够恢复
-      const redirectUrl = `/?projectId=${currentProject.id}&graphId=${currentGraph.id}`
+      // 跳转到3D编辑器页面
+      const redirectUrl = `/3d-editor?graphId=${currentGraph.id}`
       console.log('🔄 准备跳转到:', redirectUrl)
       
       setTimeout(() => {
@@ -772,6 +971,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   // 暴露方法给父组件
   useImperativeHandle(ref, () => ({
     saveAndConvert,
+    savePositions,  // 新增
     isConverting,
     conversionError,
     conversionSuccess,
@@ -1043,7 +1243,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
           left: 0,
           width: '100%',
           height: '100%',
-          pointerEvents: 'none',
+          pointerEvents: 'auto',  // 修复：允许SVG接收鼠标事件
           overflow: 'visible',
         }}>
           {renderConnections()}
@@ -2142,6 +2342,29 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
           maxWidth: '500px',
         }}>
           ❌ {conversionError}
+        </div>
+      )}
+
+      {/* 保存状态提示 */}
+      {savingStatus && !isConverting && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: savingStatus.includes('失败') ? '#ef4444' : '#10b981',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: savingStatus.includes('失败') 
+            ? '0 4px 12px rgba(239, 68, 68, 0.3)' 
+            : '0 4px 12px rgba(16, 185, 129, 0.3)',
+          zIndex: 10001,
+          maxWidth: '400px',
+        }}>
+          {savingStatus.includes('失败') ? '❌' : '✅'} {savingStatus}
         </div>
       )}
 

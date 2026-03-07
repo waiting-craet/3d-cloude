@@ -38,7 +38,19 @@ export default function WorkflowPage() {
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
       }}>
         <button
-          onClick={() => window.history.back()}
+          onClick={async () => {
+            // 保存位置
+            if (canvasRef.current) {
+              try {
+                await canvasRef.current.savePositions()
+                console.log('✅ 返回前已保存位置')
+              } catch (error) {
+                console.error('保存位置失败:', error)
+                // 即使保存失败也允许返回
+              }
+            }
+            window.history.back()
+          }}
           style={{
             padding: '8px 16px',
             background: 'transparent',

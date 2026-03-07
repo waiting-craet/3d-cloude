@@ -34,7 +34,7 @@ export default function MyProjectsContent({
     const fetchProjects = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/projects');
+        const response = await fetch('/api/projects/my-projects');
         if (!response.ok) {
           throw new Error('获取项目失败');
         }

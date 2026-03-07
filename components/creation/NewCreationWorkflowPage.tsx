@@ -86,7 +86,7 @@ export default function NewCreationWorkflowPage() {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/projects');
+      const response = await fetch('/api/projects/my-projects');
       if (response.ok) {
         const data = await response.json();
         const projectList = data.projects || [];
