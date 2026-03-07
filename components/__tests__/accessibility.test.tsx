@@ -181,9 +181,11 @@ describe('Accessibility Tests', () => {
 
   describe('StatisticsDisplay', () => {
     const mockProps = {
-      projectsCount: 1234,
-      knowledgeGraphsCount: 5678,
-      totalGraphsCount: 9012,
+      statistics: [
+        { value: '2.4千', label: '公开图谱项目' },
+        { value: '15 M+', label: '连接的节点' },
+        { value: '8,600', label: '活跃创作者' }
+      ]
     }
 
     it('should use semantic section element', () => {

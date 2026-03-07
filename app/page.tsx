@@ -5,6 +5,8 @@ import { useState, useEffect, useCallback } from 'react'
 import LoginModal from '@/components/LoginModal'
 import PaperNavbar from '@/components/PaperNavbar'
 import PaperHeroSection from '@/components/PaperHeroSection'
+import StatisticsDisplay from '@/components/StatisticsDisplay'
+import IconButtonGroup from '@/components/IconButtonGroup'
 import { PaperGallerySection } from '@/components/PaperGallerySection'
 import { PaperWorkGrid } from '@/components/PaperWorkGrid'
 import PaperWorkCard from '@/components/PaperWorkCard'
@@ -128,17 +130,25 @@ export default function LandingPage() {
     console.log('Search query:', query)
   }, [])
 
+  const handleShare = useCallback(() => {
+    // TODO: Implement share functionality
+    console.log('Share button clicked')
+  }, [])
+
+  const handleGraph = useCallback(() => {
+    // TODO: Implement graph functionality
+    console.log('Graph button clicked')
+  }, [])
+
+  const handleSettings = useCallback(() => {
+    // TODO: Implement settings functionality
+    console.log('Settings button clicked')
+  }, [])
+
   // Retry loading projects
   const handleRetry = useCallback(() => {
     window.location.reload()
   }, [])
-
-  // Calculate statistics from projects data (memoized to avoid recalculation)
-  const statistics = useCallback(() => ({
-    projectsCount: projects.length,
-    knowledgeGraphsCount: projects.reduce((sum, p) => sum + p.graphCount, 0),
-    totalGraphsCount: projects.reduce((sum, p) => sum + p.graphCount, 0),
-  }), [projects])()
 
   // Display only first 12 projects in gallery (memoized)
   const displayProjects = useCallback(() => projects.slice(0, 12), [projects])()
@@ -186,19 +196,20 @@ export default function LandingPage() {
         {/* Hero Section */}
         <PaperHeroSection
           title="构建与发现知识的无尽脉络"
-          subtitle="在这里，每一个想法都能找到它的位置，每一条知识都能连接成网络"
+          subtitle="在这里，编织零散的碎片，洞见事物背后的关联。用图谱的力量，重新组织你的知识宇宙。"
           onSearch={handleSearch}
         />
 
-        {/* Statistics Display - Hidden by default */}
-        {/* Uncomment to enable statistics display */}
-        {/* {!loading && !error && (
+        {/* Statistics Display */}
+        {!loading && !error && (
           <StatisticsDisplay
-            projectsCount={statistics.projectsCount}
-            knowledgeGraphsCount={statistics.knowledgeGraphsCount}
-            totalGraphsCount={statistics.totalGraphsCount}
+            statistics={[
+              { value: '2.4千', label: '公开图谱项目' },
+              { value: '15 M+', label: '连接的节点' },
+              { value: '8,600', label: '活跃创作者' }
+            ]}
           />
-        )} */}
+        )}
 
         {/* Gallery Section */}
         <PaperGallerySection heading="推荐广场">
@@ -249,6 +260,13 @@ export default function LandingPage() {
           )}
         </PaperGallerySection>
       </div>
+
+      {/* Icon Button Group - Fixed on right side */}
+      <IconButtonGroup
+        onShare={handleShare}
+        onGraph={handleGraph}
+        onSettings={handleSettings}
+      />
 
       {/* 登录弹窗 */}
       <LoginModal

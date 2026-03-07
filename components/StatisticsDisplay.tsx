@@ -2,50 +2,40 @@
  * StatisticsDisplay Component
  * 
  * Displays platform metrics in a clean, horizontal layout with ink-wash aesthetic.
- * Numbers are formatted using the formatNumber utility for readability.
  * 
  * Performance optimizations:
- * - Memoized to prevent unnecessary re-renders when counts don't change
+ * - Memoized to prevent unnecessary re-renders when statistics don't change
  * 
- * Requirements: 4.1, 4.2, 4.3, 4.4
+ * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6
  */
 
 import React from 'react'
 import styles from './StatisticsDisplay.module.css'
-import { formatNumber } from '@/lib/utils/formatNumber'
+
+export interface Statistic {
+  value: string
+  label: string
+}
 
 export interface StatisticsDisplayProps {
-  projectsCount: number
-  knowledgeGraphsCount: number
-  totalGraphsCount: number
+  statistics: Statistic[]
 }
 
 const StatisticsDisplayComponent: React.FC<StatisticsDisplayProps> = ({
-  projectsCount,
-  knowledgeGraphsCount,
-  totalGraphsCount,
+  statistics,
 }) => {
   return (
     <section className={styles.statistics} aria-label="平台统计数据">
       <div className={styles.container}>
-        <div className={styles.statItem}>
-          <div className={styles.statNumber}>{formatNumber(projectsCount)}</div>
-          <div className={styles.statLabel}>项目</div>
-        </div>
-        
-        <div className={styles.divider} aria-hidden="true" />
-        
-        <div className={styles.statItem}>
-          <div className={styles.statNumber}>{formatNumber(knowledgeGraphsCount)}</div>
-          <div className={styles.statLabel}>知识图谱</div>
-        </div>
-        
-        <div className={styles.divider} aria-hidden="true" />
-        
-        <div className={styles.statItem}>
-          <div className={styles.statNumber}>{formatNumber(totalGraphsCount)}</div>
-          <div className={styles.statLabel}>总图谱数</div>
-        </div>
+        {statistics.map((stat, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <div className={styles.divider} aria-hidden="true" />}
+            <div className={styles.statItem} data-testid="statistic">
+              <div className={styles.statNumber}>{stat.value}</div>
+              <div className={styles.statLabel}>{stat.label}</div>
+            </div>
+          </React.Fragment>
+        ))}
       </div>
     </section>
   )
@@ -53,10 +43,14 @@ const StatisticsDisplayComponent: React.FC<StatisticsDisplayProps> = ({
 
 // Memoize component to prevent unnecessary re-renders
 export const StatisticsDisplay = React.memo(StatisticsDisplayComponent, (prevProps, nextProps) => {
-  return (
-    prevProps.projectsCount === nextProps.projectsCount &&
-    prevProps.knowledgeGraphsCount === nextProps.knowledgeGraphsCount &&
-    prevProps.totalGraphsCount === nextProps.totalGraphsCount
+  // Deep comparison of statistics array
+  if (prevProps.statistics.length !== nextProps.statistics.length) {
+    return false
+  }
+  
+  return prevProps.statistics.every((stat, index) => 
+    stat.value === nextProps.statistics[index].value &&
+    stat.label === nextProps.statistics[index].label
   )
 })
 

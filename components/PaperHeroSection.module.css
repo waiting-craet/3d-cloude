@@ -97,8 +97,8 @@
   /* Full width */
   width: 100%;
   
-  /* Padding with space for icon */
-  padding: 12px 20px 12px 44px;
+  /* Padding with space for icon and button */
+  padding: 12px 48px 12px 44px;
   
   /* Font styling */
   font-size: 14px;
@@ -139,6 +139,55 @@
   border-color: #D0D0CE;
 }
 
+.searchButton {
+  /* Absolute positioning inside input */
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  /* Button styling */
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  
+  /* Remove default button styles */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  
+  /* Flexbox for centering icon */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Rounded corners */
+  border-radius: 6px;
+  
+  /* Icon color */
+  color: #666666;
+  
+  /* Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Remove default outline */
+  outline: none;
+}
+
+.searchButton:hover {
+  background: #F5F5F3;
+  color: #6b8e85;
+}
+
+.searchButton:focus-visible {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+.searchButton:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
 /* Responsive adjustments for tablet */
 @media (max-width: 1199px) {
   .hero {
@@ -172,11 +221,22 @@
   
   .searchInput {
     font-size: 13px;
-    padding: 10px 16px 10px 40px;
+    padding: 10px 44px 10px 40px;
   }
   
   .searchIcon {
     left: 14px;
+    width: 16px;
+    height: 16px;
+  }
+  
+  .searchButton {
+    width: 28px;
+    height: 28px;
+    right: 6px;
+  }
+  
+  .searchButton svg {
     width: 16px;
     height: 16px;
   }
