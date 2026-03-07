@@ -3,21 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { retryOperation, getDescriptiveErrorMessage } from '@/lib/db-helpers';
 import { getCurrentUserId } from '@/lib/auth';
 
-// GET - 获取当前用户的项目列表
+// GET - 获取所有项目列表（首页显示所有项目）
 export async function GET(request: NextRequest) {
   try {
-    // 获取当前用户ID
-    const userId = await getCurrentUserId(request, { required: false });
-    
-    // 如果用户未登录，返回空列表
-    if (!userId) {
-      return NextResponse.json({ projects: [] });
-    }
-
+    // 首页显示所有项目，不需要用户验证和过滤
     const projects = await prisma.project.findMany({
-      where: {
-        userId: userId, // 只返回当前用户的项目
-      },
       orderBy: {
         updatedAt: 'desc',
       },

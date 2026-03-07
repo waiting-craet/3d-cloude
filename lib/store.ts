@@ -33,6 +33,7 @@ export interface KnowledgeGraph {
   nodeCount: number
   edgeCount: number
   createdAt: string
+  settings?: any  // 图谱设置（包括保存的位置数据）
 }
 
 export interface Project {
@@ -400,6 +401,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         nodeCount: nodes?.length || 0,
         edgeCount: edges?.length || 0,
         createdAt: graph.createdAt,
+        settings: graph.settings,  // 包含settings字段（保存的位置数据）
       }
       
       // 4. 更新状态
@@ -539,6 +541,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             nodeCount: 0,
             edgeCount: 0,
             createdAt: graph.createdAt,
+            settings: null,  // 新图谱没有保存的设置
           }],
         }
         newGraph = newProject.graphs[0]
@@ -658,6 +661,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
           nodeCount: 0,
           edgeCount: 0,
           createdAt: graph.createdAt,
+          settings: null,  // 新图谱没有保存的设置
         }
         
         // 将新图谱添加到项目的图谱列表中

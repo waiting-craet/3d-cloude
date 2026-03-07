@@ -79,7 +79,7 @@ export default function ProjectGraphManager() {
   const loadProjects = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/projects', {
+      const res = await fetch('/api/projects/my-projects', {
         // 添加缓存控制，确保获取最新数据
         cache: 'no-store',
         headers: {

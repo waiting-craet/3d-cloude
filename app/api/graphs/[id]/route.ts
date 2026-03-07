@@ -26,10 +26,10 @@ export async function GET(
             description: true,
           },
         },
-        node: {
+        nodes: {
           orderBy: { createdAt: 'desc' },
         },
-        edge: {
+        edges: {
           orderBy: { createdAt: 'desc' },
         },
       },
@@ -44,8 +44,8 @@ export async function GET(
     
     return NextResponse.json({
       graph,
-      nodes: graph.node,
-      edges: graph.edge,
+      nodes: graph.nodes,
+      edges: graph.edges,
     })
   } catch (error) {
     console.error('获取图谱详情失败:', error)
@@ -169,7 +169,7 @@ export async function DELETE(
     const graph = await prisma.graph.findUnique({
       where: { id },
       include: {
-        node: {
+        nodes: {
           select: {
             id: true,
             imageUrl: true,
@@ -177,7 +177,7 @@ export async function DELETE(
             coverUrl: true,
           },
         },
-        edge: {
+        edges: {
           select: { id: true },
         },
       },
@@ -191,11 +191,11 @@ export async function DELETE(
       )
     }
     
-    console.log(`[DELETE] 找到图谱，节点数: ${graph.node.length}, 边数: ${graph.edge.length}`)
+    console.log(`[DELETE] 找到图谱，节点数: ${graph.nodes.length}, 边数: ${graph.edges.length}`)
     
     // 收集所有需要删除的图片 URL
     const imageUrls: string[] = []
-    graph.node.forEach(node => {
+    graph.nodes.forEach(node => {
       if (node.imageUrl) imageUrls.push(node.imageUrl)
       if (node.iconUrl) imageUrls.push(node.iconUrl)
       if (node.coverUrl) imageUrls.push(node.coverUrl)
@@ -242,8 +242,8 @@ export async function DELETE(
     console.log(`[DELETE] 删除完成`)
     return NextResponse.json({
       success: true,
-      deletedNodeCount: graph.node.length,
-      deletedEdgeCount: graph.edge.length,
+      deletedNodeCount: graph.nodes.length,
+      deletedEdgeCount: graph.edges.length,
       deletedFileCount,
     })
   } catch (error) {

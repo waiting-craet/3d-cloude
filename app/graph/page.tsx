@@ -13,15 +13,33 @@ type NavigationMode = 'full' | 'readonly'
 
 // 根据来源确定导航模式
 function determineNavigationMode(referrer: string | undefined): NavigationMode {
-  // 如果没有referrer或者来自首页相关页面，使用只读模式
-  const isFromHomepage = 
-    !referrer || 
-    referrer === '/' || 
-    referrer.includes('homepage') ||
-    referrer.includes('gallery') ||
-    referrer.endsWith('/'); // 根路径
+  console.log('🔍 [determineNavigationMode] Full referrer:', referrer)
   
-  return isFromHomepage ? 'readonly' : 'full';
+  // 如果没有referrer，默认使用完整模式（可能是刷新页面或直接访问）
+  if (!referrer) {
+    console.log('🔍 [determineNavigationMode] No referrer, using full mode')
+    return 'full'
+  }
+  
+  // 检查是否来自首页相关页面（只读模式）
+  const isFromHomepage = 
+    referrer === '/' || 
+    referrer.endsWith('/') && !referrer.includes('/creation') ||
+    referrer.includes('/homepage') ||
+    referrer.includes('/gallery')
+  
+  // 检查是否来自Creation页面（完整模式）
+  const isFromCreation = referrer.includes('/creation')
+  
+  console.log('🔍 [determineNavigationMode] isFromHomepage:', isFromHomepage)
+  console.log('🔍 [determineNavigationMode] isFromCreation:', isFromCreation)
+  
+  // Creation页面优先级更高
+  if (isFromCreation) {
+    return 'full'
+  }
+  
+  return isFromHomepage ? 'readonly' : 'full'
 }
 
 export default function GraphPage() {
@@ -145,7 +163,8 @@ export default function GraphPage() {
       <TopNavbar mode={navigationMode} />
       <KnowledgeGraph />
       <NodeDetailPanel />
-      <FloatingAddButton />
+      {/* 只在完整模式下显示添加按钮 */}
+      {navigationMode === 'full' && <FloatingAddButton />}
     </main>
   )
 }
