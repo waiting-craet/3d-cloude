@@ -41,10 +41,11 @@ export interface AIIntegrationService {
   /**
    * Analyzes document text and extracts entities and relationships
    * @param text - The document text to analyze
+   * @param customPrompt - Optional custom prompt to guide the AI analysis
    * @returns Promise with extracted entities and relationships
    * @throws Error if AI API fails or returns invalid response
    */
-  analyzeDocument(text: string): Promise<AIAnalysisResult>;
+  analyzeDocument(text: string, customPrompt?: string): Promise<AIAnalysisResult>;
 }
 
 /**
@@ -82,7 +83,7 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
   /**
    * Analyzes document text using AI Model API
    */
-  async analyzeDocument(text: string): Promise<AIAnalysisResult> {
+  async analyzeDocument(text: string, customPrompt?: string): Promise<AIAnalysisResult> {
     if (!text || text.trim().length === 0) {
       throw new Error('Document text cannot be empty');
     }
@@ -99,7 +100,7 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.buildRequestPayload(text)),
+        body: JSON.stringify(this.buildRequestPayload(text, customPrompt)),
         signal: controller.signal,
       });
 
@@ -154,13 +155,9 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
    * Builds the request payload for the AI API
    * This uses DeepSeek's chat completion format
    */
-  private buildRequestPayload(text: string): any {
-    return {
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: `你是知识图谱构建专家，擅长从文本中提取实体和关系。请仔细分析文本，提取核心信息。
+  private buildRequestPayload(text: string, customPrompt?: string): any {
+    // Build system message - use custom prompt if provided, otherwise use default
+    const systemContent = customPrompt || `你是知识图谱构建专家，擅长从文本中提取实体和关系。请仔细分析文本，提取核心信息。
 
 ## 提取规则
 
@@ -231,6 +228,13 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
 4. 为实体和关系添加有意义的properties，帮助理解上下文
 5. 关系类型应该语义明确，便于理解
 6. 如果文本是中文，实体名称和属性使用中文；如果是英文，使用英文`
+
+    return {
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: systemContent
         },
         {
           role: 'user',

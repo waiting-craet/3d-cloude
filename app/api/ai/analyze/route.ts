@@ -8,12 +8,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db';
 import { getAIIntegrationService } from '@/lib/services/ai-integration';
 import { getDuplicateDetectionService } from '@/lib/services/duplicate-detection';
 import { v4 as uuidv4 } from 'uuid';
-
-const prisma = new PrismaClient();
 
 /**
  * Request body interface
@@ -237,13 +235,51 @@ export async function POST(request: NextRequest) {
         });
 
       } catch (error) {
-        console.error('[AI Analysis] Database error during duplicate detection:', error);
+        // Enhanced error handling with specific error types
+        console.error('[AI Analysis] Database error during duplicate detection:', {
+          error: error instanceof Error ? error.message : String(error),
+          errorName: error instanceof Error ? error.name : 'Unknown',
+          stack: error instanceof Error ? error.stack : undefined,
+          graphId: body.graphId,
+          context: 'duplicate_detection',
+        });
+
+        // Determine error type and provide specific error messages
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorName = error instanceof Error ? error.name : '';
         
-        // Return user-friendly error message
+        let userMessage = 'Failed to check for duplicates. Please try again.';
+
+        // Handle Prisma connection errors
+        if (errorName === 'PrismaClientInitializationError' || 
+            errorMessage.includes('connection') || 
+            errorMessage.includes('Connection') ||
+            errorMessage.includes('connect ECONNREFUSED') ||
+            errorMessage.includes('Connection pool exhausted')) {
+          userMessage = 'Failed to check for duplicates. Database connection error occurred.';
+          console.warn('[AI Analysis] Prisma connection error detected');
+        }
+        
+        // Handle query timeout errors
+        else if (errorName === 'PrismaClientKnownRequestError' ||
+                 errorMessage.includes('timeout') || 
+                 errorMessage.includes('timed out') ||
+                 errorMessage.includes('Query timeout')) {
+          userMessage = 'Failed to check for duplicates. Database query timed out.';
+          console.warn('[AI Analysis] Query timeout error detected');
+        }
+        
+        // Handle other Prisma errors
+        else if (errorName.includes('Prisma')) {
+          userMessage = 'Failed to check for duplicates. Database error occurred.';
+          console.warn('[AI Analysis] Prisma error detected');
+        }
+
+        // Return error response with specific message
         return NextResponse.json(
           {
             success: false,
-            error: 'Failed to check for duplicates. Please try again.',
+            error: userMessage,
           },
           { status: 500 }
         );
@@ -271,8 +307,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
 
   } catch (error) {
-    // Catch-all error handler
-    console.error('[AI Analysis] Unexpected error:', error);
+    // Catch-all error handler with detailed logging
+    console.error('[AI Analysis] Unexpected error:', {
+      error: error instanceof Error ? error.message : String(error),
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined,
+      context: 'top_level_handler',
+    });
     
     // Don't expose internal error details to client
     return NextResponse.json(

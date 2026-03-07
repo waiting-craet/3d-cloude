@@ -59,6 +59,7 @@ export default function TextPage() {
   } | null>(null)
   const [showAILoadingModal, setShowAILoadingModal] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const isMountedRef = useRef<boolean>(true)
   
   // 自定义提示词状态
   const [customPrompt, setCustomPrompt] = useState('')
@@ -78,6 +79,20 @@ export default function TextPage() {
     return () => {
       document.body.style.overflow = originalOverflow
       document.documentElement.style.overflow = originalHtmlOverflow
+    }
+  }, [])
+
+  // Cleanup on component unmount - cancel pending requests and prevent state updates
+  useEffect(() => {
+    isMountedRef.current = true
+    
+    return () => {
+      isMountedRef.current = false
+      // Cancel any pending AI analysis requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+        abortControllerRef.current = null
+      }
     }
   }, [])
 
@@ -207,8 +222,10 @@ export default function TextPage() {
   const handleAIAnalysis = async () => {
     // 验证项目选择
     if (!selectedProject) {
-      setAnalysisError('请先选择一个项目')
-      setIsNetworkError(false)
+      if (isMountedRef.current) {
+        setAnalysisError('请先选择一个项目')
+        setIsNetworkError(false)
+      }
       return
     }
 
@@ -231,22 +248,28 @@ export default function TextPage() {
     
     if (!documentText) {
       console.error('Document text is null or undefined')
-      setAnalysisError('请输入文本或上传文件')
-      setIsNetworkError(false)
+      if (isMountedRef.current) {
+        setAnalysisError('请输入文本或上传文件')
+        setIsNetworkError(false)
+      }
       return
     }
     
     if (documentText.trim().length === 0) {
       console.error('Document text is empty after trimming')
-      setAnalysisError('文档内容为空，请输入有效的文本或上传包含内容的文件')
-      setIsNetworkError(false)
+      if (isMountedRef.current) {
+        setAnalysisError('文档内容为空，请输入有效的文本或上传包含内容的文件')
+        setIsNetworkError(false)
+      }
       return
     }
 
-    setIsAnalyzing(true)
-    setAnalysisError(null)
-    setIsNetworkError(false)
-    setShowAILoadingModal(true) // 显示加载模态框
+    if (isMountedRef.current) {
+      setIsAnalyzing(true)
+      setAnalysisError(null)
+      setIsNetworkError(false)
+      setShowAILoadingModal(true) // 显示加载模态框
+    }
 
     const params = {
       documentText,
@@ -257,49 +280,73 @@ export default function TextPage() {
     }
 
     // 保存参数以便重试
-    setLastAnalysisParams(params)
+    if (isMountedRef.current) {
+      setLastAnalysisParams(params)
+    }
 
     // 创建新的 AbortController
     const abortController = new AbortController()
     abortControllerRef.current = abortController
 
     try {
-      // 调用AI分析API
-      const response = await fetch('/api/ai/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-        signal: abortController.signal, // 添加取消信号
-      })
+      // 调用AI分析API - wrap in additional try-catch for Chrome extension compatibility
+      let response
+      try {
+        response = await fetch('/api/ai/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(params),
+          signal: abortController.signal, // 添加取消信号
+        }).catch((fetchError) => {
+          // Handle fetch errors (including Chrome extension message channel errors)
+          console.error('Fetch error in handleAIAnalysis:', fetchError)
+          throw fetchError
+        })
+      } catch (fetchError: any) {
+        // Chrome extension compatibility - handle message channel errors
+        console.error('Chrome extension or fetch error:', fetchError)
+        throw fetchError
+      }
 
       const result = await response.json()
 
       if (result.success) {
-        // 设置AI生成的数据并显示预览模态框
-        setAiGeneratedData(result.data)
-        setShowAIPreview(true)
-        setLastAnalysisParams(null) // 清除保存的参数
+        // 设置AI生成的数据并显示预览模态框 - only if mounted
+        if (isMountedRef.current) {
+          setAiGeneratedData(result.data)
+          setShowAIPreview(true)
+          setLastAnalysisParams(null) // 清除保存的参数
+        }
       } else {
-        // 显示错误消息
-        setAnalysisError(result.error || 'AI分析失败，请重试')
-        setIsNetworkError(false)
+        // 显示错误消息 - only if mounted
+        if (isMountedRef.current) {
+          setAnalysisError(result.error || 'AI分析失败，请重试')
+          setIsNetworkError(false)
+        }
       }
     } catch (error: any) {
       // 检查是否是用户取消
       if (error.name === 'AbortError') {
         console.log('AI analysis cancelled by user')
-        setAnalysisError(null)
-        setIsNetworkError(false)
+        if (isMountedRef.current) {
+          setAnalysisError(null)
+          setIsNetworkError(false)
+        }
       } else {
         console.error('AI analysis error:', error)
-        setAnalysisError('网络错误，请检查连接后重试')
-        setIsNetworkError(true)
+        if (isMountedRef.current) {
+          setAnalysisError('网络错误，请检查连接后重试')
+          setIsNetworkError(true)
+        }
       }
     } finally {
-      setIsAnalyzing(false)
-      setShowAILoadingModal(false) // 隐藏加载模态框
+      // Cleanup - only update state if mounted
+      if (isMountedRef.current) {
+        setIsAnalyzing(false)
+        setShowAILoadingModal(false) // 隐藏加载模态框
+      }
       abortControllerRef.current = null
     }
   }
@@ -318,49 +365,73 @@ export default function TextPage() {
   const handleRetryAnalysis = async () => {
     if (!lastAnalysisParams) return
 
-    setIsAnalyzing(true)
-    setAnalysisError(null)
-    setIsNetworkError(false)
-    setShowAILoadingModal(true) // 显示加载模态框
+    if (isMountedRef.current) {
+      setIsAnalyzing(true)
+      setAnalysisError(null)
+      setIsNetworkError(false)
+      setShowAILoadingModal(true) // 显示加载模态框
+    }
 
     // 创建新的 AbortController
     const abortController = new AbortController()
     abortControllerRef.current = abortController
 
     try {
-      const response = await fetch('/api/ai/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(lastAnalysisParams),
-        signal: abortController.signal, // 添加取消信号
-      })
+      // Wrap in additional try-catch for Chrome extension compatibility
+      let response
+      try {
+        response = await fetch('/api/ai/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(lastAnalysisParams),
+          signal: abortController.signal, // 添加取消信号
+        }).catch((fetchError) => {
+          // Handle fetch errors (including Chrome extension message channel errors)
+          console.error('Fetch error in handleRetryAnalysis:', fetchError)
+          throw fetchError
+        })
+      } catch (fetchError: any) {
+        // Chrome extension compatibility - handle message channel errors
+        console.error('Chrome extension or fetch error in retry:', fetchError)
+        throw fetchError
+      }
 
       const result = await response.json()
 
       if (result.success) {
-        setAiGeneratedData(result.data)
-        setShowAIPreview(true)
-        setLastAnalysisParams(null)
+        if (isMountedRef.current) {
+          setAiGeneratedData(result.data)
+          setShowAIPreview(true)
+          setLastAnalysisParams(null)
+        }
       } else {
-        setAnalysisError(result.error || 'AI分析失败，请重试')
-        setIsNetworkError(false)
+        if (isMountedRef.current) {
+          setAnalysisError(result.error || 'AI分析失败，请重试')
+          setIsNetworkError(false)
+        }
       }
     } catch (error: any) {
       // 检查是否是用户取消
       if (error.name === 'AbortError') {
         console.log('AI analysis retry cancelled by user')
-        setAnalysisError(null)
-        setIsNetworkError(false)
+        if (isMountedRef.current) {
+          setAnalysisError(null)
+          setIsNetworkError(false)
+        }
       } else {
         console.error('AI analysis retry error:', error)
-        setAnalysisError('网络错误，请检查连接后重试')
-        setIsNetworkError(true)
+        if (isMountedRef.current) {
+          setAnalysisError('网络错误，请检查连接后重试')
+          setIsNetworkError(true)
+        }
       }
     } finally {
-      setIsAnalyzing(false)
-      setShowAILoadingModal(false) // 隐藏加载模态框
+      if (isMountedRef.current) {
+        setIsAnalyzing(false)
+        setShowAILoadingModal(false) // 隐藏加载模态框
+      }
       abortControllerRef.current = null
     }
   }
