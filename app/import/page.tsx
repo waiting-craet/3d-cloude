@@ -345,7 +345,6 @@ export default function ImportPage() {
             color: 'white',
             fontSize: '18px'
           }}>
-            📊
           </div>
           知识图谱
         </div>
@@ -477,7 +476,7 @@ export default function ImportPage() {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <div style={{ fontSize: '40px', marginBottom: '10px', opacity: 0.5 }}>📄</div>
+                  <div style={{ fontSize: '40px', marginBottom: '10px', opacity: 0.5 }}></div>
                   <div style={{ fontSize: '15px', fontWeight: '600', color: '#2c2c2c', marginBottom: '4px' }}>
                     {type}
                   </div>
@@ -502,7 +501,7 @@ export default function ImportPage() {
                 marginBottom: '15px',
                 fontSize: '13px'
               }}>
-                📎 {selectedFile.name} ({fileType?.toUpperCase()})
+                {selectedFile.name} ({fileType?.toUpperCase()})
               </div>
             )}
 
@@ -615,7 +614,6 @@ export default function ImportPage() {
                   e.currentTarget.style.borderColor = '#ddd'
                 }}
               >
-                <span style={{ fontSize: '16px' }}>📊</span>
                 <span>Excel模板</span>
               </button>
               <button
@@ -642,7 +640,6 @@ export default function ImportPage() {
                   e.currentTarget.style.borderColor = '#ddd'
                 }}
               >
-                <span style={{ fontSize: '16px' }}>📄</span>
                 <span>CSV模板</span>
               </button>
               <button
@@ -669,7 +666,6 @@ export default function ImportPage() {
                   e.currentTarget.style.borderColor = '#ddd'
                 }}
               >
-                <span style={{ fontSize: '16px' }}>📋</span>
                 <span>JSON模板</span>
               </button>
             </div>
@@ -967,7 +963,6 @@ export default function ImportPage() {
               alignItems: 'center',
               gap: '10px'
             }}>
-              <span style={{ fontSize: '24px' }}>📊</span>
               确认生成图谱
             </h3>
             
@@ -1020,7 +1015,7 @@ export default function ImportPage() {
               color: '#856404',
               border: '1px solid #ffeaa7'
             }}>
-              ⚠️ 数据将被导入到选定的图谱中，此操作不可撤销
+              数据将被导入到选定的图谱中，此操作不可撤销
             </div>
 
             <div style={{
@@ -1139,7 +1134,7 @@ export default function ImportPage() {
                   marginBottom: '16px',
                   textAlign: 'center'
                 }}>
-                  📊 导入统计
+                  导入统计
                 </div>
                 
                 <div style={{
