@@ -1,16 +1,48 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import LoginModal from '@/components/LoginModal'
-import ProjectList from '@/components/ProjectList'
+import InkWashNavbar from '@/components/InkWashNavbar'
+import HeroSection from '@/components/HeroSection'
+import StatisticsDisplay from '@/components/StatisticsDisplay'
+import { GallerySection } from '@/components/GallerySection'
+import { WorkCardGrid } from '@/components/WorkCardGrid'
+import InkWashWorkCard from '@/components/InkWashWorkCard'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import ErrorMessage from '@/components/ErrorMessage'
 import { useUserStore } from '@/lib/userStore'
+
+// Project type definition
+interface Project {
+  id: string
+  name: string
+  description?: string
+  graphCount: number
+  createdAt: string
+  updatedAt: string
+  userId: string
+  graphs?: Array<{
+    id: string
+    name: string
+    nodeCount: number
+    edgeCount: number
+  }>
+}
+
+// API response type
+interface ProjectsResponse {
+  projects: Project[]
+}
 
 export default function LandingPage() {
   const router = useRouter()
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const { user, isLoggedIn, logout, initializeFromStorage } = useUserStore()
+  const { isLoggedIn, logout, initializeFromStorage } = useUserStore()
 
   // 页面加载时恢复登录状态
   useEffect(() => {
@@ -29,11 +61,45 @@ export default function LandingPage() {
     }
   }, [initializeFromStorage])
 
-  const handleLogout = () => {
-    logout()
-  }
+  // Fetch projects data for statistics and gallery
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const response = await fetch('/api/projects')
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data: ProjectsResponse = await response.json()
+        
+        // Validate and filter invalid projects
+        const validProjects = data.projects.filter(project => 
+          project && 
+          project.id && 
+          project.name && 
+          typeof project.graphCount === 'number'
+        )
+        
+        setProjects(validProjects)
+      } catch (error) {
+        console.error('Failed to fetch projects:', error)
+        setError(error instanceof Error ? error.message : 'Failed to fetch projects')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const handleStartCreating = () => {
+    fetchProjects()
+  }, [])
+
+  const handleLogout = useCallback(() => {
+    logout()
+  }, [logout])
+
+  const handleStartCreating = useCallback(() => {
     if (!isLoggedIn) {
       // 未登录时提示用户先登录
       alert('请先登录后再开始创作')
@@ -47,10 +113,36 @@ export default function LandingPage() {
       console.error('Navigation failed:', error)
       window.location.href = '/creation'
     }
-  }
+  }, [isLoggedIn, router])
 
-  // 示例作品数据 - 已替换为ProjectList组件
-  // const sampleWorks = [...]
+  const handleLogin = useCallback(() => {
+    setIsLoginModalOpen(true)
+  }, [])
+
+  const handleProjectClick = useCallback((projectId: string) => {
+    // Navigate to project's graph list
+    router.push(`/project/${projectId}`)
+  }, [router])
+
+  const handleSearch = useCallback((query: string) => {
+    // TODO: Implement search functionality
+    console.log('Search query:', query)
+  }, [])
+
+  // Retry loading projects
+  const handleRetry = useCallback(() => {
+    window.location.reload()
+  }, [])
+
+  // Calculate statistics from projects data (memoized to avoid recalculation)
+  const statistics = useCallback(() => ({
+    projectsCount: projects.length,
+    knowledgeGraphsCount: projects.reduce((sum, p) => sum + p.graphCount, 0),
+    totalGraphsCount: projects.reduce((sum, p) => sum + p.graphCount, 0),
+  }), [projects])()
+
+  // Display only first 12 projects in gallery (memoized)
+  const displayProjects = useCallback(() => projects.slice(0, 12), [projects])()
 
   return (
     <main style={{
@@ -58,184 +150,104 @@ export default function LandingPage() {
       background: '#fafafa',
       color: '#333'
     }}>
-      {/* 顶部导航栏 */}
-      <nav style={{
-        background: 'white',
-        borderBottom: '1px solid #e0e0e0',
-        padding: '16px 0',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 30px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          {/* Logo/标题 */}
-          <div style={{
-            fontSize: '20px',
-            fontWeight: '700',
-            color: '#00bfa5'
-          }}>
-            知识图谱
-          </div>
+      {/* Skip to main content link for keyboard navigation */}
+      <a 
+        href="#main-content" 
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          zIndex: 999,
+          padding: '1rem',
+          background: '#5a9a8f',
+          color: 'white',
+          textDecoration: 'none',
+          borderRadius: '4px'
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.left = '1rem';
+          e.currentTarget.style.top = '1rem';
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.left = '-9999px';
+        }}
+      >
+        跳转到主内容
+      </a>
 
-          {/* 右侧按钮组 */}
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'center'
-          }}>
-            {isLoggedIn ? (
-              <>
-                <button
-                  onClick={handleStartCreating}
-                  style={{
-                    padding: '10px 24px',
-                    background: 'linear-gradient(135deg, #00bfa5, #00d4b8)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.3)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                >
-                  开始创作
-                </button>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    padding: '10px 24px',
-                    background: 'transparent',
-                    color: '#666',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#00bfa5'
-                    e.currentTarget.style.color = '#00bfa5'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#ddd'
-                    e.currentTarget.style.color = '#666'
-                  }}
-                >
-                  退出登录
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setIsLoginModalOpen(true)}
-                  style={{
-                    padding: '10px 24px',
-                    background: 'linear-gradient(135deg, #00bfa5, #00d4b8)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.3)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                >
-                  登录/注册
-                </button>
-                <button
-                  onClick={handleStartCreating}
-                  style={{
-                    padding: '10px 24px',
-                    background: 'transparent',
-                    color: '#666',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#00bfa5'
-                    e.currentTarget.style.color = '#00bfa5'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#ddd'
-                    e.currentTarget.style.color = '#666'
-                  }}
-                >
-                  开始创作
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      {/* Ink-Wash Navigation Bar */}
+      <InkWashNavbar
+        isLoggedIn={isLoggedIn}
+        onStartCreating={handleStartCreating}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+      />
 
-      {/* 标题区域 */}
-      <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #00bfa5 50%, #00d4b8 75%, #4facfe 100%)',
-        padding: '40px 0',
-        textAlign: 'center'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 30px'
-        }}>
-          <h1 style={{
-            fontSize: '32px',
-            fontWeight: '800',
-            color: 'white',
-            margin: '0 0 12px 0',
-            textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            知识图谱作品广场
-          </h1>
-          <p style={{
-            fontSize: '16px',
-            color: 'rgba(255, 255, 255, 0.95)',
-            margin: 0,
-            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-          }}>
-            发现、创建和分享知识的无限可能
-          </p>
-        </div>
-      </div>
+      {/* Add padding to account for fixed navbar */}
+      <div id="main-content" style={{ paddingTop: '70px' }}>
+        {/* Hero Section */}
+        <HeroSection
+          title="构建与发现知识的无尽脉络"
+          subtitle="在这里，每一个想法都能找到它的位置，每一条知识都能连接成网络"
+          onSearch={handleSearch}
+        />
 
-      {/* 主内容区 */}
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '50px 30px 100px 30px'
-      }} data-works-section>
-        {/* 项目列表 */}
-        <ProjectList maxItems={12} columns={6} />
+        {/* Statistics Display */}
+        {!loading && !error && (
+          <StatisticsDisplay
+            projectsCount={statistics.projectsCount}
+            knowledgeGraphsCount={statistics.knowledgeGraphsCount}
+            totalGraphsCount={statistics.totalGraphsCount}
+          />
+        )}
+
+        {/* Gallery Section */}
+        <GallerySection heading="推荐广场">
+          {loading && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+              <LoadingSpinner />
+            </div>
+          )}
+
+          {error && (
+            <div style={{ padding: '60px 0' }}>
+              <ErrorMessage message={error} onRetry={handleRetry} />
+            </div>
+          )}
+
+          {!loading && !error && displayProjects.length === 0 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '60px 20px',
+              color: '#666'
+            }}>
+              <div 
+                style={{ fontSize: '48px', marginBottom: '16px' }}
+                role="img"
+                aria-label="图表图标"
+              >
+                📊
+              </div>
+              <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#2c2c2c' }}>
+                暂无项目
+              </h3>
+              <p style={{ fontSize: '14px', color: '#737373' }}>
+                还没有创建任何项目，点击"开始创作"来创建你的第一个项目吧！
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && displayProjects.length > 0 && (
+            <WorkCardGrid columns={6} gap="24px">
+              {displayProjects.map(project => (
+                <InkWashWorkCard
+                  key={project.id}
+                  project={project}
+                  onClick={handleProjectClick}
+                />
+              ))}
+            </WorkCardGrid>
+          )}
+        </GallerySection>
       </div>
 
       {/* 登录弹窗 */}

@@ -1,7 +1,99 @@
+/* Ink-Wash Design System CSS Custom Properties */
+:root {
+  /* Primary Colors */
+  --primary-main: #5a9a8f;
+  --primary-light: #7db3a8;
+  --primary-dark: #3d6b62;
+
+  /* Neutral Colors */
+  --neutral-white: #ffffff;
+  --neutral-gray50: #fafafa;
+  --neutral-gray100: #f5f5f5;
+  --neutral-gray200: #e8e8e8;
+  --neutral-gray300: #d4d4d4;
+  --neutral-gray400: #a3a3a3;
+  --neutral-gray500: #737373;
+  --neutral-gray600: #525252;
+  --neutral-gray700: #404040;
+  --neutral-gray800: #2c2c2c;
+  --neutral-gray900: #1a1a1a;
+
+  /* Accent Colors */
+  --accent-sage: #9caf88;
+  --accent-stone: #b8a99a;
+  --accent-mist: #c4d4d8;
+
+  /* Semantic Colors */
+  --semantic-success: #7db3a8;
+  --semantic-warning: #d4a574;
+  --semantic-error: #c17b7b;
+  --semantic-info: #8fa3b8;
+
+  /* Typography */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-heading: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 28px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 80px;
+  --spacing-5xl: 120px;
+
+  /* Animation */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  --easing-in: cubic-bezier(0.4, 0, 1, 1);
+  --easing-out: cubic-bezier(0, 0, 0.2, 1);
+  --easing-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,

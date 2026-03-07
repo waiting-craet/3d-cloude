@@ -1,556 +1,183 @@
-/* HeroSection 组件样式 */
+/* HeroSection Styles - Ink-Wash Aesthetic */
 
-.heroSection {
-  position: relative;
-  display: block;
-  padding: 30px 0 30px 0;
-  boxLoginModal.tsx:121 
- POST http://localhost:3000/api/auth/login net::ERR_CONNECTION_REFUSED
-
-LoginModal.tsx:167 请求失败: TypeError: Failed to fetch
-    at handleSubmit (LoginModal.tsx:121:30)
-    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:14)
-    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:16)
-    at invokeGuardedCallback (react-dom.development.js:20689:29)
-    at invokeGuardedCallbackAndCatchFirstError (react-dom.development.js:20703:25)
-    at executeDispatch (react-dom.development.js:32128:3)
-    at processDispatchQueueItemsInOrder (react-dom.development.js:32160:7)
-    at processDispatchQueue (react-dom.development.js:32173:5)
-    at dispatchEventsForPlugins (react-dom.development.js:32184:3)
-    at eval (react-dom.development.js:32374:12)
-    at batchedUpdates$1 (react-dom.development.js:24953:12)
-    at batchedUpdates (react-dom.development.js:28844:12)
-    at dispatchEventForPluginEventSystem (react-dom.development.js:32373:3)
-    at dispatchEvent (react-dom.development.js:30141:5)
-    at dispatchDiscreteEvent (react-dom.development.js:30112:5)
-﻿
-
-Press ctrl i to turn on code suggestions. Press ctrl x to disable code suggestions.
-ctrl
-i
- to turn on code suggestions. Don't show again
-
--sizing: border-box;
-}
-
-/* 背景样式 */
-.backgroundGradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #00bfa5 50%, #00d4b8 75%, #4facfe 100%);
-}
-
-.backgroundGradientDark {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-}
-
-.backgroundPattern {
-  background: 
-    radial-gradient(circle at 25% 25%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(0, 191, 165, 0.1) 0%, transparent 50%),
-    #fafafa;
-}
-
-.backgroundPatternDark {
-  background: 
-    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(0, 191, 165, 0.1) 0%, transparent 50%),
-    #1a1a2e;
-}
-
-.backgroundSolid {
-  background: #fafafa;
-}
-
-.backgroundSolidDark {
-  background: #1a1a2e;
-}
-
-/* 背景装饰元素 */
-.floatingElement {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.floatingElement1 {
-  top: 10%;
-  left: 10%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(0, 191, 165, 0.1) 0%, transparent 70%);
-  animation: float 6s ease-in-out infinite;
-}
-
-.floatingElement2 {
-  bottom: 15%;
-  right: 15%;
-  width: 150px;
-  height: 150px;
-  background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-  animation: float 8s ease-in-out infinite reverse;
-}
-
-.floatingElement3 {
-  top: 50%;
-  right: 5%;
-  width: 100px;
-  height: 100px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
-  animation: float 10s ease-in-out infinite;
-}
-
-/* 主要内容容器 */
-.heroContent {
-  width: 100%;
-  max-width: 900px;
-  padding: 0 40px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  text-align: center;
-  z-index: 1;
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.heroContentVisible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.heroContentHidden {
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-/* 标题样式 */
-.heroTitle {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 800;
-  margin: 0 auto 12px auto;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  animation: fadeInUp 1s ease-out 0.2s both;
-  text-align: center;
-}
-
-.heroTitleLight {
-  color: #2c2c2c;
-}
-
-.heroTitleDark {
-  color: #ffffff;
-}
-
-.heroTitleGradient {
-  background: linear-gradient(135deg, #00bfa5, #667eea, #764ba2);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-/* 副标题样式 */
-.heroSubtitle {
-  font-size: clamp(0.875rem, 1.5vw, 1rem);
-  margin: 0 auto 20px auto;
-  line-height: 1.4;
-  max-width: 600px;
-  font-weight: 400;
-  animation: fadeInUp 1s ease-out 0.4s both;
-  text-align: center;
-}
-
-.heroSubtitleLight {
-  color: rgba(44, 44, 44, 0.8);
-}
-
-.heroSubtitleDark {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* 搜索栏容器 */
-.searchContainer {
-  margin: 0 auto 20px auto;
-  animation: fadeInUp 1s ease-out 0.6s both;
-  max-width: 500px;
-}
-
-.searchWrapper {
-  width: 100%;
-  position: relative;
-}
-
-.searchBox {
+.hero {
+  /* Subtle gradient background from light gray to white */
+  background: linear-gradient(180deg, #f5f5f5 0%, #ffffff 100%);
+  
+  /* Generous vertical padding */
+  padding: 80px 24px;
+  
+  /* Centered layout */
   display: flex;
-  border-radius: 50px;
-  overflow: hidden;
-  border: 2px solid transparent;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
+  justify-content: center;
+  align-items: center;
+  
+  /* Minimum height for visual impact */
+  min-height: 400px;
 }
 
-.searchBoxLight {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(0, 0, 0, 0.1);
+.container {
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
 }
 
-.searchBoxDark {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+.title {
+  /* Large font size for emphasis */
+  font-size: 48px;
+  font-weight: 600;
+  
+  /* Dark gray color */
+  color: #2c2c2c;
+  
+  /* Tight line height for multi-line titles */
+  line-height: 1.2;
+  
+  /* Remove default margins */
+  margin: 0;
+  
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.searchBoxFocused {
-  box-shadow: 0 8px 32px rgba(0, 191, 165, 0.2);
+.subtitle {
+  /* Medium font size */
+  font-size: 18px;
+  font-weight: 400;
+  
+  /* Medium gray color */
+  color: #666666;
+  
+  /* Relaxed line height for readability */
+  line-height: 1.75;
+  
+  /* Remove default margins */
+  margin: 0;
+  
+  /* Max width for optimal reading length */
+  max-width: 600px;
 }
 
-.searchBoxFocusedLight {
-  border-color: #00bfa5;
+.searchContainer {
+  /* Full width with max constraint */
+  width: 100%;
+  max-width: 500px;
+  
+  /* Position relative for icon positioning */
+  position: relative;
+  
+  /* Top margin for spacing */
+  margin-top: 16px;
 }
 
-.searchBoxFocusedDark {
-  border-color: rgba(255, 255, 255, 0.4);
+.searchIcon {
+  /* Absolute positioning inside input */
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  /* Icon color */
+  color: #a3a3a3;
+  
+  /* Prevent pointer events */
+  pointer-events: none;
+  
+  /* Icon size */
+  width: 20px;
+  height: 20px;
 }
 
 .searchInput {
-  flex: 1;
-  padding: 12px 20px;
-  border: none;
+  /* Full width */
+  width: 100%;
+  
+  /* Padding with space for icon */
+  padding: 14px 20px 14px 48px;
+  
+  /* Font styling */
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #2c2c2c;
+  
+  /* Background and border */
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  
+  /* Rounded corners */
+  border-radius: 12px;
+  
+  /* Subtle shadow */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  
+  /* Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Remove default outline */
   outline: none;
-  font-size: 14px;
-  background: transparent;
-  font-weight: 500;
-}
-
-.searchInputLight {
-  color: #333333;
-}
-
-.searchInputDark {
-  color: #ffffff;
 }
 
 .searchInput::placeholder {
-  color: rgba(0, 0, 0, 0.5);
+  color: #a3a3a3;
 }
 
-.searchInputDark::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+.searchInput:focus {
+  /* Highlight border on focus */
+  border-color: #5a9a8f;
+  
+  /* Enhanced shadow on focus */
+  box-shadow: 0 4px 12px rgba(90, 154, 143, 0.15);
 }
 
-.searchButton {
-  padding: 12px 24px;
-  background: #00bfa5;
-  border: none;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 60px;
+.searchInput:hover {
+  /* Subtle border color change on hover */
+  border-color: #d4d4d4;
 }
 
-.searchButton:hover {
-  background: #00d4b8;
-  transform: scale(1.05);
-}
-
-/* 按钮容器 */
-.buttonContainer {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  animation: fadeInUp 1s ease-out 0.8s both;
-  margin: 0 auto;
-}
-
-/* 主要按钮 */
-.primaryButton {
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, #00bfa5, #00d4b8);
-  color: white;
-  box-shadow: 0 8px 32px rgba(0, 191, 165, 0.3);
-  min-width: 120px;
-  position: relative;
-  overflow: hidden;
-}
-
-.primaryButton:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 40px rgba(0, 191, 165, 0.4);
-}
-
-.primaryButtonDisabled {
-  background: rgba(0, 0, 0, 0.2);
-  box-shadow: none;
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.primaryButtonDisabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* 次要按钮 */
-.secondaryButton {
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  border: 2px solid #00bfa5;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: transparent;
-  color: #00bfa5;
-  min-width: 120px;
-}
-
-.secondaryButton:hover {
-  background: #00bfa5;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 191, 165, 0.4);
-}
-
-/* 按钮光效 */
-.buttonShimmer {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: shimmer 2s infinite;
-}
-
-/* 特性标签 */
-.featuresContainer {
-  margin: 24px auto 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  animation: fadeInUp 1s ease-out 1s both;
-}
-
-.featureItem {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.featureItemLight {
-  color: rgba(44, 44, 44, 0.8);
-}
-
-.featureItemDark {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.featureIcon {
-  font-size: 16px;
-}
-
-/* 动画定义 */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .heroSection {
-    padding: 30px 16px;
+/* Responsive adjustments for tablet */
+@media (max-width: 1199px) {
+  .hero {
+    padding: 64px 24px;
+    min-height: 350px;
   }
   
-  .searchWrapper {
-    max-width: 100%;
+  .title {
+    font-size: 40px;
   }
   
-  .buttonContainer {
-    gap: 12px;
-  }
-  
-  .primaryButton,
-  .secondaryButton {
-    min-width: 120px;
-    padding: 10px 20px;
-    font-size: 14px;
-  }
-  
-  .featuresContainer {
-    gap: 16px;
-    margin-top: 24px;
-  }
-  
-  .floatingElement1,
-  .floatingElement2,
-  .floatingElement3 {
-    display: none;
+  .subtitle {
+    font-size: 17px;
   }
 }
 
-@media (max-width: 480px) {
-@media (max-width: 480px) {
-  .heroSection {
-    padding: 25px 12px;
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+  .hero {
+    padding: 48px 16px;
+    min-height: 300px;
   }
   
-  .heroTitle {
-    font-size: clamp(1.5rem, 6vw, 2rem);
-    margin-bottom: 12px;
+  .title {
+    font-size: 32px;
   }
   
-  .heroSubtitle {
-    font-size: clamp(0.875rem, 3.5vw, 1rem);
-    margin-bottom: 20px;
-  }
-  
-  .searchContainer {
-    margin-bottom: 20px;
+  .subtitle {
+    font-size: 16px;
   }
   
   .searchInput {
-    padding: 12px 18px;
-    font-size: 14px;
-  }
-  
-  .searchButton {
-    padding: 12px 20px;
-    font-size: 16px;
-    min-width: 60px;
-  }
-  
-  .buttonContainer {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .primaryButton,
-  .secondaryButton {
-    width: 100%;
-    max-width: 240px;
-  }
-  
-  .featuresContainer {
-    gap: 14px;
-    margin-top: 20px;
-  }
-  
-  .featureItem {
-    font-size: 11px;
-  }
-  
-  .featureIcon {
     font-size: 15px;
-  }
-}
-/* 高对比度模式支持 */
-@media (prefers-contrast: high) {
-  .heroTitleGradient {
-    background: none;
-    -webkit-text-fill-color: unset;
-    color: #00bfa5;
+    padding: 12px 16px 12px 44px;
   }
   
-  .searchBoxLight {
-    border-color: #000000;
-  }
-  
-  .searchBoxDark {
-    border-color: #ffffff;
-  }
-}
-
-/* 减少动画模式支持 */
-@media (prefers-reduced-motion: reduce) {
-  .heroContent,
-  .heroTitle,
-  .heroSubtitle,
-  .searchContainer,
-  .buttonContainer,
-  .featuresContainer {
-    animation: none;
-  }
-  
-  .floatingElement1,
-  .floatingElement2,
-  .floatingElement3 {
-    animation: none;
-  }
-  
-  .buttonShimmer {
-    animation: none;
-  }
-  
-  .primaryButton,
-  .secondaryButton,
-  .searchButton {
-    transition: none;
-  }
-}
-
-/* 打印样式 */
-@media print {
-  .heroSection {
-    background: white !important;
-    color: black !important;
-    min-height: auto;
-    padding: 20px;
-  }
-  
-  .floatingElement1,
-  .floatingElement2,
-  .floatingElement3 {
-    display: none;
-  }
-  
-  .searchContainer,
-  .buttonContainer {
-    display: none;
-  }
-  
-  .heroTitle,
-  .heroSubtitle {
-    color: black !important;
-    background: none !important;
-    -webkit-text-fill-color: black !important;
+  .searchIcon {
+    left: 14px;
+    width: 18px;
+    height: 18px;
   }
 }

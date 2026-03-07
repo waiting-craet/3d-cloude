@@ -1,0 +1,28 @@
+/**
+ * WorkCardGrid Styles
+ * 
+ * Responsive CSS Grid layout with breakpoints for desktop, tablet, and mobile.
+ * Uses CSS custom properties for flexible column and gap configuration.
+ */
+
+.grid {
+  display: grid;
+  gap: var(--grid-gap, 24px);
+  grid-template-columns: repeat(var(--grid-columns, 6), 1fr);
+  width: 100%;
+}
+
+/* Tablet: 768px - 1199px (4 columns) */
+@media (max-width: 1199px) {
+  .grid {
+    grid-template-columns: repeat(var(--grid-columns, 4), 1fr);
+  }
+}
+
+/* Mobile: < 768px (2 columns) */
+@media (max-width: 767px) {
+  .grid {
+    grid-template-columns: repeat(var(--grid-columns, 2), 1fr);
+    gap: var(--grid-gap, 16px);
+  }
+}

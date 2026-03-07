@@ -1,0 +1,162 @@
+/* InkWashNavbar - Ink-wash aesthetic navigation bar */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  /* Fallback for browsers that don't support backdrop-filter */
+  background: #ffffff;
+  /* Semi-transparent background with backdrop blur for modern browsers */
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e8e8e8;
+  transition: all 0.3s ease;
+}
+
+/* Fallback for browsers that don't support backdrop-filter */
+@supports not (backdrop-filter: blur(10px)) {
+  .navbar {
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 600;
+  color: #5a9a8f;
+  letter-spacing: 0.5px;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.primaryButton {
+  padding: 10px 24px;
+  background: transparent;
+  color: #5a9a8f;
+  border: 1.5px solid #5a9a8f;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.primaryButton:hover {
+  background: #5a9a8f;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(90, 154, 143, 0.2);
+}
+
+.primaryButton:active {
+  transform: translateY(0);
+}
+
+.primaryButton:focus {
+  outline: 2px solid #5a9a8f;
+  outline-offset: 2px;
+}
+
+.primaryButton:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.primaryButton:focus-visible {
+  outline: 2px solid #5a9a8f;
+  outline-offset: 2px;
+}
+
+.secondaryButton {
+  padding: 10px 24px;
+  background: transparent;
+  color: #525252;
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.secondaryButton:hover {
+  border-color: #5a9a8f;
+  color: #5a9a8f;
+}
+
+.secondaryButton:active {
+  transform: translateY(0);
+}
+
+.secondaryButton:focus {
+  outline: 2px solid #5a9a8f;
+  outline-offset: 2px;
+}
+
+.secondaryButton:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.secondaryButton:focus-visible {
+  outline: 2px solid #5a9a8f;
+  outline-offset: 2px;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px 20px;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  .buttonGroup {
+    gap: 8px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px 16px;
+  }
+
+  .logo {
+    font-size: 16px;
+  }
+
+  .buttonGroup {
+    gap: 6px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
