@@ -1092,17 +1092,6 @@ export default function ImportPage() {
               }}
             />
             <div style={{
-              padding: '10px',
-              background: '#E8F5F0',
-              borderRadius: InkWashEffects.smallRadius,
-              marginBottom: '20px',
-              fontSize: '13px',
-              color: MorandiColors.sageGreen,
-              border: `1px solid ${MorandiColors.sageGreen}33`
-            }}>
-              图谱类型: 3D (统一格式)
-            </div>
-            <div style={{
               display: 'flex',
               gap: '10px',
               justifyContent: 'flex-end'
