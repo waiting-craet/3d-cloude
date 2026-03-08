@@ -35,7 +35,7 @@ const COPYRIGHT_INFO = {
  */
 const NAVIGATION_LINKS: ReadonlyArray<NavigationLink> = [
   { label: '首页', href: '/', ariaLabel: '返回首页' },
-  { label: '开始创作', href: '/create', ariaLabel: '前往创作页面' },
+  { label: '开始创作', href: '/creation', ariaLabel: '前往创作页面' },
   { label: '关于我们', href: '/about', ariaLabel: '了解关于我们' },
   { label: '帮助中心', href: '/help', ariaLabel: '访问帮助中心' }
 ] as const
