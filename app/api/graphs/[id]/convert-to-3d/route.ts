@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { retryOperation, getDescriptiveErrorMessage } from '@/lib/db-helpers';
 import { LayoutEngine } from '@/lib/layout/LayoutEngine';
+import { LayoutDiagnostics } from '@/lib/layout/LayoutDiagnostics';
 import type { 
   Node2D, 
   Node3D, 
@@ -204,6 +205,15 @@ export async function POST(
 
     console.log(`[Convert-to-3D] Conversion completed, quality score: ${qualityMetrics.qualityScore}`);
     console.log(`[Convert-to-3D] Performance: ${performanceMetrics.totalTime}ms total`);
+
+    // 生成并打印诊断报告
+    const diagnosticReport = LayoutDiagnostics.generateReport(
+      nodes3D,
+      edges,
+      qualityMetrics,
+      config?.minNodeDistance || 5
+    );
+    LayoutDiagnostics.printReport(diagnosticReport);
 
     // 步骤7: 保存3D坐标到数据库（带重试和批处理）
     await retryOperation(async () => {

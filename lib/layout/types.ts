@@ -465,15 +465,72 @@ export interface ValidationResult {
  * 默认布局配置
  */
 export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
-  heightVariation: 8,
-  minNodeDistance: 18,
-  iterations: 80,
-  springLength: 18,
-  repulsionStrength: 900,
-  damping: 0.9,
+  heightVariation: 20,        // 增加到20，提供更好的3D效果
+  minNodeDistance: 15,        // 减少到15，允许更紧凑的布局
+  iterations: 120,            // 增加到120，提供更充分的力模拟
+  springLength: 15,           // 减少到15，使连接更紧密
+  repulsionStrength: 1200,    // 增加到1200，防止节点过于密集
+  damping: 0.85,              // 减少到0.85，加快收敛速度
   convergenceThreshold: 0.01,
   batchSize: 15,
   batchDelay: 100
+};
+
+/**
+ * 优化的布局配置预设
+ */
+export const OPTIMIZED_LAYOUT_CONFIGS = {
+  /** 小型图谱（< 20节点）- 强调美观 */
+  small: {
+    heightVariation: 25,
+    minNodeDistance: 18,
+    iterations: 150,
+    springLength: 18,
+    repulsionStrength: 1500,
+    damping: 0.85,
+    convergenceThreshold: 0.01,
+    batchSize: 15,
+    batchDelay: 100
+  } as LayoutConfig,
+  
+  /** 中型图谱（20-50节点）- 平衡性能和质量 */
+  medium: {
+    heightVariation: 20,
+    minNodeDistance: 15,
+    iterations: 120,
+    springLength: 15,
+    repulsionStrength: 1200,
+    damping: 0.85,
+    convergenceThreshold: 0.01,
+    batchSize: 15,
+    batchDelay: 100
+  } as LayoutConfig,
+  
+  /** 大型图谱（50-100节点）- 强调性能 */
+  large: {
+    heightVariation: 15,
+    minNodeDistance: 12,
+    iterations: 100,
+    springLength: 12,
+    repulsionStrength: 1000,
+    damping: 0.9,
+    convergenceThreshold: 0.02,
+    batchSize: 20,
+    batchDelay: 50
+  } as LayoutConfig,
+  
+  /** 超大型图谱（> 100节点）- 最大化性能 */
+  xlarge: {
+    heightVariation: 12,
+    minNodeDistance: 10,
+    iterations: 80,
+    springLength: 10,
+    repulsionStrength: 800,
+    damping: 0.92,
+    convergenceThreshold: 0.03,
+    batchSize: 25,
+    batchDelay: 30
+  } as LayoutConfig
 };
 
 /**
