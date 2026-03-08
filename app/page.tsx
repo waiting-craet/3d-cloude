@@ -202,7 +202,7 @@ export default function LandingPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#FAFAF8',
+      background: 'linear-gradient(135deg, #e8f0ed 0%, #d4e4df 100%)',
       color: '#333'
     }}>
       {/* Skip to main content link for keyboard navigation */}

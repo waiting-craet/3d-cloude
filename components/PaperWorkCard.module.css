@@ -1,8 +1,8 @@
-/* PaperWorkCard - Warm paper-white aesthetic card with icon placeholder */
+/* PaperWorkCard - Morandi green aesthetic card with icon placeholder */
 
 .card {
-  background: #FFFFFF;
-  border: 1px solid #E8E8E6;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #b8cfc7;
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
@@ -14,8 +14,8 @@
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-color: #6b8e85;
+  box-shadow: 0 4px 12px rgba(90, 122, 110, 0.15);
+  border-color: #5a7a6e;
 }
 
 .card:focus {
@@ -40,8 +40,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #FAFAF8;
-  border-bottom: 1px solid #F0F0EE;
+  background: linear-gradient(135deg, #e8f0ed 0%, #f0f5f3 100%);
+  border-bottom: 1px solid #d4e4df;
 }
 
 .icon {
@@ -67,7 +67,7 @@
 .title {
   font-size: 16px;
   font-weight: 500;
-  color: #333333;
+  color: #3d5a50;
   margin: 0;
   line-height: 1.4;
   overflow: hidden;
@@ -87,7 +87,7 @@
 
 .metadataItem {
   font-size: 13px;
-  color: #999999;
+  color: #8ba69a;
   display: flex;
   align-items: center;
   gap: 4px;
