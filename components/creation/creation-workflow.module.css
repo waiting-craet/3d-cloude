@@ -471,6 +471,17 @@
   box-shadow: 0 4px 16px rgba(90, 122, 110, 0.12);
 }
 
+/* 选中状态的卡片 */
+.projectCard.selected {
+  border-color: #7fa99b;
+  background: rgba(127, 169, 155, 0.1);
+  box-shadow: 0 4px 16px rgba(90, 122, 110, 0.2);
+}
+
+.projectCard.selected::before {
+  transform: scaleY(1);
+}
+
 .projectCardContent {
   display: flex;
   flex-direction: column;
