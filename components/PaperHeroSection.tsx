@@ -65,6 +65,28 @@ const PaperHeroSection = React.memo(function PaperHeroSection({
             className={styles.searchInput}
             aria-label="搜索知识图谱"
           />
+          <button
+            type="submit"
+            className={styles.searchButton}
+            aria-label="搜索"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M7 10l5 5 5-5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                transform="rotate(-90 10 10)"
+              />
+            </svg>
+          </button>
         </form>
       </div>
     </section>

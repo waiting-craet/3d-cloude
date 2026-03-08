@@ -29,9 +29,25 @@ interface Project {
   }>
 }
 
+// Graph type definition
+interface Graph {
+  id: string
+  name: string
+  description?: string
+  nodeCount: number
+  edgeCount: number
+  createdAt: string
+  updatedAt: string
+}
+
 // API response type
 interface ProjectsResponse {
   projects: Project[]
+}
+
+// Graphs API response type
+interface GraphsResponse {
+  graphs: Graph[]
 }
 
 export default function LandingPage() {
@@ -40,6 +56,13 @@ export default function LandingPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // View state management
+  const [viewMode, setViewMode] = useState<'gallery' | 'projectGraphs'>('gallery')
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [graphs, setGraphs] = useState<Graph[]>([])
+  const [graphsLoading, setGraphsLoading] = useState(false)
+  const [graphsError, setGraphsError] = useState<string | null>(null)
 
   const { isLoggedIn, logout, initializeFromStorage } = useUserStore()
 
@@ -119,9 +142,49 @@ export default function LandingPage() {
   }, [])
 
   const handleProjectClick = useCallback((projectId: string) => {
-    // Navigate to project's graph list
-    router.push(`/project/${projectId}`)
-  }, [router])
+    // Find the selected project
+    const project = projects.find(p => p.id === projectId)
+    if (!project) {
+      console.error('Project not found:', projectId)
+      return
+    }
+
+    // Switch to project graphs view
+    setSelectedProject(project)
+    setViewMode('projectGraphs')
+    
+    // Fetch graphs for this project
+    fetchProjectGraphs(projectId)
+  }, [projects])
+
+  // Fetch graphs for a specific project
+  const fetchProjectGraphs = useCallback(async (projectId: string) => {
+    try {
+      setGraphsLoading(true)
+      setGraphsError(null)
+      
+      const response = await fetch(`/api/projects/${projectId}/graphs`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data: GraphsResponse = await response.json()
+      setGraphs(data.graphs || [])
+    } catch (error) {
+      console.error('Failed to fetch graphs:', error)
+      setGraphsError(error instanceof Error ? error.message : 'Failed to fetch graphs')
+    } finally {
+      setGraphsLoading(false)
+    }
+  }, [])
+
+  // Return to gallery view
+  const handleBackToGallery = useCallback(() => {
+    setViewMode('gallery')
+    setSelectedProject(null)
+    setGraphs([])
+    setGraphsError(null)
+  }, [])
 
   const handleSearch = useCallback((query: string) => {
     // TODO: Implement search functionality
@@ -132,13 +195,6 @@ export default function LandingPage() {
   const handleRetry = useCallback(() => {
     window.location.reload()
   }, [])
-
-  // Calculate statistics from projects data (memoized to avoid recalculation)
-  const statistics = useCallback(() => ({
-    projectsCount: projects.length,
-    knowledgeGraphsCount: projects.reduce((sum, p) => sum + p.graphCount, 0),
-    totalGraphsCount: projects.reduce((sum, p) => sum + p.graphCount, 0),
-  }), [projects])()
 
   // Display only first 12 projects in gallery (memoized)
   const displayProjects = useCallback(() => projects.slice(0, 12), [projects])()
@@ -186,66 +242,146 @@ export default function LandingPage() {
         {/* Hero Section */}
         <PaperHeroSection
           title="构建与发现知识的无尽脉络"
-          subtitle="在这里，每一个想法都能找到它的位置，每一条知识都能连接成网络"
+          subtitle="在这里，编织零散的碎片，洞见事物背后的关联。用图谱的力量，重新组织你的知识宇宙。"
           onSearch={handleSearch}
         />
 
-        {/* Statistics Display - Hidden by default */}
-        {/* Uncomment to enable statistics display */}
-        {/* {!loading && !error && (
-          <StatisticsDisplay
-            projectsCount={statistics.projectsCount}
-            knowledgeGraphsCount={statistics.knowledgeGraphsCount}
-            totalGraphsCount={statistics.totalGraphsCount}
-          />
-        )} */}
-
         {/* Gallery Section */}
-        <PaperGallerySection heading="推荐广场">
-          {loading && (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
-              <LoadingSpinner />
-            </div>
-          )}
-
-          {error && (
-            <div style={{ padding: '60px 0' }}>
-              <ErrorMessage message={error} onRetry={handleRetry} />
-            </div>
-          )}
-
-          {!loading && !error && displayProjects.length === 0 && (
-            <div style={{
-              textAlign: 'center',
-              padding: '60px 20px',
-              color: '#666'
-            }}>
-              <div 
-                style={{ fontSize: '48px', marginBottom: '16px' }}
-                role="img"
-                aria-label="图表图标"
+        <PaperGallerySection 
+          heading={viewMode === 'gallery' ? '推荐广场' : `${selectedProject?.name}项目中的知识图谱`}
+        >
+          {/* Back button for project graphs view */}
+          {viewMode === 'projectGraphs' && (
+            <div style={{ marginBottom: '20px' }}>
+              <button
+                onClick={handleBackToGallery}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6b8e85',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+                aria-label="返回推荐广场"
               >
-                📊
-              </div>
-              <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#333333' }}>
-                暂无项目
-              </h3>
-              <p style={{ fontSize: '14px', color: '#999999' }}>
-                还没有创建任何项目，点击"开始创作"来创建你的第一个项目吧！
-              </p>
+                ← 返回推荐广场
+              </button>
             </div>
           )}
 
-          {!loading && !error && displayProjects.length > 0 && (
-            <PaperWorkGrid columns={4} gap="20px">
-              {displayProjects.map(project => (
-                <PaperWorkCard
-                  key={project.id}
-                  project={project}
-                  onClick={handleProjectClick}
-                />
-              ))}
-            </PaperWorkGrid>
+          {/* Gallery View - Show Projects */}
+          {viewMode === 'gallery' && (
+            <>
+              {loading && (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+                  <LoadingSpinner />
+                </div>
+              )}
+
+              {error && (
+                <div style={{ padding: '60px 0' }}>
+                  <ErrorMessage message={error} onRetry={handleRetry} />
+                </div>
+              )}
+
+              {!loading && !error && displayProjects.length === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  color: '#666'
+                }}>
+                  <div 
+                    style={{ fontSize: '48px', marginBottom: '16px' }}
+                    role="img"
+                    aria-label="图表图标"
+                  >
+                    📊
+                  </div>
+                  <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#333333' }}>
+                    暂无项目
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#999999' }}>
+                    还没有创建任何项目，点击"开始创作"来创建你的第一个项目吧！
+                  </p>
+                </div>
+              )}
+
+              {!loading && !error && displayProjects.length > 0 && (
+                <PaperWorkGrid columns={4} gap="20px">
+                  {displayProjects.map(project => (
+                    <PaperWorkCard
+                      key={project.id}
+                      project={project}
+                      onClick={handleProjectClick}
+                    />
+                  ))}
+                </PaperWorkGrid>
+              )}
+            </>
+          )}
+
+          {/* Project Graphs View - Show Graphs */}
+          {viewMode === 'projectGraphs' && (
+            <>
+              {graphsLoading && (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+                  <LoadingSpinner />
+                </div>
+              )}
+
+              {graphsError && (
+                <div style={{ padding: '60px 0' }}>
+                  <ErrorMessage 
+                    message={graphsError} 
+                    onRetry={() => selectedProject && fetchProjectGraphs(selectedProject.id)} 
+                  />
+                </div>
+              )}
+
+              {!graphsLoading && !graphsError && graphs.length === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  color: '#666'
+                }}>
+                  <div 
+                    style={{ fontSize: '48px', marginBottom: '16px' }}
+                    role="img"
+                    aria-label="图谱图标"
+                  >
+                    🗺️
+                  </div>
+                  <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#333333' }}>
+                    该项目还没有创建任何图谱
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#999999' }}>
+                    点击"开始创作"来创建第一个知识图谱吧！
+                  </p>
+                </div>
+              )}
+
+              {!graphsLoading && !graphsError && graphs.length > 0 && (
+                <PaperWorkGrid columns={4} gap="20px">
+                  {graphs.map(graph => (
+                    <PaperWorkCard
+                      key={graph.id}
+                      project={{
+                        id: graph.id,
+                        name: graph.name,
+                        description: graph.description,
+                        graphCount: graph.nodeCount,
+                        createdAt: graph.createdAt,
+                        updatedAt: graph.updatedAt,
+                        userId: selectedProject?.userId || '',
+                      }}
+                      onClick={(graphId) => router.push(`/graph/${graphId}`)}
+                    />
+                  ))}
+                </PaperWorkGrid>
+              )}
+            </>
           )}
         </PaperGallerySection>
       </div>
