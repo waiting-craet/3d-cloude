@@ -10,6 +10,7 @@ import { PaperWorkGrid } from '@/components/PaperWorkGrid'
 import PaperWorkCard from '@/components/PaperWorkCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorMessage from '@/components/ErrorMessage'
+import PaperFooter from '@/components/PaperFooter'
 import { useUserStore } from '@/lib/userStore'
 
 // Project type definition
@@ -202,7 +203,7 @@ export default function LandingPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#FAFAF8',
+      background: 'linear-gradient(135deg, #e8f0ed 0%, #d4e4df 100%)',
       color: '#333'
     }}>
       {/* Skip to main content link for keyboard navigation */}
@@ -385,6 +386,9 @@ export default function LandingPage() {
           )}
         </PaperGallerySection>
       </div>
+
+      {/* Footer */}
+      <PaperFooter />
 
       {/* 登录弹窗 */}
       <LoginModal

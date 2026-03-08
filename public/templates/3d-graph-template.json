@@ -8,53 +8,30 @@
   },
   "nodes": [
     {
-      "label": "Python",
-      "description": "一种简单易学的编程语言",
-      "image": "https://example.com/python-logo.png"
+      "label": "节点A"
     },
     {
-      "label": "数据分析",
-      "description": "使用数据发现规律和洞察"
+      "label": "节点B"
     },
     {
-      "label": "机器学习",
-      "description": "让计算机从数据中学习",
-      "video": "https://example.com/ml-intro.mp4"
-    },
-    {
-      "label": "Web开发",
-      "description": "构建网站和Web应用"
-    },
-    {
-      "label": "自动化脚本",
-      "description": "自动化重复性任务"
+      "label": "节点C"
     }
   ],
   "edges": [
     {
-      "source": "Python",
-      "target": "数据分析",
-      "label": "应用于"
+      "source": "节点A",
+      "target": "节点B",
+      "label": "连接"
     },
     {
-      "source": "Python",
-      "target": "机器学习",
-      "label": "应用于"
+      "source": "节点A",
+      "target": "节点C",
+      "label": "包含"
     },
     {
-      "source": "Python",
-      "target": "Web开发",
-      "label": "应用于"
-    },
-    {
-      "source": "Python",
-      "target": "自动化脚本",
-      "label": "应用于"
-    },
-    {
-      "source": "数据分析",
-      "target": "机器学习",
-      "label": "支撑"
+      "source": "节点B",
+      "target": "节点C",
+      "label": "引用"
     }
   ]
 }

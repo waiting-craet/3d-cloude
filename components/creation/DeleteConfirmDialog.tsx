@@ -5,7 +5,9 @@ import styles from './creation-workflow.module.css';
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
-  projectCount: number;
+  projectCount?: number;
+  graphCount?: number;
+  itemType: 'project' | 'graph';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -13,25 +15,34 @@ interface DeleteConfirmDialogProps {
 /**
  * DeleteConfirmDialog组件
  * 
- * 批量删除确认对话框，显示项目数量和警告信息
+ * 批量删除确认对话框，显示项目或图谱数量和警告信息
  * 
  * 功能：
- * - 显示将要删除的项目数量
+ * - 显示将要删除的项目或图谱数量
  * - 警告用户此操作不可撤销
  * - 对话框打开时自动获得焦点 (需求 10.6)
  * - 支持Escape键关闭 (需求 10.7)
  * - 包含确认和取消按钮
  * - 使用role="alertdialog"和aria-describedby提供可访问性
  * 
- * 需求: 5.1, 5.2, 5.3, 5.7, 10.6, 10.7
+ * 需求: 4.1, 4.2, 5.1, 5.2, 5.3, 5.7, 10.6, 10.7
  */
 export default function DeleteConfirmDialog({
   isOpen,
-  projectCount,
+  projectCount = 0,
+  graphCount = 0,
+  itemType,
   onConfirm,
   onCancel
 }: DeleteConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  
+  // 根据类型确定数量和文本
+  const count = itemType === 'project' ? projectCount : graphCount;
+  const itemName = itemType === 'project' ? '项目' : '图谱';
+  const warningText = itemType === 'project' 
+    ? '此操作将永久删除所选项目及其所有关联数据（图谱、节点、边、文件），且'
+    : '此操作将永久删除所选图谱及其所有关联数据（节点、边、文件），且';
 
   // 对话框打开时自动获得焦点 (需求 10.6)
   useEffect(() => {
@@ -78,13 +89,13 @@ export default function DeleteConfirmDialog({
           确认删除
         </h2>
 
-        {/* 对话框内容 - 显示项目数量和警告信息 (需求 5.1, 5.2) */}
+        {/* 对话框内容 - 显示项目或图谱数量和警告信息 (需求 4.1, 4.2, 5.1, 5.2) */}
         <div id="dialog-description" className={styles.dialogContent}>
           <p className={styles.dialogText}>
-            您即将删除 <strong className={styles.dialogHighlight}>{projectCount}</strong> 个项目。
+            您即将删除 <strong className={styles.dialogHighlight}>{count}</strong> 个{itemName}。
           </p>
           <p className={styles.dialogWarning}>
-            ⚠️ 此操作将永久删除所选项目及其所有关联数据（图谱、节点、边、文件），且<strong>不可撤销</strong>。
+            ⚠️ {warningText}<strong>不可撤销</strong>。
           </p>
         </div>
 
@@ -99,11 +110,11 @@ export default function DeleteConfirmDialog({
             取消
           </button>
 
-          {/* 确认按钮 (需求 5.3) */}
+          {/* 确认按钮 (需求 4.3, 5.3) */}
           <button
             className={styles.dialogConfirmButton}
             onClick={onConfirm}
-            aria-label="确认删除选中的项目"
+            aria-label={`确认删除选中的${itemName}`}
           >
             确认删除
           </button>

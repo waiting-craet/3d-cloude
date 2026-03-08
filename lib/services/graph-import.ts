@@ -1,6 +1,29 @@
 import * as XLSX from 'xlsx'
+import jschardet from 'jschardet'
+import * as iconv from 'iconv-lite'
 import { DataValidator, validateAndCreateGraphData } from './data-validator'
 
+/**
+ * Normalize column name for case-insensitive matching
+ * Removes BOM, invisible Unicode characters, converts to lowercase, trims whitespace
+ * and replaces multiple internal spaces with single space
+ *
+ * @param columnName - Raw column name from CSV/Excel header
+ * @returns Normalized column name for matching
+ */
+export function normalizeColumnName(columnName: string): string {
+  return columnName
+    // Remove BOM marker at the start
+    .replace(/^\uFEFF/, '')
+    // Remove all invisible Unicode characters (zero-width spaces)
+    .replace(/[\u200B\u200C\u200D]/g, '')
+    // Convert to lowercase
+    .toLowerCase()
+    // Trim leading and trailing whitespace
+    .trim()
+    // Replace multiple internal spaces with single space
+    .replace(/\s+/g, ' ')
+}
 // 节点数据接口
 export interface NodeData {
   id?: string
@@ -331,16 +354,85 @@ function parseExcelWithSingleSheet(workbook: XLSX.WorkBook): ParsedGraphData {
  * 1. source, target, relationship格式
  * 2. 完整的节点和边数据
  * 统一处理为3D格式，自动转换2D坐标
+ * 自动检测文件编码（支持GBK、GB2312、UTF-8等）
  */
 export async function parseCSVFile(file: File): Promise<ParsedGraphData> {
-  const text = await file.text()
+  // 读取原始字节数据
+  const buffer = await file.arrayBuffer()
+  const uint8Array = new Uint8Array(buffer)
+  
+  // 检测文件编码 - jschardet需要Buffer类型
+  const detected = jschardet.detect(Buffer.from(uint8Array))
+  let encoding = detected.encoding || 'UTF-8'
+  
+  // 映射jschardet的编码名称到iconv-lite支持的名称
+  const encodingMap: { [key: string]: string } = {
+    'GB2312': 'GBK',  // iconv-lite uses GBK for GB2312
+    'GB18030': 'GBK', // iconv-lite uses GBK for GB18030
+    'BIG5': 'Big5',
+    'UTF-8': 'UTF-8',
+    'UTF-16LE': 'UTF-16LE',
+    'UTF-16BE': 'UTF-16BE',
+    'ISO-8859-1': 'ISO-8859-1',
+    'windows-1252': 'windows-1252',
+    'Shift_JIS': 'Shift_JIS',
+    'EUC-JP': 'EUC-JP',
+    'EUC-KR': 'EUC-KR'
+  }
+  
+  // 使用映射后的编码名称，如果没有映射则使用原始名称
+  encoding = encodingMap[encoding] || encoding
+  
+  // 特殊处理：如果检测为windows-1252或ISO-8859-1但包含高字节字符（可能是中文编码误检测）
+  // 尝试用GBK和Big5解码，选择包含最多有效中文字符的结果
+  if (encoding === 'windows-1252' || encoding === 'ISO-8859-1') {
+    // 检查是否包含高字节字符（>0x7F）
+    const hasHighBytes = Array.from(uint8Array).some(byte => byte > 0x7F)
+    if (hasHighBytes) {
+      let bestEncoding = encoding
+      let maxChineseChars = 0
+      
+      // 尝试GBK
+      try {
+        const gbkText = iconv.decode(Buffer.from(uint8Array), 'GBK')
+        const chineseChars = (gbkText.match(/[\u4e00-\u9fa5]/g) || []).length
+        if (chineseChars > maxChineseChars) {
+          maxChineseChars = chineseChars
+          bestEncoding = 'GBK'
+        }
+      } catch (e) {
+        // GBK解码失败
+      }
+      
+      // 尝试Big5
+      try {
+        const big5Text = iconv.decode(Buffer.from(uint8Array), 'Big5')
+        const chineseChars = (big5Text.match(/[\u4e00-\u9fa5]/g) || []).length
+        if (chineseChars > maxChineseChars) {
+          maxChineseChars = chineseChars
+          bestEncoding = 'Big5'
+        }
+      } catch (e) {
+        // Big5解码失败
+      }
+      
+      // 如果找到了包含中文字符的编码，使用它
+      if (maxChineseChars > 0) {
+        encoding = bestEncoding
+      }
+    }
+  }
+  
+  // 使用iconv-lite解码文件（支持更多编码格式）
+  const text = iconv.decode(Buffer.from(uint8Array), encoding)
+  
   const lines = text.split('\n').filter(line => line.trim())
   
   if (lines.length === 0) {
     throw new Error('CSV文件为空')
   }
   
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+  const headers = lines[0].split(',').map(h => normalizeColumnName(h))
   
   // 检查是否包含节点坐标信息
   const hasCoordinates = headers.includes('x') && headers.includes('y')
@@ -402,12 +494,12 @@ function parseCSVWithEdgeData(lines: string[], headers: string[]): ParsedGraphDa
   const nodeSet = new Set<string>()
   const edges: EdgeData[] = []
   
-  const sourceIndex = headers.findIndex(h => ['source', 'from', 'src'].includes(h))
-  const targetIndex = headers.findIndex(h => ['target', 'to', 'dest', 'dst'].includes(h))
-  const labelIndex = headers.findIndex(h => ['label', 'relationship', 'relation', 'type'].includes(h))
+  const sourceIndex = headers.findIndex(h => ['source', 'from', 'src', '源节点', '起点', '来源'].includes(h))
+  const targetIndex = headers.findIndex(h => ['target', 'to', 'dest', 'dst', '目标节点', '终点', '目的地'].includes(h))
+  const labelIndex = headers.findIndex(h => ['label', 'relationship', 'relation', 'type', '关系', '关系类型', '边类型', '连接类型'].includes(h))
   
   if (sourceIndex === -1 || targetIndex === -1) {
-    throw new Error('CSV文件必须包含source和target列')
+    throw new Error(`CSV文件必须包含source和target列。找到的列：${headers.join(', ')}`)
   }
   
   for (let i = 1; i < lines.length; i++) {

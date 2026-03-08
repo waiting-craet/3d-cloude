@@ -21,24 +21,19 @@ export default function BatchDeleteControls({
   onConfirm,
   onCancel
 }: BatchDeleteControlsProps) {
-  // 仅在项目视图显示批量删除功能
-  if (!isProjectView) {
-    return null;
-  }
-
   // 批量删除模式：显示确定和取消按钮
   if (isBatchDeleteMode) {
     return (
       <div className={styles.batchDeleteControls}>
         <span className={styles.selectedCount}>
-          已选中 {selectedCount} 个项目
+          已选中 {selectedCount} 个{isProjectView ? '项目' : '图谱'}
         </span>
         <div className={styles.batchDeleteActions}>
           <button
             className={styles.batchDeleteConfirmButton}
             onClick={onConfirm}
             disabled={selectedCount === 0 || isDeleting}
-            aria-label="确认删除选中的项目"
+            aria-label={`确认删除选中的${isProjectView ? '项目' : '图谱'}`}
           >
             {isDeleting ? '删除中...' : '确定'}
           </button>
@@ -60,7 +55,7 @@ export default function BatchDeleteControls({
     <button
       className={styles.batchDeleteButton}
       onClick={onEnterBatchMode}
-      aria-label="批量删除项目"
+      aria-label={`批量删除${isProjectView ? '项目' : '图谱'}`}
     >
       批量删除
     </button>

@@ -7,6 +7,7 @@ import CreateProjectModal from '@/components/CreateProjectModal';
 import BatchDeleteControls from './BatchDeleteControls';
 import ProjectCardCheckbox from './ProjectCardCheckbox';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
+import { useUserStore } from '@/lib/userStore';
 
 interface Graph {
   id: string;
@@ -31,7 +32,9 @@ interface Project {
 
 export default function NewCreationWorkflowPage() {
   const router = useRouter();
+  const { isLoggedIn } = useUserStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState<'updateTime' | 'title'>('updateTime');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingProjects, setExistingProjects] = useState<Project[]>([]);
@@ -42,6 +45,7 @@ export default function NewCreationWorkflowPage() {
   // 批量删除状态
   const [isBatchDeleteMode, setIsBatchDeleteMode] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
+  const [selectedGraphIds, setSelectedGraphIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -197,6 +201,7 @@ export default function NewCreationWorkflowPage() {
   const handleBackToProjects = () => {
     setSelectedProject(null);
     setViewMode('projects');
+    setSelectedGraphIds(new Set());
   };
 
   // 处理图谱卡片点击 - 导航到 3D 图谱编辑器
@@ -214,6 +219,11 @@ export default function NewCreationWorkflowPage() {
 
   // 批量删除事件处理函数
   const handleEnterBatchDeleteMode = () => {
+    // 检查用户是否登录
+    if (!isLoggedIn) {
+      alert('请先登录后再进行批量删除操作');
+      return;
+    }
     setIsBatchDeleteMode(true);
     setSelectedProjectIds(new Set());
   };
@@ -230,14 +240,40 @@ export default function NewCreationWorkflowPage() {
     });
   };
 
+  const handleToggleGraphSelection = (graphId: string) => {
+    setSelectedGraphIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(graphId)) {
+        newSet.delete(graphId);
+      } else {
+        newSet.add(graphId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllGraphs = () => {
+    if (selectedProject && selectedProject.graphs) {
+      const allGraphIds = selectedProject.graphs.map(graph => graph.id);
+      setSelectedGraphIds(new Set(allGraphIds));
+    }
+  };
+
+  const handleDeselectAllGraphs = () => {
+    setSelectedGraphIds(new Set());
+  };
+
   const handleCancelBatchDelete = () => {
     setIsBatchDeleteMode(false);
     setSelectedProjectIds(new Set());
+    setSelectedGraphIds(new Set());
     setShowDeleteConfirm(false);
   };
 
   const handleShowConfirm = () => {
-    if (selectedProjectIds.size > 0) {
+    if (viewMode === 'projects' && selectedProjectIds.size > 0) {
+      setShowDeleteConfirm(true);
+    } else if (viewMode === 'graphs' && selectedGraphIds.size > 0) {
       setShowDeleteConfirm(true);
     }
   };
@@ -257,17 +293,177 @@ export default function NewCreationWorkflowPage() {
       
       const data = await response.json();
       
+      if (response.status === 401) {
+        alert('请先登录后再进行删除操作');
+        return;
+      }
+      
       if (response.ok && data.success) {
         alert(`成功删除 ${data.summary.succeeded} 个项目`);
+        await fetchProjectsWithGraphs();
+        handleCancelBatchDelete();
+      } else if (data.summary && data.summary.succeeded > 0) {
+        // 部分成功
+        const failedProjects = data.results
+          .filter((r: any) => !r.success)
+          .map((r: any) => r.projectName || r.projectId)
+          .join(', ');
+        alert(
+          `部分删除成功：${data.summary.succeeded} 个成功，${data.summary.failed} 个失败\n` +
+          `失败的项目：${failedProjects}`
+        );
         await fetchProjectsWithGraphs();
         handleCancelBatchDelete();
       } else {
         alert(data.error || '删除失败');
       }
     } catch (error) {
+      console.error('批量删除项目失败:', error);
       alert('删除操作失败，请稍后重试');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleConfirmDeleteGraphs = async () => {
+    setIsDeleting(true);
+    setShowDeleteConfirm(false);
+    
+    try {
+      // 调用批量删除图谱 API
+      const response = await fetch('/api/graphs/batch-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          graphIds: Array.from(selectedGraphIds)
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('网络请求失败');
+      }
+      
+      const data = await response.json();
+      
+      // 处理删除结果
+      if (data.success) {
+        // 完全成功
+        alert(`成功删除 ${data.summary.succeeded} 个图谱`);
+      } else if (data.summary.succeeded > 0) {
+        // 部分成功
+        const failedGraphs = data.results
+          .filter((r: any) => !r.success)
+          .map((r: any) => r.graphName || r.graphId)
+          .join(', ');
+        alert(
+          `部分删除成功：${data.summary.succeeded} 个成功，${data.summary.failed} 个失败\n` +
+          `失败的图谱：${failedGraphs}`
+        );
+      } else {
+        // 全部失败
+        const errors = data.results
+          .map((r: any) => `${r.graphName || r.graphId}: ${r.error}`)
+          .join('\n');
+        alert(`删除失败：\n${errors}`);
+      }
+      
+      // 实现重试机制以确保数据同步
+      let retryCount = 0;
+      const maxRetries = 3;
+      let verified = false;
+      const deletedGraphIds = Array.from(selectedGraphIds);
+      
+      while (retryCount < maxRetries && !verified) {
+        if (retryCount > 0) {
+          // 指数退避策略
+          const delay = 500 * retryCount;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+        // 重新获取数据，使用 no-cache 确保获取最新数据
+        const refreshResponse = await fetch('/api/projects/with-graphs', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          },
+        });
+        
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          const projectsWithGraphs = refreshData.projects || [];
+          
+          // 验证删除是否成功
+          const stillExists = projectsWithGraphs.some((p: any) => 
+            p.graphs && p.graphs.some((g: any) => deletedGraphIds.includes(g.id))
+          );
+          
+          if (!stillExists) {
+            verified = true;
+            
+            // 更新项目列表
+            const projectList: Project[] = projectsWithGraphs.map((project: any) => ({
+              id: project.id,
+              name: project.name,
+              description: project.description || '',
+              createdAt: project.createdAt,
+              updatedAt: project.updatedAt,
+              graphs: project.graphs || [],
+              graphCount: project.graphs ? project.graphs.length : 0,
+            }));
+            
+            setProjects(projectList);
+            
+            // 更新当前选中的项目（如果在图谱视图中）
+            if (selectedProject) {
+              const updatedProject = projectList.find(p => p.id === selectedProject.id);
+              if (updatedProject) {
+                setSelectedProject(updatedProject);
+              }
+            }
+          }
+        }
+        
+        retryCount++;
+      }
+      
+      if (!verified) {
+        console.warn('数据刷新验证失败，可能存在同步延迟');
+      }
+      
+      // 清除选择状态
+      setSelectedGraphIds(new Set());
+      setIsBatchDeleteMode(false);
+      
+    } catch (error) {
+      console.error('批量删除图谱失败:', error);
+      
+      // 显示用户友好的错误消息
+      if (error instanceof Error) {
+        if (error.message.includes('网络')) {
+          alert('删除操作失败，请检查网络连接后重试');
+        } else {
+          alert(`删除操作失败：${error.message}`);
+        }
+      } else {
+        alert('删除操作失败，请稍后重试');
+      }
+      
+      // 保留选择状态，允许用户重试
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // 处理搜索
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+  };
+
+  // 处理回车键搜索
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
@@ -317,15 +513,41 @@ export default function NewCreationWorkflowPage() {
             <h2 className={styles.myProjectsText}>我的项目</h2>
             
             {/* 搜索框（从右上角移动过来） */}
-            <div style={{ position: 'relative' }}>
-              <span className={styles.searchIcon}>🔍</span>
+            <div className={styles.searchContainer}>
               <input
                 type="text"
                 className={styles.searchBar}
                 placeholder="搜索项目..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
               />
+              <button 
+                className={styles.searchButton}
+                onClick={handleSearch}
+                aria-label="搜索"
+              >
+                <svg 
+                  className={styles.searchIcon}
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle 
+                    cx="11" 
+                    cy="11" 
+                    r="7" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                  />
+                  <path 
+                    d="M20 20L16.5 16.5" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -334,7 +556,7 @@ export default function NewCreationWorkflowPage() {
             {/* 批量删除控件 */}
             <BatchDeleteControls
               isBatchDeleteMode={isBatchDeleteMode}
-              selectedCount={selectedProjectIds.size}
+              selectedCount={viewMode === 'projects' ? selectedProjectIds.size : selectedGraphIds.size}
               isDeleting={isDeleting}
               isProjectView={viewMode === 'projects'}
               onEnterBatchMode={handleEnterBatchDeleteMode}
@@ -401,8 +623,8 @@ export default function NewCreationWorkflowPage() {
                 }}>
                   暂无项目，点击"新建"按钮创建您的第一个项目
                 </div>
-              ) : (
-                projects
+              ) : (() => {
+                const filteredProjects = projects
                   .filter(project => {
                     // 搜索过滤
                     if (searchQuery && !project.name.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -422,8 +644,21 @@ export default function NewCreationWorkflowPage() {
                       const bTime = (b as any).updatedAt || (b as any).createdAt || '';
                       return new Date(bTime).getTime() - new Date(aTime).getTime();
                     }
-                  })
-                  .map((project) => (
+                  });
+
+                return filteredProjects.length === 0 ? (
+                  <div style={{ 
+                    padding: '40px', 
+                    textAlign: 'center', 
+                    color: '#6b8578',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(139, 166, 154, 0.25)'
+                  }}>
+                    搜索结果为空，未找到匹配的项目
+                  </div>
+                ) : (
+                  filteredProjects.map((project) => (
                     <div
                       key={project.id}
                       className={styles.projectCard}
@@ -450,14 +685,15 @@ export default function NewCreationWorkflowPage() {
                           </span>
                           <div className={styles.projectCardStats}>
                             <span className={styles.projectCardStat}>
-                              📊 点击查看图谱
+                              点击查看图谱
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
                   ))
-              )}
+                );
+              })()}
             </>
           )}
 
@@ -474,8 +710,8 @@ export default function NewCreationWorkflowPage() {
                 }}>
                   该项目暂无图谱，点击"新建"按钮创建图谱
                 </div>
-              ) : (
-                selectedProject.graphs
+              ) : (() => {
+                const filteredGraphs = selectedProject.graphs
                   ?.filter(graph => {
                     // 搜索过滤
                     if (searchQuery && !graph.name.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -494,13 +730,51 @@ export default function NewCreationWorkflowPage() {
                       const bTime = b.updatedAt || b.createdAt || '';
                       return new Date(bTime).getTime() - new Date(aTime).getTime();
                     }
-                  })
-                  .map((graph) => (
+                  });
+
+                return filteredGraphs && filteredGraphs.length === 0 ? (
+                  <div style={{ 
+                    padding: '40px', 
+                    textAlign: 'center', 
+                    color: '#6b8578',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(139, 166, 154, 0.25)'
+                  }}>
+                    搜索结果为空，未找到匹配的图谱
+                  </div>
+                ) : (
+                  filteredGraphs?.map((graph) => (
                     <div
                       key={graph.id}
-                      className={styles.projectCard}
-                      onClick={() => handleGraphCardClick(graph)}
+                      className={`${styles.projectCard} ${
+                        isBatchDeleteMode && selectedGraphIds.has(graph.id) ? styles.selected : ''
+                      }`}
+                      onClick={() => {
+                        if (!isBatchDeleteMode) {
+                          handleGraphCardClick(graph);
+                        }
+                      }}
                     >
+                      {/* 批量删除复选框 */}
+                      {isBatchDeleteMode && (
+                        <div
+                          className={styles.checkboxContainer}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleGraphSelection(graph.id);
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            className={styles.projectCheckbox}
+                            checked={selectedGraphIds.has(graph.id)}
+                            onChange={() => handleToggleGraphSelection(graph.id)}
+                            aria-label={`选择图谱 ${graph.name}`}
+                          />
+                        </div>
+                      )}
+                      
                       <div className={styles.projectCardContent}>
                         <h3 className={styles.projectCardTitle}>图谱：{graph.name}</h3>
                         <p className={styles.projectCardDescription}>
@@ -517,12 +791,12 @@ export default function NewCreationWorkflowPage() {
                             <div className={styles.projectCardStats}>
                               {graph.nodeCount !== undefined && (
                                 <span className={styles.projectCardStat}>
-                                  📊 {graph.nodeCount} 节点
+                                  {graph.nodeCount} 节点
                                 </span>
                               )}
                               {graph.edgeCount !== undefined && (
                                 <span className={styles.projectCardStat}>
-                                  🔗 {graph.edgeCount} 边
+                                  {graph.edgeCount} 边
                                 </span>
                               )}
                             </div>
@@ -531,7 +805,8 @@ export default function NewCreationWorkflowPage() {
                       </div>
                     </div>
                   ))
-              )}
+                );
+              })()}
             </>
           )}
         </div>
@@ -549,7 +824,9 @@ export default function NewCreationWorkflowPage() {
       <DeleteConfirmDialog
         isOpen={showDeleteConfirm}
         projectCount={selectedProjectIds.size}
-        onConfirm={handleConfirmDelete}
+        graphCount={selectedGraphIds.size}
+        itemType={viewMode === 'projects' ? 'project' : 'graph'}
+        onConfirm={viewMode === 'projects' ? handleConfirmDelete : handleConfirmDeleteGraphs}
         onCancel={handleCancelBatchDelete}
       />
 

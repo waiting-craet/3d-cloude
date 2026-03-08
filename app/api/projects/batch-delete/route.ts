@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { del, list } from '@vercel/blob';
+import { getCurrentUserId, verifyProjectOwnership } from '@/lib/auth';
 
 // 使用 Node.js Runtime
 export const runtime = 'nodejs';
@@ -36,6 +37,15 @@ export interface BatchDeleteResponse {
 // POST - 批量删除项目
 export async function POST(request: NextRequest) {
   try {
+    // 验证用户登录
+    const userId = await getCurrentUserId(request, { required: true });
+    if (!userId) {
+      return NextResponse.json(
+        { error: '用户未登录' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { projectIds } = body as BatchDeleteRequest;
 
@@ -60,11 +70,12 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       projectIds,
       count: projectIds.length,
+      userId,
     });
 
     // 任务 3.5: 批量删除主逻辑 - 使用 Promise.allSettled 并行处理
     const deletePromises = projectIds.map(projectId => 
-      deleteProject(projectId)
+      deleteProject(projectId, userId)
     );
 
     const results = await Promise.allSettled(deletePromises);
@@ -122,9 +133,20 @@ export async function POST(request: NextRequest) {
  * 任务 3.3: 删除单个项目
  * 使用 Prisma 事务确保数据完整性
  */
-async function deleteProject(projectId: string): Promise<ProjectDeleteResult> {
+async function deleteProject(projectId: string, userId: string): Promise<ProjectDeleteResult> {
   try {
     console.log(`[BatchDelete] 开始删除项目: ${projectId}`);
+
+    // 验证项目所有权
+    const isOwner = await verifyProjectOwnership({ projectId, userId });
+    if (!isOwner) {
+      return {
+        projectId,
+        projectName: 'Unknown',
+        success: false,
+        error: '无权限操作此项目',
+      };
+    }
 
     // 查询项目及其关联数据
     const project = await prisma.project.findUnique({
@@ -133,7 +155,7 @@ async function deleteProject(projectId: string): Promise<ProjectDeleteResult> {
     graphs: {
           select: { id: true, name: true },
         },
-        node: {
+        nodes: {
           select: {
             id: true,
             imageUrl: true,
@@ -142,7 +164,7 @@ async function deleteProject(projectId: string): Promise<ProjectDeleteResult> {
             videoUrl: true,
           },
         },
-        edge: {
+        edges: {
           select: { id: true },
         },
       },
