@@ -133,7 +133,7 @@ async function deleteProject(projectId: string): Promise<ProjectDeleteResult> {
     graphs: {
           select: { id: true, name: true },
         },
-        node: {
+        nodes: {
           select: {
             id: true,
             imageUrl: true,
@@ -142,7 +142,7 @@ async function deleteProject(projectId: string): Promise<ProjectDeleteResult> {
             videoUrl: true,
           },
         },
-        edge: {
+        edges: {
           select: { id: true },
         },
       },
