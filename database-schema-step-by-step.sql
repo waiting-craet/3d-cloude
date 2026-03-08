@@ -12,16 +12,37 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- 步骤 2: 清理旧表（如果存在）
 DROP TABLE IF EXISTS `SearchHistory`;
-DROP TABLE IF EXISTS `User`;
 DROP TABLE IF EXISTS `Edge`;
 DROP TABLE IF EXISTS `Node`;
 DROP TABLE IF EXISTS `Graph`;
 DROP TABLE IF EXISTS `Project`;
+DROP TABLE IF EXISTS `User`;
 
 -- 验证：查看当前表列表（应该为空或不包含上述表）
 SHOW TABLES;
 
--- 步骤 3: 创建 Project 表
+-- 步骤 3: 创建 User 表（必须先创建，因为 Project 依赖它）
+CREATE TABLE `User` (
+    `id` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) DEFAULT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `username` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(255) DEFAULT NULL,
+    `avatar` TEXT DEFAULT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `User_email_key` (`email`),
+    UNIQUE KEY `User_username_key` (`username`),
+    INDEX `User_email_idx` (`email`),
+    INDEX `User_username_idx` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 验证 User 表
+SELECT 'User 表创建成功' AS Status;
+DESCRIBE User;
+
+-- 步骤 4: 创建 Project 表
 CREATE TABLE `Project` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
@@ -29,17 +50,24 @@ CREATE TABLE `Project` (
     `settings` TEXT,
     `nodeCount` INT NOT NULL DEFAULT 0,
     `edgeCount` INT NOT NULL DEFAULT 0,
+    `userId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     PRIMARY KEY (`id`),
-    INDEX `Project_createdAt_idx` (`createdAt`)
+    INDEX `Project_createdAt_idx` (`createdAt`),
+    INDEX `Project_userId_idx` (`userId`),
+    CONSTRAINT `Project_userId_fkey` 
+        FOREIGN KEY (`userId`) 
+        REFERENCES `User`(`id`) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 验证 Project 表
 SELECT 'Project 表创建成功' AS Status;
 DESCRIBE Project;
 
--- 步骤 4: 创建 Graph 表
+-- 步骤 5: 创建 Graph 表
 CREATE TABLE `Graph` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
@@ -65,7 +93,7 @@ CREATE TABLE `Graph` (
 SELECT 'Graph 表创建成功' AS Status;
 DESCRIBE Graph;
 
--- 步骤 5: 创建 Node 表
+-- 步骤 6: 创建 Node 表
 CREATE TABLE `Node` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
@@ -125,7 +153,7 @@ CREATE TABLE `Node` (
 SELECT 'Node 表创建成功' AS Status;
 DESCRIBE Node;
 
--- 步骤 6: 创建 Edge 表
+-- 步骤 7: 创建 Edge 表
 CREATE TABLE `Edge` (
     `id` VARCHAR(191) NOT NULL,
     `fromNodeId` VARCHAR(191) NOT NULL,
@@ -171,27 +199,6 @@ CREATE TABLE `Edge` (
 SELECT 'Edge 表创建成功' AS Status;
 DESCRIBE Edge;
 
--- 步骤 7: 创建 User 表
-CREATE TABLE `User` (
-    `id` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) DEFAULT NULL,
-    `password` VARCHAR(255) NOT NULL,
-    `username` VARCHAR(191) NOT NULL,
-    `name` VARCHAR(255) DEFAULT NULL,
-    `avatar` TEXT DEFAULT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `User_email_key` (`email`),
-    UNIQUE KEY `User_username_key` (`username`),
-    INDEX `User_email_idx` (`email`),
-    INDEX `User_username_idx` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 验证 User 表
-SELECT 'User 表创建成功' AS Status;
-DESCRIBE User;
-
 -- 步骤 8: 创建 SearchHistory 表
 CREATE TABLE `SearchHistory` (
     `id` VARCHAR(191) NOT NULL,
@@ -219,4 +226,4 @@ SHOW TABLES;
 SELECT COUNT(*) AS '创建的表数量' 
 FROM information_schema.tables 
 WHERE table_schema = 'neondb' 
-AND table_name IN ('Project', 'Graph', 'Node', 'Edge', 'User', 'SearchHistory');
+AND table_name IN ('User', 'Project', 'Graph', 'Node', 'Edge', 'SearchHistory');

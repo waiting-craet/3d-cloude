@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import AIPreviewModal, { PreviewData } from '@/components/AIPreviewModal'
 import { MergeDecision } from '@/lib/services/merge-resolution'
+import { inkWashTokens } from '@/lib/design-tokens'
 import styles from './page.module.css'
 
 interface Project {
@@ -596,19 +598,19 @@ export default function TextPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 30%, #80DEEA 70%, #4DD0E1 100%)',
+      background: `linear-gradient(135deg, ${inkWashTokens.colors.neutral.gray50} 0%, ${inkWashTokens.colors.neutral.gray100} 50%, ${inkWashTokens.colors.neutral.white} 100%)`,
       padding: '0'
     }}>
-      {/* 顶部导航栏 - 夏威夷海滩风格 */}
-      <nav style={{
+      {/* 顶部导航栏 - 水墨风格 */}
+      <nav className={styles.mobileNav} style={{
         padding: '20px 40px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(0, 188, 212, 0.1)',
-        boxShadow: '0 2px 20px rgba(0, 188, 212, 0.08)'
+        borderBottom: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+        boxShadow: inkWashTokens.shadows.sm
       }}>
         <div style={{
           display: 'flex',
@@ -616,7 +618,7 @@ export default function TextPage() {
           gap: '12px',
           fontSize: '22px',
           fontWeight: 'bold',
-          background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+          background: `linear-gradient(135deg, ${inkWashTokens.colors.primary.main} 0%, ${inkWashTokens.colors.primary.light} 100%)`,
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text'
@@ -624,53 +626,53 @@ export default function TextPage() {
           <div style={{
             width: '40px',
             height: '40px',
-            background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
-            borderRadius: '12px',
+            background: `linear-gradient(135deg, ${inkWashTokens.colors.primary.main} 0%, ${inkWashTokens.colors.primary.light} 100%)`,
+            borderRadius: inkWashTokens.borderRadius.lg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
             fontSize: '20px',
-            boxShadow: '0 4px 12px rgba(0, 188, 212, 0.3)'
+            boxShadow: `0 4px 12px rgba(90, 154, 143, 0.3)`
           }}>
-            🌊
+            🎋
           </div>
           知识图谱生成器
         </div>
       </nav>
 
-      <div style={{
+      <div className={`${styles.mobileContainer} ${styles.tabletContainer} ${styles.desktopContainer}`} style={{
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '60px 30px 100px 30px'
       }}>
-        {/* 标题 - 夏威夷风格 */}
+        {/* 标题 - 水墨风格 */}
         <div style={{
           textAlign: 'center',
           marginBottom: '60px'
         }}>
-          <h1 style={{
+          <h1 className={styles.mobileTitle} style={{
             fontSize: '48px',
             fontWeight: '800',
             marginBottom: '20px',
-            background: 'linear-gradient(135deg, #00BCD4 0%, #FF6F61 50%, #FFD54F 100%)',
+            background: `linear-gradient(135deg, ${inkWashTokens.colors.primary.main} 0%, ${inkWashTokens.colors.primary.light} 50%, ${inkWashTokens.colors.accent.sage} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             letterSpacing: '-1px',
-            textShadow: '0 2px 20px rgba(0, 188, 212, 0.1)'
+            textShadow: '0 2px 20px rgba(90, 154, 143, 0.1)'
           }}>
             AI知识图谱生成器
           </h1>
-          <p style={{
-            color: '#00838F',
+          <p className={styles.mobileSubtitle} style={{
+            color: inkWashTokens.colors.neutral.gray600,
             fontSize: '18px',
             maxWidth: '700px',
             margin: '0 auto',
             lineHeight: '1.8',
             fontWeight: '500'
           }}>
-            🏝️ 导入数据或输入文本，AI 将自动提取实体关系，生成可视化知识图谱
+            🎨 导入数据或输入文本，AI 将自动提取实体关系，生成可视化知识图谱
           </p>
         </div>
 
@@ -680,19 +682,18 @@ export default function TextPage() {
           gridTemplateColumns: '1fr',
           gap: '24px',
         }}>
-          {/* 项目和图谱选择区域 - 夏威夷风格 */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '24px',
+          {/* 项目和图谱选择区域 - 水墨风格 */}
+          <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard}`} style={{
+            background: inkWashTokens.colors.neutral.white,
+            borderRadius: inkWashTokens.borderRadius.lg,
             padding: '36px',
-            border: '1px solid rgba(0, 188, 212, 0.15)',
-            boxShadow: '0 8px 32px rgba(0, 188, 212, 0.12)'
+            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+            boxShadow: inkWashTokens.shadows.md
           }}>
             <h2 style={{
               fontSize: '20px',
               fontWeight: '700',
-              background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+              background: `linear-gradient(135deg, ${inkWashTokens.colors.primary.main} 0%, ${inkWashTokens.colors.primary.light} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -704,7 +705,7 @@ export default function TextPage() {
               <span>📁</span> 项目与图谱
             </h2>
 
-            <div style={{
+            <div className={`${styles.mobileGrid} ${styles.tabletGrid}`} style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: '20px',
@@ -713,7 +714,7 @@ export default function TextPage() {
               <div>
                 <label style={{
                   display: 'block',
-                  color: '#00838F',
+                  color: inkWashTokens.colors.neutral.gray800,
                   fontSize: '15px',
                   fontWeight: '700',
                   marginBottom: '12px',
@@ -734,15 +735,33 @@ export default function TextPage() {
                     style={{
                       flex: 1,
                       padding: '14px 18px',
-                      background: 'white',
-                      border: '2px solid #B2EBF2',
-                      borderRadius: '12px',
-                      color: '#00838F',
+                      background: inkWashTokens.colors.neutral.white,
+                      border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                      borderRadius: inkWashTokens.borderRadius.lg,
+                      color: inkWashTokens.colors.neutral.gray800,
                       fontSize: '15px',
                       fontWeight: '500',
                       cursor: isLoadingProjects ? 'wait' : 'pointer',
                       transition: 'all 0.3s ease',
                       outline: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isLoadingProjects) {
+                        e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isLoadingProjects) {
+                        e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                      }
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 154, 143, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                      e.currentTarget.style.boxShadow = 'none'
                     }}>
                     <option value="">
                       {isLoadingProjects ? '加载中...' : '请选择项目'}
@@ -755,26 +774,29 @@ export default function TextPage() {
                   </select>
                   <button
                     onClick={() => setShowNewProjectModal(true)}
+                    className={styles.mobileButton}
                     style={{
                       padding: '14px 24px',
-                      background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+                      background: inkWashTokens.colors.primary.main,
                       border: 'none',
-                      borderRadius: '12px',
+                      borderRadius: inkWashTokens.borderRadius.lg,
                       color: 'white',
                       fontSize: '15px',
                       fontWeight: '700',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
                       whiteSpace: 'nowrap',
-                      boxShadow: '0 4px 12px rgba(0, 188, 212, 0.3)'
+                      boxShadow: '0 4px 12px rgba(90, 154, 143, 0.3)'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)'
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 188, 212, 0.4)'
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(90, 154, 143, 0.4)'
+                      e.currentTarget.style.background = inkWashTokens.colors.primary.dark
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 188, 212, 0.3)'
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(90, 154, 143, 0.3)'
+                      e.currentTarget.style.background = inkWashTokens.colors.primary.main
                     }}>
                     + 新建
                   </button>
@@ -785,7 +807,7 @@ export default function TextPage() {
               <div>
                 <label style={{
                   display: 'block',
-                  color: '#00838F',
+                  color: inkWashTokens.colors.neutral.gray800,
                   fontSize: '15px',
                   fontWeight: '700',
                   marginBottom: '12px',
@@ -803,15 +825,37 @@ export default function TextPage() {
                     style={{
                       flex: 1,
                       padding: '14px 18px',
-                      background: (selectedProject && !isLoadingGraphs) ? 'white' : '#F0F9FA',
-                      border: '2px solid #B2EBF2',
-                      borderRadius: '12px',
-                      color: (selectedProject && !isLoadingGraphs) ? '#00838F' : '#80DEEA',
+                      background: (selectedProject && !isLoadingGraphs) ? inkWashTokens.colors.neutral.white : inkWashTokens.colors.neutral.gray100,
+                      border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                      borderRadius: inkWashTokens.borderRadius.lg,
+                      color: (selectedProject && !isLoadingGraphs) ? inkWashTokens.colors.neutral.gray800 : inkWashTokens.colors.neutral.gray500,
                       fontSize: '15px',
                       fontWeight: '500',
                       cursor: (selectedProject && !isLoadingGraphs) ? 'pointer' : 'not-allowed',
                       transition: 'all 0.3s ease',
                       outline: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedProject && !isLoadingGraphs) {
+                        e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedProject && !isLoadingGraphs) {
+                        e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                      }
+                    }}
+                    onFocus={(e) => {
+                      if (selectedProject && !isLoadingGraphs) {
+                        e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 154, 143, 0.1)'
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (selectedProject && !isLoadingGraphs) {
+                        e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                        e.currentTarget.style.boxShadow = 'none'
+                      }
                     }}>
                     <option value="">
                       {isLoadingGraphs ? '加载中...' : '请选择图谱'}
@@ -825,11 +869,12 @@ export default function TextPage() {
                   <button
                     onClick={() => setShowNewGraphModal(true)}
                     disabled={!selectedProject}
+                    className={styles.mobileButton}
                     style={{
                       padding: '14px 24px',
-                      background: selectedProject ? 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)' : '#E0E0E0',
+                      background: selectedProject ? inkWashTokens.colors.primary.main : inkWashTokens.colors.neutral.gray300,
                       border: 'none',
-                      borderRadius: '12px',
+                      borderRadius: inkWashTokens.borderRadius.lg,
                       color: 'white',
                       fontSize: '15px',
                       fontWeight: '700',
@@ -837,18 +882,20 @@ export default function TextPage() {
                       transition: 'all 0.3s ease',
                       whiteSpace: 'nowrap',
                       opacity: selectedProject ? 1 : 0.5,
-                      boxShadow: selectedProject ? '0 4px 12px rgba(0, 188, 212, 0.3)' : 'none'
+                      boxShadow: selectedProject ? '0 4px 12px rgba(90, 154, 143, 0.3)' : 'none'
                     }}
                     onMouseEnter={(e) => {
                       if (selectedProject) {
                         e.currentTarget.style.transform = 'translateY(-2px)'
-                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 188, 212, 0.4)'
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(90, 154, 143, 0.4)'
+                        e.currentTarget.style.background = inkWashTokens.colors.primary.dark
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (selectedProject) {
                         e.currentTarget.style.transform = 'translateY(0)'
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 188, 212, 0.3)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(90, 154, 143, 0.3)'
+                        e.currentTarget.style.background = inkWashTokens.colors.primary.main
                       }
                     }}>
                     + 新建
@@ -857,40 +904,39 @@ export default function TextPage() {
               </div>
             </div>
 
-            {/* 提示信息 - 夏威夷风格 */}
+            {/* 提示信息 - 水墨风格 */}
             {!selectedProject && (
               <div style={{
                 marginTop: '20px',
                 padding: '16px 20px',
-                background: 'linear-gradient(135deg, rgba(255, 213, 79, 0.15) 0%, rgba(255, 193, 7, 0.1) 100%)',
-                border: '2px solid rgba(255, 193, 7, 0.3)',
-                borderRadius: '16px',
-                color: '#F57C00',
+                background: inkWashTokens.colors.semantic.warning + '1a', // 10% opacity
+                border: `1px solid ${inkWashTokens.colors.semantic.warning}4d`, // 30% opacity
+                borderRadius: inkWashTokens.borderRadius.lg,
+                color: '#8b6f47',
                 fontSize: '14px',
                 fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
               }}>
-                <span style={{ fontSize: '20px' }}>🌺</span>
+                <span style={{ fontSize: '20px' }}>💡</span>
                 <span>请先选择或创建一个项目</span>
               </div>
             )}
           </div>
 
-          {/* 输入区域 - 夏威夷风格 */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '24px',
+          {/* 输入区域 - 水墨风格 */}
+          <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard}`} style={{
+            background: inkWashTokens.colors.neutral.white,
+            borderRadius: inkWashTokens.borderRadius.lg,
             padding: '36px',
-            border: '1px solid rgba(0, 188, 212, 0.15)',
-            boxShadow: '0 8px 32px rgba(0, 188, 212, 0.12)'
+            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+            boxShadow: inkWashTokens.shadows.md
           }}>
             <h2 style={{
               fontSize: '20px',
               fontWeight: '700',
-              background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%)',
+              background: `linear-gradient(135deg, ${inkWashTokens.colors.primary.main} 0%, ${inkWashTokens.colors.primary.light} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -902,7 +948,7 @@ export default function TextPage() {
               <span>📝</span> 数据输入
             </h2>
 
-            {/* 文件上传按钮 - 夏威夷风格 */}
+            {/* 文件上传按钮 - 水墨风格 */}
             <div style={{
               marginBottom: '24px',
             }}>
@@ -912,25 +958,25 @@ export default function TextPage() {
                 gap: '12px',
                 padding: '16px 32px',
                 background: 'white',
-                border: '3px dashed #4DD0E1',
-                borderRadius: '16px',
-                color: '#00ACC1',
+                border: `2px dashed ${inkWashTokens.colors.accent.mist}`,
+                borderRadius: inkWashTokens.borderRadius.lg,
+                color: inkWashTokens.colors.primary.main,
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 fontSize: '15px',
                 fontWeight: '700',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(77, 208, 225, 0.08)'
-                e.currentTarget.style.borderColor = '#00BCD4'
+                e.currentTarget.style.background = 'rgba(90, 154, 143, 0.05)'
+                e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
                 e.currentTarget.style.transform = 'translateY(-2px)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'white'
-                e.currentTarget.style.borderColor = '#4DD0E1'
+                e.currentTarget.style.borderColor = inkWashTokens.colors.accent.mist
                 e.currentTarget.style.transform = 'translateY(0)'
               }}>
-                <span style={{ fontSize: '24px' }}>🏖️</span>
+                <span style={{ fontSize: '24px' }}>📄</span>
                 导入文本文件
                 <input
                   type="file"
@@ -941,7 +987,7 @@ export default function TextPage() {
               </label>
               <div style={{
                 marginTop: '10px',
-                color: '#00838F',
+                color: inkWashTokens.colors.neutral.gray600,
                 fontSize: '13px',
                 fontWeight: '500'
               }}>
@@ -949,14 +995,14 @@ export default function TextPage() {
               </div>
             </div>
 
-            {/* 已导入文件信息卡片 */}
+            {/* 已导入文件信息卡片 - 水墨风格 */}
             {uploadedFile && (
               <div style={{
                 marginBottom: '20px',
                 padding: '16px',
-                background: 'rgba(0, 191, 165, 0.08)',
-                border: '1px solid rgba(0, 191, 165, 0.2)',
-                borderRadius: '12px',
+                background: 'rgba(90, 154, 143, 0.08)',
+                border: `1px solid rgba(90, 154, 143, 0.2)`,
+                borderRadius: inkWashTokens.borderRadius.lg,
               }}>
                 <div style={{
                   display: 'flex',
@@ -966,7 +1012,7 @@ export default function TextPage() {
                 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      color: '#00bfa5',
+                      color: inkWashTokens.colors.primary.main,
                       fontSize: '14px',
                       fontWeight: '600',
                       marginBottom: '8px',
@@ -981,12 +1027,12 @@ export default function TextPage() {
                         width: '20px',
                         height: '20px',
                         borderRadius: '50%',
-                        background: 'rgba(0, 191, 165, 0.2)',
+                        background: 'rgba(90, 154, 143, 0.2)',
                       }}>✓</span>
                       文件已导入
                     </div>
                     <div style={{
-                      color: '#2c2c2c',
+                      color: inkWashTokens.colors.neutral.gray800,
                       fontSize: '14px',
                       marginBottom: '6px',
                       fontWeight: '500',
@@ -994,7 +1040,7 @@ export default function TextPage() {
                       📄 {uploadedFile.name}
                     </div>
                     <div style={{
-                      color: '#666',
+                      color: inkWashTokens.colors.neutral.gray600,
                       fontSize: '13px',
                       display: 'flex',
                       gap: '12px',
@@ -1010,7 +1056,7 @@ export default function TextPage() {
                       padding: '6px 12px',
                       background: 'rgba(239, 68, 68, 0.1)',
                       border: '1px solid rgba(239, 68, 68, 0.3)',
-                      borderRadius: '6px',
+                      borderRadius: inkWashTokens.borderRadius.sm,
                       color: '#ef4444',
                       fontSize: '12px',
                       fontWeight: '600',
@@ -1032,21 +1078,21 @@ export default function TextPage() {
                     width: '100%',
                     padding: '10px',
                     background: 'white',
-                    border: '1px solid #e5e5e5',
-                    borderRadius: '8px',
-                    color: '#00bfa5',
+                    border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                    borderRadius: inkWashTokens.borderRadius.md,
+                    color: inkWashTokens.colors.primary.main,
                     fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 191, 165, 0.05)'
-                    e.currentTarget.style.borderColor = '#00bfa5'
+                    e.currentTarget.style.background = 'rgba(90, 154, 143, 0.05)'
+                    e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'white'
-                    e.currentTarget.style.borderColor = '#e5e5e5'
+                    e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
                   }}>
                   {showPreview ? '🔼 收起预览' : '🔽 展开预览'}
                 </button>
@@ -1056,14 +1102,14 @@ export default function TextPage() {
                   <div style={{
                     marginTop: '12px',
                     padding: '16px',
-                    background: '#f5f5f5',
-                    border: '1px solid #e5e5e5',
-                    borderRadius: '8px',
+                    background: inkWashTokens.colors.neutral.gray100,
+                    border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                    borderRadius: inkWashTokens.borderRadius.md,
                     maxHeight: '300px',
                     overflowY: 'auto',
                   }}>
                     <pre style={{
-                      color: '#2c2c2c',
+                      color: inkWashTokens.colors.neutral.gray800,
                       fontSize: '13px',
                       lineHeight: '1.6',
                       margin: 0,
@@ -1079,13 +1125,13 @@ export default function TextPage() {
               </div>
             )}
 
-            {/* AI智能分析说明 */}
+            {/* AI智能分析说明 - 水墨风格 */}
             <div style={{
               marginBottom: '20px',
               padding: '16px',
-              background: 'rgba(0, 191, 165, 0.08)',
-              border: '1px solid rgba(0, 191, 165, 0.2)',
-              borderRadius: '12px',
+              background: 'rgba(90, 154, 143, 0.08)',
+              border: `1px solid rgba(90, 154, 143, 0.2)`,
+              borderRadius: inkWashTokens.borderRadius.lg,
             }}>
               <div style={{
                 display: 'flex',
@@ -1096,7 +1142,7 @@ export default function TextPage() {
                 <span style={{ fontSize: '20px' }}>🤖</span>
                 <div style={{
                   fontSize: '15px',
-                  color: '#00bfa5',
+                  color: inkWashTokens.colors.primary.main,
                   fontWeight: '600',
                 }}>
                   AI 智能分析
@@ -1104,7 +1150,7 @@ export default function TextPage() {
               </div>
               <div style={{ 
                 fontSize: '13px', 
-                color: '#666', 
+                color: inkWashTokens.colors.neutral.gray600, 
                 lineHeight: '1.6',
                 paddingLeft: '30px',
               }}>
@@ -1112,7 +1158,7 @@ export default function TextPage() {
               </div>
             </div>
 
-            {/* 文本输入框 */}
+            {/* 文本输入框 - 水墨风格 */}
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -1127,22 +1173,35 @@ export default function TextPage() {
                 minHeight: '250px',
                 maxHeight: '500px',
                 padding: '16px',
-                background: uploadedFile ? '#f5f5f5' : 'white',
-                border: '1px solid #e5e5e5',
-                borderRadius: '8px',
-                color: uploadedFile ? '#999' : '#2c2c2c',
+                background: uploadedFile ? inkWashTokens.colors.neutral.gray100 : 'white',
+                border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                borderRadius: inkWashTokens.borderRadius.md,
+                color: uploadedFile ? inkWashTokens.colors.neutral.gray500 : inkWashTokens.colors.neutral.gray800,
                 fontSize: '14px',
                 lineHeight: '1.7',
                 resize: 'vertical',
                 fontFamily: 'inherit',
                 cursor: uploadedFile ? 'not-allowed' : 'text',
                 transition: 'all 0.2s ease',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                if (!uploadedFile) {
+                  e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 154, 143, 0.1)'
+                }
+              }}
+              onBlur={(e) => {
+                if (!uploadedFile) {
+                  e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                  e.currentTarget.style.boxShadow = 'none'
+                }
               }}
             />
 
             <div style={{
               marginTop: '8px',
-              color: '#666',
+              color: inkWashTokens.colors.neutral.gray600,
               fontSize: '12px',
             }}>
               {uploadedFile && inputText.trim()
@@ -1153,21 +1212,27 @@ export default function TextPage() {
             </div>
           </div>
 
-          {/* 配置区域 */}
-          <div style={{
-            background: 'white',
-            borderRadius: '14px',
-            padding: '30px',
-            border: '1px solid #ebebeb',
-            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
+          {/* 配置区域 - 水墨风格 */}
+          <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard}`} style={{
+            background: inkWashTokens.colors.neutral.white,
+            borderRadius: inkWashTokens.borderRadius.lg,
+            padding: '36px',
+            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+            boxShadow: inkWashTokens.shadows.md
           }}>
             <h2 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#2c2c2c',
-              marginBottom: '24px'
+              fontSize: '20px',
+              fontWeight: '700',
+              background: `linear-gradient(135deg, ${inkWashTokens.colors.primary.main} 0%, ${inkWashTokens.colors.primary.light} 100%)`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
             }}>
-              输出配置
+              <span>⚙️</span> 输出配置
             </h2>
 
             {/* 输出格式选择 */}
@@ -1176,9 +1241,9 @@ export default function TextPage() {
             }}>
               <label style={{
                 display: 'block',
-                color: '#2c2c2c',
-                fontSize: '14px',
-                fontWeight: '600',
+                color: inkWashTokens.colors.neutral.gray800,
+                fontSize: '15px',
+                fontWeight: '700',
                 marginBottom: '12px',
               }}>
                 图谱类型
@@ -1191,9 +1256,9 @@ export default function TextPage() {
                 <div
                   style={{
                     padding: '20px',
-                    background: 'rgba(0, 191, 165, 0.08)',
-                    border: '2px solid #00bfa5',
-                    borderRadius: '12px',
+                    background: 'rgba(90, 154, 143, 0.08)',
+                    border: `2px solid ${inkWashTokens.colors.primary.main}`,
+                    borderRadius: inkWashTokens.borderRadius.lg,
                     textAlign: 'center',
                     width: '100%',
                     maxWidth: '300px',
@@ -1205,7 +1270,7 @@ export default function TextPage() {
                     🌐
                   </div>
                   <div style={{
-                    color: '#2c2c2c',
+                    color: inkWashTokens.colors.neutral.gray800,
                     fontSize: '16px',
                     fontWeight: '600',
                     marginBottom: '4px',
@@ -1213,7 +1278,7 @@ export default function TextPage() {
                     三维图谱
                   </div>
                   <div style={{
-                    color: '#666',
+                    color: inkWashTokens.colors.neutral.gray600,
                     fontSize: '12px',
                   }}>
                     立体空间视图
@@ -1256,48 +1321,36 @@ export default function TextPage() {
                   onClick={() => setShowCustomPrompt(!showCustomPrompt)}
                   style={{
                     padding: '6px 12px',
-                    background: 'rgba(0, 191, 165, 0.1)',
-                    border: '1px solid rgba(0, 191, 165, 0.3)',
+                    background: `rgba(90, 154, 143, 0.1)`,
+                    border: `1px solid rgba(90, 154, 143, 0.3)`,
                     borderRadius: '8px',
-                    color: '#00bfa5',
+                    color: inkWashTokens.colors.primary.main,
                     fontSize: '12px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 191, 165, 0.15)'
+                    e.currentTarget.style.background = 'rgba(90, 154, 143, 0.15)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 191, 165, 0.1)'
+                    e.currentTarget.style.background = 'rgba(90, 154, 143, 0.1)'
                   }}>
                   {showCustomPrompt ? '收起 ▲' : '展开 ▼'}
                 </button>
               </div>
 
               {showCustomPrompt && (
-                <div style={{
-                  padding: '20px',
-                  background: 'rgba(0, 191, 165, 0.05)',
-                  border: '1px solid rgba(0, 191, 165, 0.2)',
-                  borderRadius: '12px',
-                  animation: 'slideDown 0.3s ease',
-                }}>
-                  <style jsx>{`
-                    @keyframes slideDown {
-                      from {
-                        opacity: 0;
-                        transform: translateY(-10px);
-                      }
-                      to {
-                        opacity: 1;
-                        transform: translateY(0);
-                      }
-                    }
-                  `}</style>
-                  
+                <div 
+                  className={styles.slideDown}
+                  style={{
+                    padding: '20px',
+                    background: 'rgba(90, 154, 143, 0.05)',
+                    border: '1px solid rgba(90, 154, 143, 0.2)',
+                    borderRadius: '12px',
+                  }}>
                   <div style={{
-                    color: '#666',
+                    color: inkWashTokens.colors.neutral.gray600,
                     fontSize: '13px',
                     marginBottom: '12px',
                     lineHeight: '1.6',
@@ -1322,22 +1375,23 @@ export default function TextPage() {
                       minHeight: '120px',
                       padding: '14px',
                       background: 'white',
-                      border: '1px solid #e5e5e5',
+                      border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
                       borderRadius: '10px',
-                      color: '#2c2c2c',
+                      color: inkWashTokens.colors.neutral.gray800,
                       fontSize: '13px',
                       lineHeight: '1.6',
                       resize: 'vertical',
                       fontFamily: 'inherit',
                       transition: 'all 0.2s ease',
+                      outline: 'none'
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = '#00bfa5'
-                      e.currentTarget.style.background = 'white'
+                      e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 154, 143, 0.1)'
                     }}
                     onBlur={(e) => {
-                      e.currentTarget.style.borderColor = '#e5e5e5'
-                      e.currentTarget.style.background = 'white'
+                      e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                      e.currentTarget.style.boxShadow = 'none'
                     }}
                   />
 
@@ -1348,7 +1402,7 @@ export default function TextPage() {
                     alignItems: 'center',
                   }}>
                     <div style={{
-                      color: '#666',
+                      color: inkWashTokens.colors.neutral.gray600,
                       fontSize: '12px',
                     }}>
                       字符数: {customPrompt.length}
@@ -1381,7 +1435,7 @@ export default function TextPage() {
               )}
             </div>
 
-            {/* AI分析生成按钮 */}
+            {/* AI分析生成按钮 - 水墨风格 */}
             <div style={{
               marginBottom: '16px',
             }}>
@@ -1392,17 +1446,17 @@ export default function TextPage() {
                   width: '100%',
                   padding: '20px',
                   background: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing)
-                    ? '#00bfa5'
-                    : '#e0e0e0',
+                    ? inkWashTokens.colors.primary.main
+                    : inkWashTokens.colors.neutral.gray300,
                   border: 'none',
-                  borderRadius: '14px',
+                  borderRadius: inkWashTokens.borderRadius.lg,
                   color: 'white',
                   fontSize: '18px',
                   fontWeight: '700',
                   cursor: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxShadow: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing)
-                    ? '0 4px 12px rgba(0, 191, 165, 0.3)'
+                    ? '0 4px 12px rgba(90, 154, 143, 0.3)'
                     : 'none',
                   opacity: (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) ? 1 : 0.6,
                   letterSpacing: '0.5px',
@@ -1410,15 +1464,15 @@ export default function TextPage() {
                 onMouseEnter={(e) => {
                   if (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) {
                     e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 191, 165, 0.4)'
-                    e.currentTarget.style.background = '#00d4b8'
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(90, 154, 143, 0.4)'
+                    e.currentTarget.style.background = inkWashTokens.colors.primary.light
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedProject && (uploadedFile || inputText.trim()) && !isAnalyzing) {
                     e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.3)'
-                    e.currentTarget.style.background = '#00bfa5'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(90, 154, 143, 0.3)'
+                    e.currentTarget.style.background = inkWashTokens.colors.primary.main
                   }
                 }}>
                 <span style={{ fontSize: '22px', marginRight: '10px' }}>
@@ -1427,15 +1481,15 @@ export default function TextPage() {
                 {isAnalyzing ? 'AI分析中...' : 'AI分析生成知识图谱'}
               </button>
               
-              {/* 提示信息 */}
+              {/* 提示信息 - 水墨风格 */}
               {!selectedProject ? (
                 <div style={{
                   marginTop: '12px',
                   padding: '12px 16px',
-                  background: 'rgba(251, 191, 36, 0.1)',
-                  border: '1px solid rgba(251, 191, 36, 0.3)',
-                  borderRadius: '10px',
-                  color: '#d97706',
+                  background: inkWashTokens.colors.semantic.warning + '1a', // 10% opacity
+                  border: `1px solid ${inkWashTokens.colors.semantic.warning}4d`, // 30% opacity
+                  borderRadius: inkWashTokens.borderRadius.md,
+                  color: '#8b6f47',
                   fontSize: '13px',
                   display: 'flex',
                   alignItems: 'center',
@@ -1448,10 +1502,10 @@ export default function TextPage() {
                 <div style={{
                   marginTop: '12px',
                   padding: '12px 16px',
-                  background: 'rgba(251, 191, 36, 0.1)',
-                  border: '1px solid rgba(251, 191, 36, 0.3)',
-                  borderRadius: '10px',
-                  color: '#d97706',
+                  background: inkWashTokens.colors.semantic.warning + '1a', // 10% opacity
+                  border: `1px solid ${inkWashTokens.colors.semantic.warning}4d`, // 30% opacity
+                  borderRadius: inkWashTokens.borderRadius.md,
+                  color: '#8b6f47',
                   fontSize: '13px',
                   display: 'flex',
                   alignItems: 'center',
@@ -1536,16 +1590,16 @@ export default function TextPage() {
               </div>
             )}
 
-            {/* 提示信息 */}
+            {/* 提示信息 - 水墨风格 */}
             <div style={{
               marginTop: '24px',
               padding: '20px',
-              background: 'rgba(0, 191, 165, 0.05)',
-              border: '1px solid rgba(0, 191, 165, 0.2)',
-              borderRadius: '14px',
+              background: 'rgba(90, 154, 143, 0.08)',
+              border: `1px solid rgba(90, 154, 143, 0.2)`,
+              borderRadius: inkWashTokens.borderRadius.lg,
             }}>
               <div style={{
-                color: '#666',
+                color: inkWashTokens.colors.neutral.gray600,
                 fontSize: '14px',
                 lineHeight: '1.7',
               }}>
@@ -1555,7 +1609,7 @@ export default function TextPage() {
                   gap: '8px',
                   marginBottom: '12px',
                   fontWeight: '700',
-                  color: '#00bfa5',
+                  color: inkWashTokens.colors.primary.main,
                 }}>
                   <span style={{ fontSize: '18px' }}>💡</span>
                   AI智能分析说明
@@ -1563,7 +1617,7 @@ export default function TextPage() {
                 <ul style={{
                   margin: 0,
                   paddingLeft: '24px',
-                  color: '#666',
+                  color: inkWashTokens.colors.neutral.gray600,
                 }}>
                   <li style={{ marginBottom: '6px' }}>支持格式：TXT、Markdown (.md) 文本文件</li>
                   <li style={{ marginBottom: '6px' }}>AI自动识别文本中的实体（人物、地点、概念等）</li>
@@ -1593,18 +1647,18 @@ export default function TextPage() {
           zIndex: 1000,
         }}
         onClick={() => setShowNewProjectModal(false)}>
-          <div style={{
-            background: 'white',
-            borderRadius: '20px',
+          <div className={styles.mobileModal} style={{
+            background: inkWashTokens.colors.neutral.white,
+            borderRadius: inkWashTokens.borderRadius.xl,
             padding: '32px',
             maxWidth: '500px',
             width: '90%',
-            border: '1px solid #ebebeb',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+            boxShadow: inkWashTokens.shadows.xl,
           }}
           onClick={(e) => e.stopPropagation()}>
             <h3 style={{
-              color: '#2c2c2c',
+              color: inkWashTokens.colors.neutral.gray800,
               fontSize: '24px',
               fontWeight: '700',
               marginBottom: '20px',
@@ -1619,12 +1673,22 @@ export default function TextPage() {
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                background: 'white',
-                border: '1px solid #e5e5e5',
-                borderRadius: '12px',
-                color: '#2c2c2c',
+                background: inkWashTokens.colors.neutral.white,
+                border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                borderRadius: inkWashTokens.borderRadius.lg,
+                color: inkWashTokens.colors.neutral.gray800,
                 fontSize: '15px',
                 marginBottom: '24px',
+                outline: 'none',
+                transition: 'all 0.2s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 154, 143, 0.1)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                e.currentTarget.style.boxShadow = 'none'
               }}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') handleCreateProject()
@@ -1642,20 +1706,20 @@ export default function TextPage() {
                 }}
                 style={{
                   padding: '12px 24px',
-                  background: 'white',
-                  border: '1px solid #e5e5e5',
-                  borderRadius: '10px',
-                  color: '#666',
+                  background: inkWashTokens.colors.neutral.white,
+                  border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                  borderRadius: inkWashTokens.borderRadius.md,
+                  color: inkWashTokens.colors.neutral.gray600,
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f5f5f5'
+                  e.currentTarget.style.background = inkWashTokens.colors.neutral.gray100
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white'
+                  e.currentTarget.style.background = inkWashTokens.colors.neutral.white
                 }}>
                 取消
               </button>
@@ -1665,11 +1729,11 @@ export default function TextPage() {
                 style={{
                   padding: '12px 24px',
                   background: (newProjectName.trim() && !isCreatingProject)
-                    ? '#00bfa5'
-                    : '#e0e0e0',
+                    ? inkWashTokens.colors.primary.main
+                    : inkWashTokens.colors.neutral.gray300,
                   border: 'none',
-                  borderRadius: '10px',
-                  color: 'white',
+                  borderRadius: inkWashTokens.borderRadius.md,
+                  color: inkWashTokens.colors.neutral.white,
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: (newProjectName.trim() && !isCreatingProject) ? 'pointer' : 'not-allowed',
@@ -1681,12 +1745,12 @@ export default function TextPage() {
                 }}
                 onMouseEnter={(e) => {
                   if (newProjectName.trim() && !isCreatingProject) {
-                    e.currentTarget.style.background = '#00d4b8'
+                    e.currentTarget.style.background = inkWashTokens.colors.primary.light
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (newProjectName.trim() && !isCreatingProject) {
-                    e.currentTarget.style.background = '#00bfa5'
+                    e.currentTarget.style.background = inkWashTokens.colors.primary.main
                   }
                 }}>
                 {isCreatingProject && (
@@ -1715,18 +1779,18 @@ export default function TextPage() {
           zIndex: 1000,
         }}
         onClick={() => setShowNewGraphModal(false)}>
-          <div style={{
-            background: 'white',
-            borderRadius: '20px',
+          <div className={styles.mobileModal} style={{
+            background: inkWashTokens.colors.neutral.white,
+            borderRadius: inkWashTokens.borderRadius.xl,
             padding: '32px',
             maxWidth: '500px',
             width: '90%',
-            border: '1px solid #ebebeb',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+            boxShadow: inkWashTokens.shadows.xl,
           }}
           onClick={(e) => e.stopPropagation()}>
             <h3 style={{
-              color: '#2c2c2c',
+              color: inkWashTokens.colors.neutral.gray800,
               fontSize: '24px',
               fontWeight: '700',
               marginBottom: '20px',
@@ -1741,12 +1805,22 @@ export default function TextPage() {
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                background: 'white',
-                border: '1px solid #e5e5e5',
-                borderRadius: '12px',
-                color: '#2c2c2c',
+                background: inkWashTokens.colors.neutral.white,
+                border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                borderRadius: inkWashTokens.borderRadius.lg,
+                color: inkWashTokens.colors.neutral.gray800,
                 fontSize: '15px',
                 marginBottom: '24px',
+                outline: 'none',
+                transition: 'all 0.2s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 154, 143, 0.1)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                e.currentTarget.style.boxShadow = 'none'
               }}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') handleCreateGraph()
@@ -1764,20 +1838,20 @@ export default function TextPage() {
                 }}
                 style={{
                   padding: '12px 24px',
-                  background: 'white',
-                  border: '1px solid #e5e5e5',
-                  borderRadius: '10px',
-                  color: '#666',
+                  background: inkWashTokens.colors.neutral.white,
+                  border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                  borderRadius: inkWashTokens.borderRadius.md,
+                  color: inkWashTokens.colors.neutral.gray600,
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f5f5f5'
+                  e.currentTarget.style.background = inkWashTokens.colors.neutral.gray100
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white'
+                  e.currentTarget.style.background = inkWashTokens.colors.neutral.white
                 }}>
                 取消
               </button>
@@ -1787,11 +1861,11 @@ export default function TextPage() {
                 style={{
                   padding: '12px 24px',
                   background: (newGraphName.trim() && !isCreatingGraph)
-                    ? '#00bfa5'
-                    : '#e0e0e0',
+                    ? inkWashTokens.colors.primary.main
+                    : inkWashTokens.colors.neutral.gray300,
                   border: 'none',
-                  borderRadius: '10px',
-                  color: 'white',
+                  borderRadius: inkWashTokens.borderRadius.md,
+                  color: inkWashTokens.colors.neutral.white,
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: (newGraphName.trim() && !isCreatingGraph) ? 'pointer' : 'not-allowed',
@@ -1803,12 +1877,12 @@ export default function TextPage() {
                 }}
                 onMouseEnter={(e) => {
                   if (newGraphName.trim() && !isCreatingGraph) {
-                    e.currentTarget.style.transform = 'scale(1.05)'
+                    e.currentTarget.style.background = inkWashTokens.colors.primary.light
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (newGraphName.trim() && !isCreatingGraph) {
-                    e.currentTarget.style.transform = 'scale(1)'
+                    e.currentTarget.style.background = inkWashTokens.colors.primary.main
                   }
                 }}>
                 {isCreatingGraph && (
@@ -1837,16 +1911,16 @@ export default function TextPage() {
           zIndex: 9999,
         }}>
           <div style={{
-            background: 'white',
-            borderRadius: '24px',
+            background: inkWashTokens.colors.neutral.white,
+            borderRadius: inkWashTokens.borderRadius.xl,
             padding: '48px',
             maxWidth: '480px',
             width: '90%',
-            border: '1px solid #ebebeb',
-            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.15)',
+            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+            boxShadow: inkWashTokens.shadows.xl,
             textAlign: 'center',
           }}>
-            {/* 加载动画 */}
+            {/* 加载动画 - 水墨风格 */}
             <div style={{
               width: '80px',
               height: '80px',
@@ -1856,8 +1930,8 @@ export default function TextPage() {
               <div style={{
                 width: '100%',
                 height: '100%',
-                border: '4px solid rgba(0, 191, 165, 0.2)',
-                borderTop: '4px solid #00bfa5',
+                border: `4px solid rgba(90, 154, 143, 0.2)`,
+                borderTop: `4px solid ${inkWashTokens.colors.primary.main}`,
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }} />
@@ -1880,7 +1954,7 @@ export default function TextPage() {
 
             {/* 标题 */}
             <h3 style={{
-              color: '#2c2c2c',
+              color: inkWashTokens.colors.neutral.gray800,
               fontSize: '24px',
               fontWeight: '700',
               marginBottom: '16px',
@@ -1891,7 +1965,7 @@ export default function TextPage() {
 
             {/* 描述 */}
             <p style={{
-              color: '#666',
+              color: inkWashTokens.colors.neutral.gray600,
               fontSize: '15px',
               lineHeight: '1.6',
               marginBottom: '32px',
@@ -1906,20 +1980,20 @@ export default function TextPage() {
               onClick={handleCancelAIAnalysis}
               style={{
                 padding: '14px 32px',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '12px',
-                color: '#dc2626',
+                background: 'rgba(193, 123, 123, 0.1)',
+                border: `1px solid rgba(193, 123, 123, 0.3)`,
+                borderRadius: inkWashTokens.borderRadius.lg,
+                color: inkWashTokens.colors.semantic.error,
                 fontSize: '15px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+                e.currentTarget.style.background = 'rgba(193, 123, 123, 0.15)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                e.currentTarget.style.background = 'rgba(193, 123, 123, 0.1)'
               }}>
               取消生成
             </button>

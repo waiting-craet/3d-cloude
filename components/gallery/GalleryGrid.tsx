@@ -55,7 +55,7 @@ function GalleryGridContent({
   }
 
   const handleGraphClick = (graphId: string) => {
-    router.push(`/graph/${graphId}`)
+    router.push(`/graph?graphId=${graphId}`)
   }
 
   return (

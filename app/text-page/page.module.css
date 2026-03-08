@@ -7,6 +7,19 @@
   }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
 .spinner {
   width: 16px;
   height: 16px;
@@ -14,4 +27,85 @@
   border-top: 2px solid #ffffff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+}
+
+.slideDown {
+  animation: slideDown 0.3s ease;
+}
+
+/* Responsive Design Styles */
+
+/* Mobile devices (320px - 767px) */
+@media (max-width: 767px) {
+  /* Adjust padding for smaller screens */
+  .mobileContainer {
+    padding: 40px 16px 60px 16px !important;
+  }
+  
+  .mobileNav {
+    padding: 16px 20px !important;
+  }
+  
+  .mobileCard {
+    padding: 24px !important;
+  }
+  
+  /* Stack grid layouts vertically */
+  .mobileGrid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Adjust font sizes for readability */
+  .mobileTitle {
+    font-size: 32px !important;
+  }
+  
+  .mobileSubtitle {
+    font-size: 16px !important;
+  }
+  
+  .mobileSectionTitle {
+    font-size: 18px !important;
+  }
+  
+  /* Ensure buttons are full width on mobile */
+  .mobileButton {
+    width: 100% !important;
+  }
+  
+  /* Adjust modal width */
+  .mobileModal {
+    width: 95% !important;
+    padding: 24px !important;
+  }
+}
+
+/* Tablet devices (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tabletContainer {
+    padding: 50px 24px 80px 24px !important;
+  }
+  
+  .tabletCard {
+    padding: 28px !important;
+  }
+  
+  /* Adjust grid for tablet */
+  .tabletGrid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+}
+
+/* Desktop devices (1024px+) */
+@media (min-width: 1024px) {
+  /* Ensure max-width constraints */
+  .desktopContainer {
+    max-width: 1200px !important;
+  }
+  
+  /* Optimal spacing for large screens */
+  .desktopCard {
+    padding: 36px !important;
+  }
 }

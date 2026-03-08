@@ -486,14 +486,7 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
       }}>
         {/* 返回按钮 */}
         <button
-          onClick={() => {
-            // 如果当前在graph页面，直接返回到creation页面
-            if (window.location.pathname === '/graph') {
-              router.push('/creation')
-            } else {
-              window.history.back()
-            }
-          }}
+          onClick={() => window.history.back()}
           style={{
             padding: '8px 12px',
             background: 'transparent',

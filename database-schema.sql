@@ -19,7 +19,26 @@ DROP TABLE IF EXISTS `Graph`;
 DROP TABLE IF EXISTS `Project`;
 
 -- =====================================================
--- 1. Project 表 - 项目管理
+-- 1. User 表 - 用户认证和管理（必须先创建，因为 Project 依赖它）
+-- =====================================================
+CREATE TABLE `User` (
+    `id` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) DEFAULT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `username` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(255) DEFAULT NULL,
+    `avatar` TEXT DEFAULT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `User_email_key` (`email`),
+    UNIQUE KEY `User_username_key` (`username`),
+    INDEX `User_email_idx` (`email`),
+    INDEX `User_username_idx` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 2. Project 表 - 项目管理
 -- =====================================================
 CREATE TABLE `Project` (
     `id` VARCHAR(191) NOT NULL,
@@ -28,10 +47,17 @@ CREATE TABLE `Project` (
     `settings` TEXT,
     `nodeCount` INT NOT NULL DEFAULT 0,
     `edgeCount` INT NOT NULL DEFAULT 0,
+    `userId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     PRIMARY KEY (`id`),
-    INDEX `Project_createdAt_idx` (`createdAt`)
+    INDEX `Project_createdAt_idx` (`createdAt`),
+    INDEX `Project_userId_idx` (`userId`),
+    CONSTRAINT `Project_userId_fkey` 
+        FOREIGN KEY (`userId`) 
+        REFERENCES `User`(`id`) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -193,26 +219,7 @@ CREATE TABLE `Edge` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
--- 5. User 表 - 用户认证和管理
--- =====================================================
-CREATE TABLE `User` (
-    `id` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) DEFAULT NULL,
-    `password` VARCHAR(255) NOT NULL,
-    `username` VARCHAR(191) NOT NULL,
-    `name` VARCHAR(255) DEFAULT NULL,
-    `avatar` TEXT DEFAULT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `User_email_key` (`email`),
-    UNIQUE KEY `User_username_key` (`username`),
-    INDEX `User_email_idx` (`email`),
-    INDEX `User_username_idx` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =====================================================
--- 6. SearchHistory 表 - 搜索历史记录
+-- 5. SearchHistory 表 - 搜索历史记录
 -- =====================================================
 CREATE TABLE `SearchHistory` (
     `id` VARCHAR(191) NOT NULL,
@@ -233,13 +240,14 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- =====================================================
 
 -- 表关系说明：
--- 1. Project (1) -> (N) Graph: 一个项目可以包含多个图谱
--- 2. Project (1) -> (N) Node: 一个项目可以包含多个节点
--- 3. Project (1) -> (N) Edge: 一个项目可以包含多个边
--- 4. Graph (1) -> (N) Node: 一个图谱可以包含多个节点
--- 5. Graph (1) -> (N) Edge: 一个图谱可以包含多个边
--- 6. Node (1) -> (N) Edge: 一个节点可以有多条出边和入边
--- 7. Node (1) -> (N) Node: 文档节点可以包含多个块节点（自引用关系）
+-- 1. User (1) -> (N) Project: 一个用户可以拥有多个项目
+-- 2. Project (1) -> (N) Graph: 一个项目可以包含多个图谱
+-- 3. Project (1) -> (N) Node: 一个项目可以包含多个节点
+-- 4. Project (1) -> (N) Edge: 一个项目可以包含多个边
+-- 5. Graph (1) -> (N) Node: 一个图谱可以包含多个节点
+-- 6. Graph (1) -> (N) Edge: 一个图谱可以包含多个边
+-- 7. Node (1) -> (N) Edge: 一个节点可以有多条出边和入边
+-- 8. Node (1) -> (N) Node: 文档节点可以包含多个块节点（自引用关系）
 
 -- 字段说明：
 -- Node.type: 节点类型，如 document, chunk, concept, entity 等
@@ -251,9 +259,10 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- TINYINT(1): 用于表示布尔值，0=false, 1=true
 
 -- 级联删除说明：
--- 1. 删除 Project 时，会级联删除关联的 Graph, Node, Edge
--- 2. 删除 Graph 时，会级联删除关联的 Node, Edge
--- 3. 删除 Node 时，会级联删除关联的 Edge 和子节点（chunks）
+-- 1. 删除 User 时，会级联删除关联的 Project（以及 Project 下的所有内容）
+-- 2. 删除 Project 时，会级联删除关联的 Graph, Node, Edge
+-- 3. 删除 Graph 时，会级联删除关联的 Node, Edge
+-- 4. 删除 Node 时，会级联删除关联的 Edge 和子节点（chunks）
 
 -- =====================================================
 -- 使用说明

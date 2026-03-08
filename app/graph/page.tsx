@@ -13,26 +13,20 @@ type NavigationMode = 'full' | 'readonly'
 
 // 根据来源确定导航模式
 function determineNavigationMode(referrer: string | undefined): NavigationMode {
-  console.log('🔍 [determineNavigationMode] Full referrer:', referrer)
-  
   // 如果没有referrer，默认使用完整模式（可能是刷新页面或直接访问）
   if (!referrer) {
-    console.log('🔍 [determineNavigationMode] No referrer, using full mode')
     return 'full'
   }
   
   // 检查是否来自首页相关页面（只读模式）
   const isFromHomepage = 
     referrer === '/' || 
-    referrer.endsWith('/') && !referrer.includes('/creation') ||
+    (referrer.endsWith('/') && referrer.split('/').filter(Boolean).length === 0) ||
     referrer.includes('/homepage') ||
     referrer.includes('/gallery')
   
   // 检查是否来自Creation页面（完整模式）
   const isFromCreation = referrer.includes('/creation')
-  
-  console.log('🔍 [determineNavigationMode] isFromHomepage:', isFromHomepage)
-  console.log('🔍 [determineNavigationMode] isFromCreation:', isFromCreation)
   
   // Creation页面优先级更高
   if (isFromCreation) {
@@ -57,9 +51,6 @@ export default function GraphPage() {
     const referrer = document.referrer
     const mode = determineNavigationMode(referrer)
     setNavigationMode(mode)
-    
-    console.log('🔍 [GraphPage] Referrer:', referrer)
-    console.log('🔍 [GraphPage] Navigation Mode:', mode)
   }, [])
 
   // 强制使用明亮主题
@@ -86,10 +77,8 @@ export default function GraphPage() {
       }
 
       try {
-        console.log('🔄 [GraphPage] 开始加载图谱:', graphId)
         await loadGraphById(graphId)
         setError(null)
-        console.log('✅ [GraphPage] 图谱加载成功')
       } catch (err) {
         console.error('❌ [GraphPage] 图谱加载失败:', err)
         setError(err instanceof Error ? err.message : '加载图谱失败')

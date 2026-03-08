@@ -330,10 +330,6 @@ export default function KnowledgeGraph() {
   }, [currentGraph, nodes, setNodes])
 
   useEffect(() => {
-    console.log('Display - Nodes:', nodes.length, 'Edges:', edges.length)
-  }, [nodes, edges])
-
-  useEffect(() => {
     if (controlsRef.current) {
       controlsRef.current.enabled = !isDragging
     }
@@ -616,22 +612,6 @@ export default function KnowledgeGraph() {
             )}
           </>
         )}
-      </div>
-
-      <div style={{
-        position: 'absolute',
-        top: '60px',
-        left: '10px',
-        color: 'white',
-        background: 'rgba(0,0,0,0.5)',
-        padding: '10px',
-        borderRadius: '5px',
-        zIndex: 100,
-        fontSize: '12px',
-      }}>
-        Canvas Container Loaded
-        <br />
-        Nodes: {nodes.length} | Edges: {edges.length}
       </div>
 
       <Canvas onPointerMissed={handleCanvasClick}>

@@ -82,7 +82,7 @@ export default function GalleryTopNavbar({
 
   const handleSuggestionClick = (suggestion: any) => {
     if (suggestion.type === 'graph') {
-      router.push(`/graph/${suggestion.id}`)
+      router.push(`/graph?graphId=${suggestion.id}`)
     } else if (suggestion.type === 'user') {
       router.push(`/user/${suggestion.id}`)
     }

@@ -9,11 +9,28 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `SearchHistory`;
-DROP TABLE IF EXISTS `User`;
 DROP TABLE IF EXISTS `Edge`;
 DROP TABLE IF EXISTS `Node`;
 DROP TABLE IF EXISTS `Graph`;
 DROP TABLE IF EXISTS `Project`;
+DROP TABLE IF EXISTS `User`;
+
+-- User 表（必须先创建，因为 Project 依赖它）
+CREATE TABLE `User` (
+    `id` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191),
+    `password` VARCHAR(255) NOT NULL,
+    `username` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(255),
+    `avatar` TEXT,
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `User_email_key` (`email`),
+    UNIQUE KEY `User_username_key` (`username`),
+    KEY `User_email_idx` (`email`),
+    KEY `User_username_idx` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Project 表
 CREATE TABLE `Project` (
@@ -23,10 +40,13 @@ CREATE TABLE `Project` (
     `settings` TEXT,
     `nodeCount` INT NOT NULL DEFAULT 0,
     `edgeCount` INT NOT NULL DEFAULT 0,
+    `userId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `Project_createdAt_idx` (`createdAt`)
+    KEY `Project_createdAt_idx` (`createdAt`),
+    KEY `Project_userId_idx` (`userId`),
+    CONSTRAINT `Project_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Graph 表
@@ -115,23 +135,6 @@ CREATE TABLE `Edge` (
     CONSTRAINT `Edge_graphId_fkey` FOREIGN KEY (`graphId`) REFERENCES `Graph`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT `Edge_fromNodeId_fkey` FOREIGN KEY (`fromNodeId`) REFERENCES `Node`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT `Edge_toNodeId_fkey` FOREIGN KEY (`toNodeId`) REFERENCES `Node`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- User 表
-CREATE TABLE `User` (
-    `id` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191),
-    `password` VARCHAR(255) NOT NULL,
-    `username` VARCHAR(191) NOT NULL,
-    `name` VARCHAR(255),
-    `avatar` TEXT,
-    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `User_email_key` (`email`),
-    UNIQUE KEY `User_username_key` (`username`),
-    KEY `User_email_idx` (`email`),
-    KEY `User_username_idx` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- SearchHistory 表
