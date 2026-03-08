@@ -14,6 +14,7 @@
 import { describe, it, expect } from '@jest/globals'
 import { parseCSVFile } from '../graph-import'
 import fc from 'fast-check'
+import { TextEncoder } from 'util'
 
 // Helper to create a File-like object that works in Node.js test environment
 function createMockFile(content: string, filename: string): File {
@@ -23,6 +24,14 @@ function createMockFile(content: string, filename: string): File {
   // Add text() method for Node.js environment
   if (!file.text) {
     (file as any).text = async () => content
+  }
+  
+  // Add arrayBuffer() method for encoding detection
+  if (!file.arrayBuffer) {
+    (file as any).arrayBuffer = async () => {
+      const encoder = new TextEncoder()
+      return encoder.encode(content).buffer
+    }
   }
   
   return file
