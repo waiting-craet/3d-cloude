@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
       totalNodesInFile: filtered.originalNodeCount,
       totalEdgesInFile: filtered.originalEdgeCount,
       coordinateSystem: '3D', // 系统已统一为3D
-      skippedEdges: validatedData.edge.length - createdEdges.length,
+      skippedEdges: validatedData.edges.length - createdEdges.length,
       warnings: importResult.warnings
     })
 

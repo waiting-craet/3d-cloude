@@ -22,57 +22,58 @@ interface ImportStats {
   totalEdgesInFile: number
 }
 
-// Morandi Green Color Palette
+// Morandi Green Color Palette - Matching Creation Page
 const MorandiColors = {
   // Primary Colors
-  skyBlue: '#87CEEB',           // 天青色 - primary accent
-  darkGreen: '#2F4F4F',         // 黛绿色 - secondary accent
+  skyBlue: '#7FDBDA',           // 天青色 - primary accent
+  darkGreen: '#426666',         // 黛绿色 - secondary accent
   
   // Background Greens
-  sageGreen: '#8B9D83',         // Morandi green - main backgrounds
-  mintGreen: '#A8B5A0',         // Lighter Morandi green - secondary backgrounds
-  paleGreen: '#C8D5C8',         // Very light green - subtle backgrounds
+  sageGreen: '#7fa99b',         // Morandi green - main backgrounds and buttons
+  mintGreen: '#9bbaae',         // Lighter Morandi green - secondary backgrounds
+  paleGreen: '#c8d5cf',         // Very light green - subtle backgrounds
   
   // Neutral Tones
-  warmGray: '#E8E6E3',          // Warm gray - borders and dividers
-  softWhite: '#F5F4F2',         // Off-white - card backgrounds
-  charcoal: '#4A4A48',          // Dark gray - text
+  warmGray: '#e8e6e3',          // Warm gray - borders and dividers
+  softWhite: '#f5f4f2',         // Off-white - card backgrounds
+  charcoal: '#4a4a48',          // Dark gray - text
   
   // State Colors (muted to complement palette)
-  successGreen: '#7FA87F',      // Muted green - success states
-  warningAmber: '#D4B896',      // Muted amber - warnings
-  errorRose: '#C89B9B',         // Muted rose - errors
+  successGreen: '#7fa87f',      // Muted green - success states
+  warningAmber: '#d4b896',      // Muted amber - warnings
+  errorRose: '#c89b9b',         // Muted rose - errors
   
   // Hover States (slightly lighter/darker variants)
-  skyBlueHover: '#9DD9F3',      // Lighter sky blue
-  darkGreenHover: '#3D6363',    // Lighter dark green
-  sageGreenHover: '#9BAA93',    // Lighter sage green
+  skyBlueHover: '#9dd9f3',      // Lighter sky blue
+  darkGreenHover: '#3d6363',    // Lighter dark green
+  sageGreenHover: '#8fb5a7',    // Lighter sage green
 }
 
-// Ink Wash Visual Effects
+// Ink Wash Visual Effects - Matching Creation Page
 const InkWashEffects = {
   // Gradient backgrounds (subtle, vertical)
-  cardGradient: 'linear-gradient(180deg, #F5F4F2 0%, #E8E6E3 100%)',
-  navGradient: 'linear-gradient(180deg, #FFFFFF 0%, #F5F4F2 100%)',
-  modalGradient: 'linear-gradient(180deg, #FFFFFF 0%, #F5F4F2 100%)',
+  pageGradient: 'linear-gradient(135deg, #e8f0ed 0%, #d4e4df 100%)',
+  cardGradient: 'linear-gradient(180deg, #f5f4f2 0%, #e8e6e3 100%)',
+  navGradient: 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(245, 244, 242, 0.85) 100%)',
+  modalGradient: 'linear-gradient(180deg, #ffffff 0%, #f5f4f2 100%)',
   
   // Soft shadows (multiple layers for depth)
-  softShadow: '0 2px 8px rgba(75, 75, 72, 0.08), 0 1px 3px rgba(75, 75, 72, 0.06)',
-  cardShadow: '0 4px 12px rgba(75, 75, 72, 0.1), 0 2px 4px rgba(75, 75, 72, 0.06)',
-  modalShadow: '0 8px 24px rgba(75, 75, 72, 0.15), 0 4px 8px rgba(75, 75, 72, 0.1)',
+  softShadow: '0 2px 8px rgba(90, 122, 110, 0.08), 0 1px 3px rgba(90, 122, 110, 0.06)',
+  cardShadow: '0 4px 12px rgba(90, 122, 110, 0.12), 0 2px 4px rgba(90, 122, 110, 0.06)',
+  modalShadow: '0 8px 24px rgba(90, 122, 110, 0.15), 0 4px 8px rgba(90, 122, 110, 0.1)',
   
   // Border radius (soft, rounded)
   smallRadius: '8px',
   mediumRadius: '12px',
-  largeRadius: '16px',
+  largeRadius: '14px',
   pillRadius: '24px',
   
   // Transparency for overlays
-  modalOverlay: 'rgba(47, 79, 79, 0.6)',  // Dark green with transparency
-  loadingOverlay: 'rgba(47, 79, 79, 0.7)',
+  modalOverlay: 'rgba(66, 102, 102, 0.6)',      // 黛绿色半透明
+  loadingOverlay: 'rgba(66, 102, 102, 0.7)',    // 黛绿色半透明(更深)
   
   // Blur effects
-  backdropBlur: 'blur(8px)',
+  backdropBlur: 'blur(10px)',
 }
 
 // Icon Paths
@@ -425,7 +426,7 @@ export default function ImportPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#fafafa',
+      background: InkWashEffects.pageGradient,
       padding: '0'
     }}>
       {/* 顶部导航栏 */}
@@ -435,7 +436,8 @@ export default function ImportPage() {
         justifyContent: 'space-between',
         alignItems: 'center',
         background: InkWashEffects.navGradient,
-        borderBottom: `1px solid ${MorandiColors.warmGray}`,
+        backdropFilter: InkWashEffects.backdropBlur,
+        borderBottom: `1px solid rgba(139, 166, 154, 0.2)`,
         boxShadow: InkWashEffects.softShadow
       }}>
         <div style={{
@@ -449,7 +451,7 @@ export default function ImportPage() {
           <div style={{
             width: '32px',
             height: '32px',
-            background: MorandiColors.sageGreen,
+            background: `linear-gradient(135deg, ${MorandiColors.sageGreen} 0%, ${MorandiColors.darkGreen} 100%)`,
             borderRadius: '6px',
             display: 'flex',
             alignItems: 'center',
@@ -457,6 +459,7 @@ export default function ImportPage() {
             color: 'white',
             fontSize: '18px'
           }}>
+            📊
           </div>
           知识图谱
         </div>
@@ -923,7 +926,7 @@ export default function ImportPage() {
             <h3 style={{
               fontSize: '18px',
               fontWeight: 'bold',
-              color: '#333',
+              color: MorandiColors.charcoal,
               marginBottom: '20px'
             }}>
               新建项目
@@ -1053,7 +1056,7 @@ export default function ImportPage() {
             <h3 style={{
               fontSize: '18px',
               fontWeight: 'bold',
-              color: '#333',
+              color: MorandiColors.charcoal,
               marginBottom: '20px'
             }}>
               新建图谱
@@ -1194,7 +1197,7 @@ export default function ImportPage() {
             <h3 style={{
               fontSize: '18px',
               fontWeight: 'bold',
-              color: '#333',
+              color: MorandiColors.charcoal,
               marginBottom: '20px',
               display: 'flex',
               alignItems: 'center',
