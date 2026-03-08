@@ -1,6 +1,4 @@
 source,target,label
-Python,数据分析,应用于
-Python,机器学习,应用于
-Python,Web开发,应用于
-Python,自动化脚本,应用于
-数据分析,机器学习,支撑
+节点A,节点B,连接
+节点A,节点C,包含
+节点B,节点C,引用

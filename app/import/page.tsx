@@ -382,7 +382,7 @@ export default function ImportPage() {
           successMessage += `\n跳过了 ${result.skippedEdges} 条无效边`
         }
         setUploadStatus(successMessage)
-        setShowLoadingModal(false)
+        // 不关闭加载模态框，保持显示直到页面跳转完成，避免闪烁
         router.push(`/graph?projectId=${selectedProject}&graphId=${selectedGraph}`)
       } else {
         let errorMessage = '导入失败：'
@@ -451,15 +451,17 @@ export default function ImportPage() {
           <div style={{
             width: '32px',
             height: '32px',
-            background: `linear-gradient(135deg, ${MorandiColors.sageGreen} 0%, ${MorandiColors.darkGreen} 100%)`,
-            borderRadius: '6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white',
-            fontSize: '18px'
+            padding: '4px'
           }}>
-            📊
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="6" cy="6" r="4" stroke={MorandiColors.sageGreen} strokeWidth="2.5" fill="none"/>
+              <circle cx="18" cy="6" r="4" stroke={MorandiColors.sageGreen} strokeWidth="2.5" fill="none"/>
+              <circle cx="6" cy="18" r="4" stroke={MorandiColors.sageGreen} strokeWidth="2.5" fill="none"/>
+              <circle cx="18" cy="18" r="4" stroke={MorandiColors.sageGreen} strokeWidth="2.5" fill="none"/>
+            </svg>
           </div>
           知识图谱
         </div>
