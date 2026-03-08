@@ -11,6 +11,7 @@ import PaperWorkCard from '@/components/PaperWorkCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorMessage from '@/components/ErrorMessage'
 import PaperFooter from '@/components/PaperFooter'
+import Pagination from '@/components/Pagination'
 import { useUserStore } from '@/lib/userStore'
 
 // Project type definition
@@ -64,6 +65,13 @@ export default function LandingPage() {
   const [graphs, setGraphs] = useState<Graph[]>([])
   const [graphsLoading, setGraphsLoading] = useState(false)
   const [graphsError, setGraphsError] = useState<string | null>(null)
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 12
 
   const { isLoggedIn, logout, initializeFromStorage } = useUserStore()
 
@@ -153,6 +161,7 @@ export default function LandingPage() {
     // Switch to project graphs view
     setSelectedProject(project)
     setViewMode('projectGraphs')
+    setCurrentPage(1) // Reset to first page
     
     // Fetch graphs for this project
     fetchProjectGraphs(projectId)
@@ -185,11 +194,13 @@ export default function LandingPage() {
     setSelectedProject(null)
     setGraphs([])
     setGraphsError(null)
+    setSearchQuery('') // Clear search when going back
+    setCurrentPage(1) // Reset to first page
   }, [])
 
   const handleSearch = useCallback((query: string) => {
-    // TODO: Implement search functionality
-    console.log('Search query:', query)
+    setSearchQuery(query)
+    setCurrentPage(1) // Reset to first page when searching
   }, [])
 
   // Retry loading projects
@@ -198,7 +209,52 @@ export default function LandingPage() {
   }, [])
 
   // Display only first 12 projects in gallery (memoized)
-  const displayProjects = useCallback(() => projects.slice(0, 12), [projects])()
+  const displayProjects = useCallback(() => {
+    let filtered = projects
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(project => 
+        project.name.toLowerCase().includes(query) ||
+        (project.description && project.description.toLowerCase().includes(query))
+      )
+    }
+    
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    
+    return {
+      items: filtered.slice(startIndex, endIndex),
+      totalItems: filtered.length,
+      totalPages: Math.ceil(filtered.length / itemsPerPage)
+    }
+  }, [projects, searchQuery, currentPage])()
+
+  // Filter graphs based on search query
+  const displayGraphs = useCallback(() => {
+    let filtered = graphs
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(graph => 
+        graph.name.toLowerCase().includes(query) ||
+        (graph.description && graph.description.toLowerCase().includes(query))
+      )
+    }
+    
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    
+    return {
+      items: filtered.slice(startIndex, endIndex),
+      totalItems: filtered.length,
+      totalPages: Math.ceil(filtered.length / itemsPerPage)
+    }
+  }, [graphs, searchQuery, currentPage])()
 
   return (
     <main style={{
@@ -251,6 +307,38 @@ export default function LandingPage() {
         <PaperGallerySection 
           heading={viewMode === 'gallery' ? '推荐广场' : `${selectedProject?.name}项目中的知识图谱`}
         >
+          {/* Search results info */}
+          {searchQuery.trim() && (
+            <div style={{
+              marginBottom: '20px',
+              padding: '12px 16px',
+              background: 'rgba(107, 142, 133, 0.1)',
+              borderRadius: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ color: '#6b8e85', fontSize: '14px' }}>
+                搜索 "{searchQuery}" 找到 {viewMode === 'gallery' ? displayProjects.totalItems : displayGraphs.totalItems} 个结果
+              </span>
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  padding: '4px 12px',
+                  background: 'transparent',
+                  color: '#6b8e85',
+                  border: '1px solid #6b8e85',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                }}
+                aria-label="清除搜索"
+              >
+                清除
+              </button>
+            </div>
+          )}
+
           {/* Back button for project graphs view */}
           {viewMode === 'projectGraphs' && (
             <div style={{ marginBottom: '20px' }}>
@@ -287,7 +375,7 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {!loading && !error && displayProjects.length === 0 && (
+              {!loading && !error && displayProjects.items.length === 0 && (
                 <div style={{
                   textAlign: 'center',
                   padding: '60px 20px',
@@ -301,24 +389,33 @@ export default function LandingPage() {
                     📊
                   </div>
                   <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#333333' }}>
-                    暂无项目
+                    {searchQuery.trim() ? '未找到匹配的项目' : '暂无项目'}
                   </h3>
                   <p style={{ fontSize: '14px', color: '#999999' }}>
-                    还没有创建任何项目，点击"开始创作"来创建你的第一个项目吧！
+                    {searchQuery.trim() ? '尝试使用其他关键词搜索' : '还没有创建任何项目，点击"开始创作"来创建你的第一个项目吧！'}
                   </p>
                 </div>
               )}
 
-              {!loading && !error && displayProjects.length > 0 && (
-                <PaperWorkGrid columns={4} gap="20px">
-                  {displayProjects.map(project => (
-                    <PaperWorkCard
-                      key={project.id}
-                      project={project}
-                      onClick={handleProjectClick}
-                    />
-                  ))}
-                </PaperWorkGrid>
+              {!loading && !error && displayProjects.items.length > 0 && (
+                <>
+                  <PaperWorkGrid columns={4} gap="20px">
+                    {displayProjects.items.map(project => (
+                      <PaperWorkCard
+                        key={project.id}
+                        project={project}
+                        onClick={handleProjectClick}
+                      />
+                    ))}
+                  </PaperWorkGrid>
+                  
+                  {/* Pagination for projects */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={displayProjects.totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </>
               )}
             </>
           )}
@@ -341,7 +438,7 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {!graphsLoading && !graphsError && graphs.length === 0 && (
+              {!graphsLoading && !graphsError && displayGraphs.items.length === 0 && (
                 <div style={{
                   textAlign: 'center',
                   padding: '60px 20px',
@@ -355,32 +452,41 @@ export default function LandingPage() {
                     🗺️
                   </div>
                   <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#333333' }}>
-                    该项目还没有创建任何图谱
+                    {searchQuery.trim() ? '未找到匹配的图谱' : '该项目还没有创建任何图谱'}
                   </h3>
                   <p style={{ fontSize: '14px', color: '#999999' }}>
-                    点击"开始创作"来创建第一个知识图谱吧！
+                    {searchQuery.trim() ? '尝试使用其他关键词搜索' : '点击"开始创作"来创建第一个知识图谱吧！'}
                   </p>
                 </div>
               )}
 
-              {!graphsLoading && !graphsError && graphs.length > 0 && (
-                <PaperWorkGrid columns={4} gap="20px">
-                  {graphs.map(graph => (
-                    <PaperWorkCard
-                      key={graph.id}
-                      project={{
-                        id: graph.id,
-                        name: graph.name,
-                        description: graph.description,
-                        graphCount: graph.nodeCount,
-                        createdAt: graph.createdAt,
-                        updatedAt: graph.updatedAt,
-                        userId: selectedProject?.userId || '',
-                      }}
-                      onClick={(graphId) => router.push(`/graph?graphId=${graphId}`)}
-                    />
-                  ))}
-                </PaperWorkGrid>
+              {!graphsLoading && !graphsError && displayGraphs.items.length > 0 && (
+                <>
+                  <PaperWorkGrid columns={4} gap="20px">
+                    {displayGraphs.items.map(graph => (
+                      <PaperWorkCard
+                        key={graph.id}
+                        project={{
+                          id: graph.id,
+                          name: graph.name,
+                          description: graph.description,
+                          graphCount: graph.nodeCount,
+                          createdAt: graph.createdAt,
+                          updatedAt: graph.updatedAt,
+                          userId: selectedProject?.userId || '',
+                        }}
+                        onClick={(graphId) => router.push(`/graph?graphId=${graphId}`)}
+                      />
+                    ))}
+                  </PaperWorkGrid>
+                  
+                  {/* Pagination for graphs */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={displayGraphs.totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </>
               )}
             </>
           )}
