@@ -12,8 +12,9 @@
  */
 export interface AIEntity {
   name: string;
-  type: string;
-  properties: Record<string, any>;
+  description?: string;  // Optional description
+  type?: string;  // Optional, for backward compatibility
+  properties?: Record<string, any>;  // Optional, for backward compatibility
 }
 
 /**
@@ -23,7 +24,7 @@ export interface AIRelationship {
   from: string;  // Entity name
   to: string;    // Entity name
   type: string;
-  properties: Record<string, any>;
+  properties?: Record<string, any>;  // Optional, for backward compatibility
 }
 
 /**
@@ -162,39 +163,29 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
 ## 提取规则
 
 ### 1. 实体提取（节点）
-识别文本中的关键实体，包括：
-- **人物 (person)**: 真实人物、虚构角色、历史人物
-- **组织 (organization)**: 公司、机构、团队、政府部门
-- **地点 (location)**: 国家、城市、建筑、地理位置
-- **概念 (concept)**: 理论、方法、技术、学科领域
-- **事件 (event)**: 重要事件、活动、会议
-- **产品 (product)**: 产品、服务、工具、系统
-- **时间 (time)**: 时间点、时期、年代
-- **其他 (other)**: 其他重要实体
+识别文本中的关键实体，包括人物、组织、地点、概念、事件、产品等。
 
 每个实体包含：
 - name: 实体名称（使用原文中的准确名称）
-- type: 实体类型（从上述类型中选择最合适的）
-- properties: 相关属性（如描述、特征、数值等）
+- description: 实体的简短描述（可选，用于补充说明）
 
 ### 2. 关系提取（边）
 识别实体间的语义关系，常见关系类型：
-- **属于 (belongs_to)**: A属于B、A是B的一部分
-- **位于 (located_in)**: A位于B、A在B
-- **工作于 (works_for)**: A在B工作、A任职于B
-- **创建 (created)**: A创建了B、A发明了B
-- **参与 (participates_in)**: A参与B、A参加B
-- **影响 (influences)**: A影响B、A导致B
-- **关联 (related_to)**: A与B相关、A和B有联系
-- **拥有 (owns)**: A拥有B、A持有B
-- **使用 (uses)**: A使用B、A应用B
-- **产生 (produces)**: A产生B、A生成B
+- **属于**: A属于B、A是B的一部分
+- **位于**: A位于B、A在B
+- **工作于**: A在B工作、A任职于B
+- **创建**: A创建了B、A发明了B
+- **参与**: A参与B、A参加B
+- **影响**: A影响B、A导致B
+- **关联**: A与B相关、A和B有联系
+- **拥有**: A拥有B、A持有B
+- **使用**: A使用B、A应用B
+- **产生**: A产生B、A生成B
 
 每个关系包含：
 - from: 源实体名称（必须与entities中的name完全匹配）
 - to: 目标实体名称（必须与entities中的name完全匹配）
-- type: 关系类型（使用上述类型或自定义更准确的类型）
-- properties: 关系属性（如时间、强度、描述等）
+- type: 关系类型（使用简洁的中文描述，如"属于"、"位于"、"创建"等）
 
 ## 输出格式
 严格按照以下JSON格式返回：
@@ -202,21 +193,14 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
   "entities": [
     {
       "name": "实体名称",
-      "type": "实体类型",
-      "properties": {
-        "description": "简短描述",
-        "其他属性": "属性值"
-      }
+      "description": "简短描述（可选）"
     }
   ],
   "relationships": [
     {
       "from": "源实体名称",
       "to": "目标实体名称",
-      "type": "关系类型",
-      "properties": {
-        "description": "关系描述"
-      }
+      "type": "关系类型"
     }
   ]
 }
@@ -225,9 +209,9 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
 1. 实体名称必须准确，使用文本中的原始表述
 2. 关系中的from和to必须与entities数组中的name完全一致
 3. 优先提取核心实体和主要关系，避免过度细化
-4. 为实体和关系添加有意义的properties，帮助理解上下文
-5. 关系类型应该语义明确，便于理解
-6. 如果文本是中文，实体名称和属性使用中文；如果是英文，使用英文`
+4. 关系类型应该简洁明了，使用中文动词或动词短语
+5. description字段是可选的，只在需要补充说明时添加
+6. 不需要生成type（实体类型）和properties（属性）字段`
 
     return {
       model: 'deepseek-chat',
@@ -290,8 +274,9 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
           
           entities.push({
             name: trimmedName,
-            type: entity.type || 'entity',
-            properties: entity.properties || {},
+            description: entity.description || undefined,
+            type: entity.type || undefined,  // Optional
+            properties: entity.properties || undefined,  // Optional
           });
         }
       }
@@ -331,8 +316,8 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
           relationships.push({
             from: fromName,
             to: toName,
-            type: rel.type || 'related_to',
-            properties: rel.properties || {},
+            type: rel.type || '关联',
+            properties: rel.properties || undefined,  // Optional
           });
         }
       }

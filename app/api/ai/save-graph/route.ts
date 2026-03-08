@@ -23,8 +23,9 @@ interface SaveGraphRequest {
   nodes: Array<{
     id: string;  // Temporary UUID from preview
     name: string;
-    type: string;
-    properties: Record<string, any>;
+    description?: string;  // Optional description
+    type?: string;  // Optional, for backward compatibility
+    properties?: Record<string, any>;  // Optional, for backward compatibility
     isDuplicate?: boolean;
     duplicateOf?: string;
   }>;
@@ -33,7 +34,7 @@ interface SaveGraphRequest {
     fromNodeId: string;
     toNodeId: string;
     label: string;
-    properties: Record<string, any>;
+    properties?: Record<string, any>;  // Optional, for backward compatibility
     isRedundant?: boolean;
   }>;
   mergeDecisions: MergeDecision[];
@@ -49,12 +50,62 @@ interface SaveGraphRequest {
  * Saves AI-generated graph data to the database
  */
 export async function POST(request: NextRequest) {
+  let retryCount = 0;
+  const maxRetries = 3; // Increased from 2 to 3
+  
+  while (retryCount <= maxRetries) {
+    try {
+      return await handleSaveGraph(request);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Retry on transaction timeout or connection errors
+      const isRetryableError = 
+        errorMessage.includes('Unable to start a transaction') ||
+        errorMessage.includes('connection') ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('ECONNREFUSED') ||
+        errorMessage.includes('ETIMEDOUT');
+      
+      if (isRetryableError && retryCount < maxRetries) {
+        retryCount++;
+        const waitTime = 2000 * Math.pow(2, retryCount - 1); // 2s, 4s, 8s
+        console.log(`[AI Save Graph] Retrying after error (${retryCount}/${maxRetries}), waiting ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+      
+      // If not a retryable error or max retries reached, throw the error
+      throw error;
+    }
+  }
+  
+  // This should never be reached, but TypeScript needs it
+  throw new Error('Max retries exceeded');
+}
+
+async function handleSaveGraph(request: NextRequest) {
   try {
     // Parse request body
     const body: SaveGraphRequest = await request.json();
     
+    // Debug logging
+    console.log('[AI Save Graph] Received request body keys:', Object.keys(body));
+    console.log('[AI Save Graph] Body structure:', {
+      hasNodes: 'nodes' in body,
+      hasEdges: 'edges' in body,
+      hasProjectId: 'projectId' in body,
+      hasGraphId: 'graphId' in body,
+      hasGraphName: 'graphName' in body,
+      nodesType: typeof body.nodes,
+      edgesType: typeof body.edges,
+      nodesIsArray: Array.isArray(body.nodes),
+      edgesIsArray: Array.isArray(body.edges),
+    });
+    
     // Validate required fields
-    if (!body.node || !Array.isArray(body.node)) {
+    if (!body.nodes || !Array.isArray(body.nodes)) {
+      console.error('[AI Save Graph] Validation failed: nodes', { nodes: body.nodes });
       return NextResponse.json(
         {
           success: false,
@@ -64,7 +115,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!body.edge || !Array.isArray(body.edge)) {
+    if (!body.edges || !Array.isArray(body.edges)) {
+      console.error('[AI Save Graph] Validation failed: edges', { edges: body.edges });
       return NextResponse.json(
         {
           success: false,
@@ -75,6 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!body.projectId) {
+      console.error('[AI Save Graph] Validation failed: projectId', { projectId: body.projectId });
       return NextResponse.json(
         {
           success: false,
@@ -85,6 +138,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!body.graphId && !body.graphName) {
+      console.error('[AI Save Graph] Validation failed: graphId/graphName', { 
+        graphId: body.graphId, 
+        graphName: body.graphName 
+      });
       return NextResponse.json(
         {
           success: false,
@@ -99,12 +156,39 @@ export async function POST(request: NextRequest) {
       projectId: body.projectId,
       graphId: body.graphId,
       graphName: body.graphName,
-      nodeCount: body.node.length,
-      edgeCount: body.edge.length,
+      nodeCount: body.nodes.length,
+      edgeCount: body.edges.length,
       mergeDecisionCount: body.mergeDecisions?.length || 0,
     });
 
-    // Use Prisma transaction for atomicity
+    // Step 0: Verify project exists (outside transaction for faster validation)
+    let project;
+    try {
+      project = await prisma.project.findUnique({
+        where: { id: body.projectId },
+      });
+    } catch (dbError) {
+      console.error('[AI Save Graph] Database query failed:', dbError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database is temporarily unavailable. Please wait a moment and try again.',
+        },
+        { status: 503 }
+      );
+    }
+
+    if (!project) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Project not found. Please select a valid project.',
+        },
+        { status: 404 }
+      );
+    }
+
+    // Use Prisma transaction for atomicity with extended timeout
     const result = await prisma.$transaction(async (tx) => {
       // Step 1: Get or create graph
       let graph;
@@ -156,21 +240,24 @@ export async function POST(request: NextRequest) {
       const mergeService = getMergeResolutionService();
       
       // Get redundant edge indices (edges marked as redundant)
-      const redundantEdgeIndices = body.edge
+      const redundantEdgeIndices = body.edges
         .map((edge, index) => edge.isRedundant ? index : -1)
         .filter(index => index !== -1);
 
       // Prepare new nodes data
-      const newNodes = body.node.map(n => ({
+      const newNodes = body.nodes.map(n => ({
         tempId: n.id,
         name: n.name,
-        type: n.type,
-        properties: n.properties,
+        type: n.type || 'entity',
+        properties: n.description ? { description: n.description } : (n.properties || {}),
       }));
 
       // Create existing nodes map
       const existingNodesMap = new Map(
-        graph.node.map(n => [n.id, { name: n.name, metadata: n.metadata }])
+        graph.nodes.map(n => [n.id, { 
+          name: n.name, 
+          metadata: typeof n.metadata === 'string' ? n.metadata : JSON.stringify(n.metadata)
+        }])
       );
 
       // Process nodes and get merge results
@@ -220,12 +307,12 @@ export async function POST(request: NextRequest) {
 
       // Step 5: Process edges with node ID mapping
       const processedEdges = mergeService.processEdges(
-        body.edge.map(e => ({
+        body.edges.map(e => ({
           id: e.id,
           fromNodeId: e.fromNodeId,
           toNodeId: e.toNodeId,
           label: e.label,
-          properties: e.properties,
+          properties: e.properties || {},
         })),
         mergeResult.nodeIdMapping,
         redundantEdgeIndices
@@ -292,6 +379,9 @@ export async function POST(request: NextRequest) {
         totalNodes,
         totalEdges,
       };
+    }, {
+      maxWait: 15000, // Maximum time to wait for a transaction slot (15 seconds)
+      timeout: 60000, // Maximum time for the transaction to complete (60 seconds)
     });
 
     console.log('[AI Save Graph] Save complete:', result);
@@ -304,25 +394,57 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // Catch-all error handler
     console.error('[AI Save Graph] Error:', error);
+    console.error('[AI Save Graph] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     // Check if it's a known error
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
-    // Don't expose internal error details to client
-    if (errorMessage.includes('not found') || errorMessage.includes('does not belong')) {
+    // Return specific error messages for known issues
+    if (errorMessage.includes('Project not found')) {
       return NextResponse.json(
         {
           success: false,
-          error: errorMessage,
+          error: 'Project not found. Please select a valid project.',
         },
         { status: 404 }
+      );
+    }
+    
+    if (errorMessage.includes('Graph not found')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Graph not found.',
+        },
+        { status: 404 }
+      );
+    }
+    
+    if (errorMessage.includes('does not belong')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Graph does not belong to the specified project.',
+        },
+        { status: 403 }
+      );
+    }
+    
+    // Database connection errors
+    if (errorMessage.includes('connect') || errorMessage.includes('timeout')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database connection error. Please try again.',
+        },
+        { status: 503 }
       );
     }
     
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to save graph. Please try again.',
+        error: `Failed to save graph: ${errorMessage}`,
       },
       { status: 500 }
     );

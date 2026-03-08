@@ -30,8 +30,9 @@ interface AnalyzeRequest {
 interface PreviewNode {
   id: string;  // Temporary UUID
   name: string;
-  type: string;
-  properties: Record<string, any>;
+  description?: string;  // Optional description
+  type?: string;  // Optional, for backward compatibility
+  properties?: Record<string, any>;  // Optional, for backward compatibility
   isDuplicate?: boolean;
   duplicateOf?: string;
   conflicts?: Array<{
@@ -49,7 +50,7 @@ interface PreviewEdge {
   fromNodeId: string;
   toNodeId: string;
   label: string;
-  properties: Record<string, any>;
+  properties?: Record<string, any>;  // Optional, for backward compatibility
   isRedundant?: boolean;
 }
 
@@ -131,8 +132,7 @@ export async function POST(request: NextRequest) {
       return {
         id: tempId,
         name: entity.name,
-        type: entity.type,
-        properties: entity.properties,
+        description: entity.description,  // Use description instead of type/properties
       };
     });
 
@@ -142,7 +142,6 @@ export async function POST(request: NextRequest) {
       fromNodeId: nodeNameToTempId.get(rel.from.toLowerCase().trim()) || '',
       toNodeId: nodeNameToTempId.get(rel.to.toLowerCase().trim()) || '',
       label: rel.type,
-      properties: rel.properties,
     }));
 
     // Step 4: Perform duplicate detection if graphId is provided
@@ -152,23 +151,45 @@ export async function POST(request: NextRequest) {
 
     if (body.graphId) {
       try {
-        // Fetch existing graph data
-        const existingNodes = await prisma.node.findMany({
+        console.log('[AI Analysis] Starting duplicate detection for graphId:', body.graphId);
+        
+        // Add timeout to database queries
+        const queryTimeout = 5000; // 5 seconds timeout
+        
+        // Fetch existing graph data with timeout
+        const existingNodesPromise = prisma.node.findMany({
           where: { graphId: body.graphId },
           select: {
             id: true,
             name: true,
             metadata: true,
           },
+          take: 1000, // Limit to prevent excessive data
         });
 
-        const existingEdges = await prisma.edge.findMany({
+        const existingEdgesPromise = prisma.edge.findMany({
           where: { graphId: body.graphId },
           select: {
             fromNodeId: true,
             toNodeId: true,
             label: true,
           },
+          take: 1000, // Limit to prevent excessive data
+        });
+
+        // Race against timeout
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database query timed out')), queryTimeout)
+        );
+
+        const [existingNodes, existingEdges] = await Promise.race([
+          Promise.all([existingNodesPromise, existingEdgesPromise]),
+          timeoutPromise
+        ]) as [any[], any[]];
+
+        console.log('[AI Analysis] Fetched existing data:', {
+          nodes: existingNodes.length,
+          edges: existingEdges.length,
         });
 
         // Detect duplicate nodes
@@ -176,7 +197,7 @@ export async function POST(request: NextRequest) {
         const duplicateInfo = duplicateDetectionService.detectDuplicateNodes(
           aiResult.entities.map(e => ({
             name: e.name,
-            properties: e.properties,
+            properties: e.properties || {},
           })),
           existingNodes
         );
@@ -235,54 +256,26 @@ export async function POST(request: NextRequest) {
         });
 
       } catch (error) {
-        // Enhanced error handling with specific error types
-        console.error('[AI Analysis] Database error during duplicate detection:', {
+        // Enhanced error handling - log but don't fail the entire request
+        console.error('[AI Analysis] Duplicate detection failed (continuing without it):', {
           error: error instanceof Error ? error.message : String(error),
           errorName: error instanceof Error ? error.name : 'Unknown',
-          stack: error instanceof Error ? error.stack : undefined,
           graphId: body.graphId,
-          context: 'duplicate_detection',
         });
 
-        // Determine error type and provide specific error messages
+        // Log warning but continue - duplicate detection is optional
         const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorName = error instanceof Error ? error.name : '';
         
-        let userMessage = 'Failed to check for duplicates. Please try again.';
-
-        // Handle Prisma connection errors
-        if (errorName === 'PrismaClientInitializationError' || 
-            errorMessage.includes('connection') || 
-            errorMessage.includes('Connection') ||
-            errorMessage.includes('connect ECONNREFUSED') ||
-            errorMessage.includes('Connection pool exhausted')) {
-          userMessage = 'Failed to check for duplicates. Database connection error occurred.';
-          console.warn('[AI Analysis] Prisma connection error detected');
+        if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+          console.warn('[AI Analysis] Duplicate detection timed out - skipping duplicate check');
+        } else if (errorMessage.includes('connection') || errorMessage.includes('Connection')) {
+          console.warn('[AI Analysis] Database connection error - skipping duplicate check');
+        } else {
+          console.warn('[AI Analysis] Duplicate detection error - skipping duplicate check');
         }
         
-        // Handle query timeout errors
-        else if (errorName === 'PrismaClientKnownRequestError' ||
-                 errorMessage.includes('timeout') || 
-                 errorMessage.includes('timed out') ||
-                 errorMessage.includes('Query timeout')) {
-          userMessage = 'Failed to check for duplicates. Database query timed out.';
-          console.warn('[AI Analysis] Query timeout error detected');
-        }
-        
-        // Handle other Prisma errors
-        else if (errorName.includes('Prisma')) {
-          userMessage = 'Failed to check for duplicates. Database error occurred.';
-          console.warn('[AI Analysis] Prisma error detected');
-        }
-
-        // Return error response with specific message
-        return NextResponse.json(
-          {
-            success: false,
-            error: userMessage,
-          },
-          { status: 500 }
-        );
+        // Continue without duplicate detection
+        // duplicateNodes, redundantEdges, and conflicts remain 0
       }
     }
 

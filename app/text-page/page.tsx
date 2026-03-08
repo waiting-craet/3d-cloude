@@ -441,24 +441,47 @@ export default function TextPage() {
   // AI预览保存处理函数 - Enhanced for navigation (Task 2.2)
   const handleAISave = async (editedData: PreviewData, mergeDecisions: MergeDecision[]) => {
     try {
+      const requestBody = {
+        nodes: editedData.nodes,
+        edges: editedData.edges,
+        mergeDecisions,
+        projectId: selectedProject,
+        graphId: selectedGraph || undefined,
+        graphName: selectedGraph ? undefined : `AI图谱 ${new Date().toLocaleString('zh-CN')}`,
+        visualizationType: outputFormat,
+      };
+      
+      // Debug logging
+      console.log('[handleAISave] Request body:', {
+        nodeCount: requestBody.nodes?.length,
+        edgeCount: requestBody.edges?.length,
+        projectId: requestBody.projectId,
+        graphId: requestBody.graphId,
+        graphName: requestBody.graphName,
+        hasNodes: !!requestBody.nodes,
+        hasEdges: !!requestBody.edges,
+        nodesIsArray: Array.isArray(requestBody.nodes),
+        edgesIsArray: Array.isArray(requestBody.edges),
+      });
+      
       // 调用保存API
       const response = await fetch('/api/ai/save-graph', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          nodes: editedData.nodes,
-          edges: editedData.edges,
-          mergeDecisions,
-          projectId: selectedProject,
-          graphId: selectedGraph || undefined,
-          graphName: selectedGraph ? undefined : `AI图谱 ${new Date().toLocaleString('zh-CN')}`,
-          visualizationType: outputFormat,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const result = await response.json()
+      
+      // Log response details
+      console.log('[handleAISave] Response:', {
+        status: response.status,
+        ok: response.ok,
+        success: result.success,
+        error: result.error,
+      });
 
       if (result.success) {
         console.log('Graph saved successfully:', result.data)
