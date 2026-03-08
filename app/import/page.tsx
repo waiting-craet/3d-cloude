@@ -22,6 +22,117 @@ interface ImportStats {
   totalEdgesInFile: number
 }
 
+// Morandi Green Color Palette
+const MorandiColors = {
+  // Primary Colors
+  skyBlue: '#87CEEB',           // 天青色 - primary accent
+  darkGreen: '#2F4F4F',         // 黛绿色 - secondary accent
+  
+  // Background Greens
+  sageGreen: '#8B9D83',         // Morandi green - main backgrounds
+  mintGreen: '#A8B5A0',         // Lighter Morandi green - secondary backgrounds
+  paleGreen: '#C8D5C8',         // Very light green - subtle backgrounds
+  
+  // Neutral Tones
+  warmGray: '#E8E6E3',          // Warm gray - borders and dividers
+  softWhite: '#F5F4F2',         // Off-white - card backgrounds
+  charcoal: '#4A4A48',          // Dark gray - text
+  
+  // State Colors (muted to complement palette)
+  successGreen: '#7FA87F',      // Muted green - success states
+  warningAmber: '#D4B896',      // Muted amber - warnings
+  errorRose: '#C89B9B',         // Muted rose - errors
+  
+  // Hover States (slightly lighter/darker variants)
+  skyBlueHover: '#9DD9F3',      // Lighter sky blue
+  darkGreenHover: '#3D6363',    // Lighter dark green
+  sageGreenHover: '#9BAA93',    // Lighter sage green
+}
+
+// Ink Wash Visual Effects
+const InkWashEffects = {
+  // Gradient backgrounds (subtle, vertical)
+  cardGradient: 'linear-gradient(180deg, #F5F4F2 0%, #E8E6E3 100%)',
+  navGradient: 'linear-gradient(180deg, #FFFFFF 0%, #F5F4F2 100%)',
+  modalGradient: 'linear-gradient(180deg, #FFFFFF 0%, #F5F4F2 100%)',
+  
+  // Soft shadows (multiple layers for depth)
+  softShadow: '0 2px 8px rgba(75, 75, 72, 0.08), 0 1px 3px rgba(75, 75, 72, 0.06)',
+  cardShadow: '0 4px 12px rgba(75, 75, 72, 0.1), 0 2px 4px rgba(75, 75, 72, 0.06)',
+  modalShadow: '0 8px 24px rgba(75, 75, 72, 0.15), 0 4px 8px rgba(75, 75, 72, 0.1)',
+  
+  // Border radius (soft, rounded)
+  smallRadius: '8px',
+  mediumRadius: '12px',
+  largeRadius: '16px',
+  pillRadius: '24px',
+  
+  // Transparency for overlays
+  modalOverlay: 'rgba(47, 79, 79, 0.6)',  // Dark green with transparency
+  loadingOverlay: 'rgba(47, 79, 79, 0.7)',
+  
+  // Blur effects
+  backdropBlur: 'blur(8px)',
+}
+
+// Icon Paths
+const IconPaths = {
+  excel: '/icons/excel.png',
+  csv: '/icons/csv.png',
+  json: '/icons/filetype-json.png',
+  download: '/icons/下载.png',
+}
+
+// File Type Icon Component
+const FileTypeIcon = ({ type }: { type: 'excel' | 'csv' | 'json' }) => {
+  return (
+    <div style={{
+      width: '48px',
+      height: '48px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      filter: 'opacity(0.8)',
+      transition: 'all 0.2s'
+    }}>
+      <img 
+        src={IconPaths[type]} 
+        alt={`${type} icon`}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain'
+        }}
+      />
+    </div>
+  )
+}
+
+// Download Icon Component
+const DownloadIcon = () => {
+  return (
+    <div style={{
+      width: '20px',
+      height: '20px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      filter: 'opacity(0.8)',
+      transition: 'all 0.2s'
+    }}>
+      <img 
+        src={IconPaths.download} 
+        alt="download icon"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain'
+        }}
+      />
+    </div>
+  )
+}
+
 export default function ImportPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
@@ -323,8 +434,9 @@ export default function ImportPage() {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        background: 'white',
-        borderBottom: '1px solid #e5e5e5'
+        background: InkWashEffects.navGradient,
+        borderBottom: `1px solid ${MorandiColors.warmGray}`,
+        boxShadow: InkWashEffects.softShadow
       }}>
         <div style={{
           display: 'flex',
@@ -332,12 +444,12 @@ export default function ImportPage() {
           gap: '8px',
           fontSize: '20px',
           fontWeight: 'bold',
-          color: '#00bfa5'
+          color: MorandiColors.sageGreen
         }}>
           <div style={{
             width: '32px',
             height: '32px',
-            background: '#00bfa5',
+            background: MorandiColors.sageGreen,
             borderRadius: '6px',
             display: 'flex',
             alignItems: 'center',
@@ -376,11 +488,11 @@ export default function ImportPage() {
           {/* 项目选择 */}
           <div style={{
             flex: 1,
-            background: 'white',
-            borderRadius: '14px',
+            background: InkWashEffects.cardGradient,
+            borderRadius: InkWashEffects.smallRadius,
             padding: '16px 20px',
-            border: '1px solid #ebebeb',
-            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+            border: `1px solid ${MorandiColors.warmGray}`,
+            boxShadow: InkWashEffects.softShadow,
             display: 'flex',
             gap: '10px',
             alignItems: 'center'
@@ -391,11 +503,20 @@ export default function ImportPage() {
               style={{
                 flex: 1,
                 padding: '8px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
+                border: `1px solid ${MorandiColors.warmGray}`,
+                borderRadius: InkWashEffects.smallRadius,
                 fontSize: '14px',
                 outline: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                background: MorandiColors.softWhite,
+                color: MorandiColors.charcoal,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = MorandiColors.sageGreen
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = MorandiColors.warmGray
               }}
             >
               <option value="">项目选择</option>
@@ -407,21 +528,22 @@ export default function ImportPage() {
               onClick={() => setShowNewProjectModal(true)}
               style={{
                 padding: '8px 16px',
-                background: '#00bfa5',
+                background: MorandiColors.sageGreen,
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: InkWashEffects.smallRadius,
                 color: 'white',
                 fontSize: '13px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                boxShadow: InkWashEffects.softShadow
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#00d4b8'
+                e.currentTarget.style.background = MorandiColors.sageGreenHover
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#00bfa5'
+                e.currentTarget.style.background = MorandiColors.sageGreen
               }}
             >
               + 新建
@@ -467,17 +589,32 @@ export default function ImportPage() {
                   style={{
                     padding: '30px 20px',
                     border: selectedFile && fileType?.toUpperCase() === type.toUpperCase()
-                      ? '2px solid #00bfa5'
-                      : '1px solid #e5e5e5',
-                    borderRadius: '12px',
+                      ? `2px solid ${MorandiColors.sageGreen}`
+                      : `1px solid ${MorandiColors.warmGray}`,
+                    borderRadius: InkWashEffects.mediumRadius,
                     textAlign: 'center',
                     cursor: 'pointer',
-                    background: 'white',
-                    transition: 'all 0.2s'
+                    background: InkWashEffects.cardGradient,
+                    transition: 'all 0.2s',
+                    boxShadow: InkWashEffects.cardShadow,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = MorandiColors.sageGreenHover
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = selectedFile && fileType?.toUpperCase() === type.toUpperCase()
+                      ? MorandiColors.sageGreen
+                      : MorandiColors.warmGray
+                    e.currentTarget.style.transform = 'translateY(0)'
                   }}
                 >
-                  <div style={{ fontSize: '40px', marginBottom: '10px', opacity: 0.5 }}></div>
-                  <div style={{ fontSize: '15px', fontWeight: '600', color: '#2c2c2c', marginBottom: '4px' }}>
+                  <FileTypeIcon type={type.toLowerCase() as 'excel' | 'csv' | 'json'} />
+                  <div style={{ fontSize: '15px', fontWeight: '600', color: MorandiColors.charcoal, marginTop: '12px', marginBottom: '4px' }}>
                     {type}
                   </div>
                   <div style={{ fontSize: '11px', color: '#999' }}>拖拽文件到此</div>
@@ -511,7 +648,7 @@ export default function ImportPage() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: '600',
-                color: '#2c2c2c',
+                color: MorandiColors.charcoal,
                 marginBottom: '8px'
               }}>
                 选择图谱
@@ -528,12 +665,25 @@ export default function ImportPage() {
                   style={{
                     flex: 1,
                     padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
+                    border: `1px solid ${MorandiColors.warmGray}`,
+                    borderRadius: InkWashEffects.smallRadius,
                     fontSize: '14px',
                     outline: 'none',
                     cursor: selectedProject ? 'pointer' : 'not-allowed',
-                    opacity: selectedProject ? 1 : 0.5
+                    opacity: selectedProject ? 1 : 0.5,
+                    background: MorandiColors.softWhite,
+                    color: MorandiColors.charcoal,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedProject) {
+                      e.currentTarget.style.borderColor = MorandiColors.sageGreen
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedProject) {
+                      e.currentTarget.style.borderColor = MorandiColors.warmGray
+                    }
                   }}
                 >
                   <option value="">请选择图谱</option>
@@ -546,24 +696,25 @@ export default function ImportPage() {
                   disabled={!selectedProject}
                   style={{
                     padding: '10px 16px',
-                    background: !selectedProject ? '#ccc' : '#00bfa5',
+                    background: !selectedProject ? '#ccc' : MorandiColors.sageGreen,
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: InkWashEffects.smallRadius,
                     color: 'white',
                     fontSize: '13px',
                     fontWeight: '600',
                     cursor: !selectedProject ? 'not-allowed' : 'pointer',
                     whiteSpace: 'nowrap',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    boxShadow: !selectedProject ? 'none' : InkWashEffects.softShadow
                   }}
                   onMouseEnter={(e) => {
                     if (selectedProject) {
-                      e.currentTarget.style.background = '#00d4b8'
+                      e.currentTarget.style.background = MorandiColors.sageGreenHover
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (selectedProject) {
-                      e.currentTarget.style.background = '#00bfa5'
+                      e.currentTarget.style.background = MorandiColors.sageGreen
                     }
                   }}
                 >
@@ -594,78 +745,84 @@ export default function ImportPage() {
                 onClick={() => handleDownloadTemplate('excel')}
                 style={{
                   padding: '12px 16px',
-                  background: 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
+                  background: MorandiColors.sageGreen,
+                  border: `1px solid ${MorandiColors.warmGray}`,
+                  borderRadius: InkWashEffects.smallRadius,
                   fontSize: '13px',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  color: 'white',
+                  fontWeight: '500',
+                  boxShadow: InkWashEffects.softShadow
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f5f5f5'
-                  e.currentTarget.style.borderColor = '#1a3a52'
+                  e.currentTarget.style.background = MorandiColors.sageGreenHover
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white'
-                  e.currentTarget.style.borderColor = '#ddd'
+                  e.currentTarget.style.background = MorandiColors.sageGreen
                 }}
               >
+                <DownloadIcon />
                 <span>Excel模板</span>
               </button>
               <button
                 onClick={() => handleDownloadTemplate('csv')}
                 style={{
                   padding: '12px 16px',
-                  background: 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
+                  background: MorandiColors.sageGreen,
+                  border: `1px solid ${MorandiColors.warmGray}`,
+                  borderRadius: InkWashEffects.smallRadius,
                   fontSize: '13px',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  color: 'white',
+                  fontWeight: '500',
+                  boxShadow: InkWashEffects.softShadow
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f5f5f5'
-                  e.currentTarget.style.borderColor = '#00bfa5'
+                  e.currentTarget.style.background = MorandiColors.sageGreenHover
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white'
-                  e.currentTarget.style.borderColor = '#ddd'
+                  e.currentTarget.style.background = MorandiColors.sageGreen
                 }}
               >
+                <DownloadIcon />
                 <span>CSV模板</span>
               </button>
               <button
                 onClick={() => handleDownloadTemplate('json')}
                 style={{
                   padding: '12px 16px',
-                  background: 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
+                  background: MorandiColors.sageGreen,
+                  border: `1px solid ${MorandiColors.warmGray}`,
+                  borderRadius: InkWashEffects.smallRadius,
                   fontSize: '13px',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  color: 'white',
+                  fontWeight: '500',
+                  boxShadow: InkWashEffects.softShadow
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f5f5f5'
-                  e.currentTarget.style.borderColor = '#00bfa5'
+                  e.currentTarget.style.background = MorandiColors.sageGreenHover
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white'
-                  e.currentTarget.style.borderColor = '#ddd'
+                  e.currentTarget.style.background = MorandiColors.sageGreen
                 }}
               >
+                <DownloadIcon />
                 <span>JSON模板</span>
               </button>
             </div>
@@ -687,24 +844,29 @@ export default function ImportPage() {
             style={{
               padding: '14px 60px',
               background: (!selectedFile || !selectedProject || !selectedGraph || uploading)
-                ? '#e0e0e0'
-                : '#00bfa5',
+                ? MorandiColors.warmGray
+                : MorandiColors.sageGreen,
               border: 'none',
-              borderRadius: '24px',
-              color: 'white',
+              borderRadius: InkWashEffects.mediumRadius,
+              color: (!selectedFile || !selectedProject || !selectedGraph || uploading)
+                ? MorandiColors.charcoal
+                : 'white',
               fontSize: '15px',
               fontWeight: '600',
               cursor: (!selectedFile || !selectedProject || !selectedGraph || uploading) ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              boxShadow: (!selectedFile || !selectedProject || !selectedGraph || uploading)
+                ? 'none'
+                : InkWashEffects.softShadow
             }}
             onMouseEnter={(e) => {
               if (selectedFile && selectedProject && selectedGraph && !uploading) {
-                e.currentTarget.style.background = '#00d4b8'
+                e.currentTarget.style.background = MorandiColors.sageGreenHover
               }
             }}
             onMouseLeave={(e) => {
               if (selectedFile && selectedProject && selectedGraph && !uploading) {
-                e.currentTarget.style.background = '#00bfa5'
+                e.currentTarget.style.background = MorandiColors.sageGreen
               }
             }}
           >
@@ -714,11 +876,20 @@ export default function ImportPage() {
           {uploadStatus && (
             <div style={{
               marginTop: '12px',
-              padding: '10px',
-              background: uploadStatus.includes('成功') ? '#d4edda' : '#f8d7da',
-              color: uploadStatus.includes('成功') ? '#155724' : '#721c24',
-              borderRadius: '6px',
-              fontSize: '13px'
+              padding: '12px 16px',
+              background: uploadStatus.includes('成功') 
+                ? MorandiColors.successGreen 
+                : uploadStatus.includes('警告') || uploadStatus.includes('注意')
+                  ? MorandiColors.warningAmber
+                  : MorandiColors.errorRose,
+              color: uploadStatus.includes('成功') 
+                ? MorandiColors.darkGreen 
+                : MorandiColors.charcoal,
+              borderRadius: InkWashEffects.smallRadius,
+              fontSize: '13px',
+              boxShadow: InkWashEffects.softShadow,
+              lineHeight: '1.5',
+              whiteSpace: 'pre-line'
             }}>
               {uploadStatus}
             </div>
@@ -734,19 +905,20 @@ export default function ImportPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: InkWashEffects.modalOverlay,
+          backdropFilter: InkWashEffects.backdropBlur,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000
         }}>
           <div style={{
-            background: 'white',
-            borderRadius: '12px',
+            background: InkWashEffects.modalGradient,
+            borderRadius: InkWashEffects.largeRadius,
             padding: '30px',
             width: '400px',
             maxWidth: '90%',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+            boxShadow: InkWashEffects.modalShadow
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -765,11 +937,22 @@ export default function ImportPage() {
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
+                border: `1px solid ${MorandiColors.warmGray}`,
+                borderRadius: InkWashEffects.smallRadius,
                 fontSize: '14px',
                 outline: 'none',
-                marginBottom: '20px'
+                marginBottom: '20px',
+                background: MorandiColors.softWhite,
+                color: MorandiColors.charcoal,
+                transition: 'all 0.2s'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = MorandiColors.sageGreen
+                e.currentTarget.style.boxShadow = `0 0 0 2px ${MorandiColors.sageGreen}33`
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = MorandiColors.warmGray
+                e.currentTarget.style.boxShadow = 'none'
               }}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') handleCreateProject()
@@ -788,12 +971,25 @@ export default function ImportPage() {
                 disabled={creating}
                 style={{
                   padding: '10px 20px',
-                  background: '#f5f5f5',
+                  background: MorandiColors.warmGray,
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: InkWashEffects.smallRadius,
                   fontSize: '14px',
                   cursor: creating ? 'not-allowed' : 'pointer',
-                  opacity: creating ? 0.5 : 1
+                  opacity: creating ? 0.5 : 1,
+                  color: MorandiColors.charcoal,
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (!creating) {
+                    e.currentTarget.style.background = '#ddd9d6'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!creating) {
+                    e.currentTarget.style.background = MorandiColors.warmGray
+                  }
                 }}
               >
                 取消
@@ -803,23 +999,24 @@ export default function ImportPage() {
                 disabled={creating || !newProjectName.trim()}
                 style={{
                   padding: '10px 20px',
-                  background: creating || !newProjectName.trim() ? '#e0e0e0' : '#00bfa5',
+                  background: creating || !newProjectName.trim() ? MorandiColors.warmGray : MorandiColors.sageGreen,
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: InkWashEffects.smallRadius,
                   color: 'white',
                   fontSize: '14px',
                   cursor: creating || !newProjectName.trim() ? 'not-allowed' : 'pointer',
                   fontWeight: '600',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  boxShadow: creating || !newProjectName.trim() ? 'none' : InkWashEffects.softShadow
                 }}
                 onMouseEnter={(e) => {
                   if (!creating && newProjectName.trim()) {
-                    e.currentTarget.style.background = '#00d4b8'
+                    e.currentTarget.style.background = MorandiColors.sageGreenHover
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!creating && newProjectName.trim()) {
-                    e.currentTarget.style.background = '#00bfa5'
+                    e.currentTarget.style.background = MorandiColors.sageGreen
                   }
                 }}
               >
@@ -838,19 +1035,20 @@ export default function ImportPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: InkWashEffects.modalOverlay,
+          backdropFilter: InkWashEffects.backdropBlur,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000
         }}>
           <div style={{
-            background: 'white',
-            borderRadius: '12px',
+            background: InkWashEffects.modalGradient,
+            borderRadius: InkWashEffects.largeRadius,
             padding: '30px',
             width: '400px',
             maxWidth: '90%',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+            boxShadow: InkWashEffects.modalShadow
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -869,11 +1067,22 @@ export default function ImportPage() {
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
+                border: `1px solid ${MorandiColors.warmGray}`,
+                borderRadius: InkWashEffects.smallRadius,
                 fontSize: '14px',
                 outline: 'none',
-                marginBottom: '15px'
+                marginBottom: '15px',
+                background: MorandiColors.softWhite,
+                color: MorandiColors.charcoal,
+                transition: 'all 0.2s'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = MorandiColors.sageGreen
+                e.currentTarget.style.boxShadow = `0 0 0 2px ${MorandiColors.sageGreen}33`
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = MorandiColors.warmGray
+                e.currentTarget.style.boxShadow = 'none'
               }}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') handleCreateGraph()
@@ -881,11 +1090,12 @@ export default function ImportPage() {
             />
             <div style={{
               padding: '10px',
-              background: '#f0f8ff',
-              borderRadius: '6px',
+              background: '#E8F5F0',
+              borderRadius: InkWashEffects.smallRadius,
               marginBottom: '20px',
               fontSize: '13px',
-              color: '#00bfa5'
+              color: MorandiColors.sageGreen,
+              border: `1px solid ${MorandiColors.sageGreen}33`
             }}>
               图谱类型: 3D (统一格式)
             </div>
@@ -902,12 +1112,25 @@ export default function ImportPage() {
                 disabled={creating}
                 style={{
                   padding: '10px 20px',
-                  background: '#f5f5f5',
+                  background: MorandiColors.warmGray,
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: InkWashEffects.smallRadius,
                   fontSize: '14px',
                   cursor: creating ? 'not-allowed' : 'pointer',
-                  opacity: creating ? 0.5 : 1
+                  opacity: creating ? 0.5 : 1,
+                  color: MorandiColors.charcoal,
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (!creating) {
+                    e.currentTarget.style.background = '#ddd9d6'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!creating) {
+                    e.currentTarget.style.background = MorandiColors.warmGray
+                  }
                 }}
               >
                 取消
@@ -917,12 +1140,25 @@ export default function ImportPage() {
                 disabled={creating || !newGraphName.trim()}
                 style={{
                   padding: '10px 20px',
-                  background: creating || !newGraphName.trim() ? '#ccc' : '#00bfa5',
+                  background: creating || !newGraphName.trim() ? MorandiColors.warmGray : MorandiColors.sageGreen,
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: InkWashEffects.smallRadius,
                   color: 'white',
                   fontSize: '14px',
-                  cursor: creating || !newGraphName.trim() ? 'not-allowed' : 'pointer'
+                  cursor: creating || !newGraphName.trim() ? 'not-allowed' : 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s',
+                  boxShadow: creating || !newGraphName.trim() ? 'none' : InkWashEffects.softShadow
+                }}
+                onMouseEnter={(e) => {
+                  if (!creating && newGraphName.trim()) {
+                    e.currentTarget.style.background = MorandiColors.sageGreenHover
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!creating && newGraphName.trim()) {
+                    e.currentTarget.style.background = MorandiColors.sageGreen
+                  }
                 }}
               >
                 {creating ? '创建中...' : '确定'}
@@ -940,19 +1176,20 @@ export default function ImportPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: InkWashEffects.modalOverlay,
+          backdropFilter: InkWashEffects.backdropBlur,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000
         }}>
           <div style={{
-            background: 'white',
-            borderRadius: '12px',
+            background: InkWashEffects.modalGradient,
+            borderRadius: InkWashEffects.largeRadius,
             padding: '30px',
             width: '450px',
             maxWidth: '90%',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+            boxShadow: InkWashEffects.modalShadow
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -1008,12 +1245,12 @@ export default function ImportPage() {
 
             <div style={{
               padding: '12px',
-              background: '#fff3cd',
-              borderRadius: '6px',
+              background: '#FFF8E1',
+              borderRadius: InkWashEffects.smallRadius,
               marginBottom: '20px',
               fontSize: '13px',
-              color: '#856404',
-              border: '1px solid #ffeaa7'
+              color: '#8B7355',
+              border: `1px solid ${MorandiColors.warningAmber}`
             }}>
               数据将被导入到选定的图谱中，此操作不可撤销
             </div>
@@ -1027,12 +1264,20 @@ export default function ImportPage() {
                 onClick={() => setShowConfirmModal(false)}
                 style={{
                   padding: '10px 24px',
-                  background: '#f5f5f5',
+                  background: MorandiColors.warmGray,
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: InkWashEffects.smallRadius,
                   fontSize: '14px',
                   cursor: 'pointer',
-                  fontWeight: '600'
+                  fontWeight: '600',
+                  color: MorandiColors.charcoal,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#ddd9d6'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = MorandiColors.warmGray
                 }}
               >
                 取消
@@ -1041,20 +1286,21 @@ export default function ImportPage() {
                 onClick={handleConfirmUpload}
                 style={{
                   padding: '10px 24px',
-                  background: '#00bfa5',
+                  background: MorandiColors.sageGreen,
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: InkWashEffects.smallRadius,
                   color: 'white',
                   fontSize: '14px',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  boxShadow: InkWashEffects.softShadow
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#00d4b8'
+                  e.currentTarget.style.background = MorandiColors.sageGreenHover
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#00bfa5'
+                  e.currentTarget.style.background = MorandiColors.sageGreen
                 }}
               >
                 确认生成
@@ -1072,19 +1318,20 @@ export default function ImportPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.7)',
+          background: InkWashEffects.loadingOverlay,
+          backdropFilter: InkWashEffects.backdropBlur,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 2000
         }}>
           <div style={{
-            background: 'white',
-            borderRadius: '16px',
+            background: InkWashEffects.modalGradient,
+            borderRadius: InkWashEffects.largeRadius,
             padding: '40px',
             width: '450px',
             maxWidth: '90%',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            boxShadow: InkWashEffects.modalShadow,
             textAlign: 'center'
           }}>
             {/* 加载动画 */}
@@ -1092,8 +1339,8 @@ export default function ImportPage() {
               width: '60px',
               height: '60px',
               margin: '0 auto 24px',
-              border: '4px solid #f3f3f3',
-              borderTop: '4px solid #00bfa5',
+              border: `4px solid ${MorandiColors.paleGreen}`,
+              borderTop: `4px solid ${MorandiColors.sageGreen}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite'
             }} />
@@ -1101,7 +1348,7 @@ export default function ImportPage() {
             <h3 style={{
               fontSize: '20px',
               fontWeight: 'bold',
-              color: '#333',
+              color: MorandiColors.charcoal,
               marginBottom: '12px'
             }}>
               正在生成图谱...
@@ -1109,7 +1356,7 @@ export default function ImportPage() {
             
             <p style={{
               fontSize: '14px',
-              color: uploadStatus.includes('失败') || uploadStatus.includes('错误') ? '#d32f2f' : '#666',
+              color: uploadStatus.includes('失败') || uploadStatus.includes('错误') ? MorandiColors.errorRose : MorandiColors.charcoal,
               marginBottom: '24px',
               lineHeight: '1.6',
               fontWeight: uploadStatus.includes('失败') || uploadStatus.includes('错误') ? '600' : 'normal',
@@ -1121,16 +1368,18 @@ export default function ImportPage() {
             {/* 统计信息显示区域 */}
             {importStats && (
               <div style={{
-                background: '#f8f9fa',
-                borderRadius: '12px',
+                background: InkWashEffects.cardGradient,
+                borderRadius: InkWashEffects.mediumRadius,
                 padding: '20px',
                 marginBottom: '24px',
-                textAlign: 'left'
+                textAlign: 'left',
+                border: `1px solid ${MorandiColors.warmGray}`,
+                boxShadow: InkWashEffects.cardShadow
               }}>
                 <div style={{
                   fontSize: '15px',
                   fontWeight: '600',
-                  color: '#333',
+                  color: MorandiColors.charcoal,
                   marginBottom: '16px',
                   textAlign: 'center'
                 }}>
@@ -1145,85 +1394,91 @@ export default function ImportPage() {
                 }}>
                   {/* 节点统计 */}
                   <div style={{
-                    background: 'white',
+                    background: MorandiColors.softWhite,
                     padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #e5e5e5'
+                    borderRadius: InkWashEffects.smallRadius,
+                    border: `1px solid ${MorandiColors.warmGray}`,
+                    boxShadow: InkWashEffects.cardShadow
                   }}>
-                    <div style={{ color: '#666', marginBottom: '6px' }}>
+                    <div style={{ color: MorandiColors.charcoal, marginBottom: '6px' }}>
                       文件节点数
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: MorandiColors.charcoal }}>
                       {importStats.totalNodesInFile}
                     </div>
                   </div>
                   
                   <div style={{
-                    background: 'white',
+                    background: MorandiColors.softWhite,
                     padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #e5e5e5'
+                    borderRadius: InkWashEffects.smallRadius,
+                    border: `1px solid ${MorandiColors.warmGray}`,
+                    boxShadow: InkWashEffects.cardShadow
                   }}>
-                    <div style={{ color: '#666', marginBottom: '6px' }}>
+                    <div style={{ color: MorandiColors.charcoal, marginBottom: '6px' }}>
                       文件边数
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: MorandiColors.charcoal }}>
                       {importStats.totalEdgesInFile}
                     </div>
                   </div>
                   
                   <div style={{
-                    background: '#fff3cd',
+                    background: MorandiColors.paleGreen,
                     padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #ffeaa7'
+                    borderRadius: InkWashEffects.smallRadius,
+                    border: `1px solid ${MorandiColors.warmGray}`,
+                    boxShadow: InkWashEffects.cardShadow
                   }}>
-                    <div style={{ color: '#856404', marginBottom: '6px' }}>
+                    <div style={{ color: MorandiColors.warningAmber, marginBottom: '6px', fontWeight: '500' }}>
                       冗余节点
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#856404' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: MorandiColors.warningAmber }}>
                       {importStats.duplicateNodesCount}
                     </div>
                   </div>
                   
                   <div style={{
-                    background: '#fff3cd',
+                    background: MorandiColors.paleGreen,
                     padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #ffeaa7'
+                    borderRadius: InkWashEffects.smallRadius,
+                    border: `1px solid ${MorandiColors.warmGray}`,
+                    boxShadow: InkWashEffects.cardShadow
                   }}>
-                    <div style={{ color: '#856404', marginBottom: '6px' }}>
+                    <div style={{ color: MorandiColors.warningAmber, marginBottom: '6px', fontWeight: '500' }}>
                       冗余边
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#856404' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: MorandiColors.warningAmber }}>
                       {importStats.duplicateEdgesCount}
                     </div>
                   </div>
                   
                   <div style={{
-                    background: '#d4edda',
+                    background: MorandiColors.paleGreen,
                     padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #c3e6cb'
+                    borderRadius: InkWashEffects.smallRadius,
+                    border: `1px solid ${MorandiColors.warmGray}`,
+                    boxShadow: InkWashEffects.cardShadow
                   }}>
-                    <div style={{ color: '#155724', marginBottom: '6px' }}>
+                    <div style={{ color: MorandiColors.successGreen, marginBottom: '6px', fontWeight: '500' }}>
                       导入节点
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#155724' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: MorandiColors.successGreen }}>
                       {importStats.importedNodesCount}
                     </div>
                   </div>
                   
                   <div style={{
-                    background: '#d4edda',
+                    background: MorandiColors.paleGreen,
                     padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #c3e6cb'
+                    borderRadius: InkWashEffects.smallRadius,
+                    border: `1px solid ${MorandiColors.warmGray}`,
+                    boxShadow: InkWashEffects.cardShadow
                   }}>
-                    <div style={{ color: '#155724', marginBottom: '6px' }}>
+                    <div style={{ color: MorandiColors.successGreen, marginBottom: '6px', fontWeight: '500' }}>
                       导入边
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#155724' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: MorandiColors.successGreen }}>
                       {importStats.importedEdgesCount}
                     </div>
                   </div>
@@ -1235,22 +1490,22 @@ export default function ImportPage() {
               onClick={handleCancelUpload}
               style={{
                 padding: '12px 32px',
-                background: '#f5f5f5',
-                border: '2px solid #ddd',
-                borderRadius: '8px',
+                background: MorandiColors.warmGray,
+                border: `2px solid ${MorandiColors.warmGray}`,
+                borderRadius: InkWashEffects.smallRadius,
                 fontSize: '14px',
                 cursor: 'pointer',
                 fontWeight: '600',
-                color: '#666',
+                color: MorandiColors.charcoal,
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#e0e0e0'
-                e.currentTarget.style.borderColor = '#bbb'
+                e.currentTarget.style.background = '#ddd9d6'
+                e.currentTarget.style.borderColor = '#ddd9d6'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#f5f5f5'
-                e.currentTarget.style.borderColor = '#ddd'
+                e.currentTarget.style.background = MorandiColors.warmGray
+                e.currentTarget.style.borderColor = MorandiColors.warmGray
               }}
             >
               取消生成
