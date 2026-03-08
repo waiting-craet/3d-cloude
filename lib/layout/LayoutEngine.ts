@@ -24,6 +24,7 @@ import {
   LayoutQualityMetrics,
   ValidationResult,
   DEFAULT_LAYOUT_CONFIG,
+  OPTIMIZED_LAYOUT_CONFIGS,
   isValidCoordinate,
   ProgressCallback
 } from './types';
@@ -102,6 +103,8 @@ export class LayoutEngine {
     this.strategies.set(LayoutStrategy.FORCE_DIRECTED, new ForceDirectedStrategy());
     this.strategies.set(LayoutStrategy.GRID, new GridStrategy());
     this.strategies.set(LayoutStrategy.SPHERICAL, new SphericalStrategy());
+
+    console.log('LayoutEngine initialized with config:', this.config);
   }
 
   /**
@@ -165,6 +168,28 @@ export class LayoutEngine {
   }
 
   /**
+   * 根据节点数量选择最优配置
+   * 
+   * @param nodeCount 节点数量
+   * @returns 优化的配置
+   */
+  private selectOptimalConfig(nodeCount: number): LayoutConfig {
+    if (nodeCount < 20) {
+      console.log(`Using 'small' config for ${nodeCount} nodes`);
+      return { ...OPTIMIZED_LAYOUT_CONFIGS.small };
+    } else if (nodeCount <= 50) {
+      console.log(`Using 'medium' config for ${nodeCount} nodes`);
+      return { ...OPTIMIZED_LAYOUT_CONFIGS.medium };
+    } else if (nodeCount <= 100) {
+      console.log(`Using 'large' config for ${nodeCount} nodes`);
+      return { ...OPTIMIZED_LAYOUT_CONFIGS.large };
+    } else {
+      console.log(`Using 'xlarge' config for ${nodeCount} nodes`);
+      return { ...OPTIMIZED_LAYOUT_CONFIGS.xlarge };
+    }
+  }
+
+  /**
    * 主要转换方法：将2D图谱转换为3D图谱
    * 
    * 完整流程：
@@ -201,6 +226,13 @@ export class LayoutEngine {
     onProgress?.(0, 'Starting layout conversion...');
 
     try {
+      // 步骤0: 根据节点数量选择最优配置（如果用户没有提供自定义配置）
+      if (nodes.length > 0 && !this.config.iterations) {
+        const optimalConfig = this.selectOptimalConfig(nodes.length);
+        this.updateConfig(optimalConfig);
+        console.log('Applied optimal config for node count:', nodes.length);
+      }
+
       // 步骤1: 验证输入
       onProgress?.(5, 'Validating input data...');
       const validation = this.validateInput(nodes, edges);
