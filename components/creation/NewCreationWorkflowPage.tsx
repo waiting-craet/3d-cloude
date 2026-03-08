@@ -32,6 +32,7 @@ interface Project {
 export default function NewCreationWorkflowPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState<'updateTime' | 'title'>('updateTime');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingProjects, setExistingProjects] = useState<Project[]>([]);
@@ -271,6 +272,18 @@ export default function NewCreationWorkflowPage() {
     }
   };
 
+  // 处理搜索
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+  };
+
+  // 处理回车键搜索
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <div className={styles.pageContainer}>
       {/* 左侧导航栏 - 占 1/6 宽度 */}
@@ -317,15 +330,41 @@ export default function NewCreationWorkflowPage() {
             <h2 className={styles.myProjectsText}>我的项目</h2>
             
             {/* 搜索框（从右上角移动过来） */}
-            <div style={{ position: 'relative' }}>
-              <span className={styles.searchIcon}>🔍</span>
+            <div className={styles.searchContainer}>
               <input
                 type="text"
                 className={styles.searchBar}
                 placeholder="搜索项目..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
               />
+              <button 
+                className={styles.searchButton}
+                onClick={handleSearch}
+                aria-label="搜索"
+              >
+                <svg 
+                  className={styles.searchIcon}
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle 
+                    cx="11" 
+                    cy="11" 
+                    r="7" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                  />
+                  <path 
+                    d="M20 20L16.5 16.5" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -401,8 +440,8 @@ export default function NewCreationWorkflowPage() {
                 }}>
                   暂无项目，点击"新建"按钮创建您的第一个项目
                 </div>
-              ) : (
-                projects
+              ) : (() => {
+                const filteredProjects = projects
                   .filter(project => {
                     // 搜索过滤
                     if (searchQuery && !project.name.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -422,8 +461,21 @@ export default function NewCreationWorkflowPage() {
                       const bTime = (b as any).updatedAt || (b as any).createdAt || '';
                       return new Date(bTime).getTime() - new Date(aTime).getTime();
                     }
-                  })
-                  .map((project) => (
+                  });
+
+                return filteredProjects.length === 0 ? (
+                  <div style={{ 
+                    padding: '40px', 
+                    textAlign: 'center', 
+                    color: '#6b8578',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(139, 166, 154, 0.25)'
+                  }}>
+                    搜索结果为空，未找到匹配的项目
+                  </div>
+                ) : (
+                  filteredProjects.map((project) => (
                     <div
                       key={project.id}
                       className={styles.projectCard}
@@ -450,14 +502,15 @@ export default function NewCreationWorkflowPage() {
                           </span>
                           <div className={styles.projectCardStats}>
                             <span className={styles.projectCardStat}>
-                              📊 点击查看图谱
+                              点击查看图谱
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
                   ))
-              )}
+                );
+              })()}
             </>
           )}
 
@@ -474,8 +527,8 @@ export default function NewCreationWorkflowPage() {
                 }}>
                   该项目暂无图谱，点击"新建"按钮创建图谱
                 </div>
-              ) : (
-                selectedProject.graphs
+              ) : (() => {
+                const filteredGraphs = selectedProject.graphs
                   ?.filter(graph => {
                     // 搜索过滤
                     if (searchQuery && !graph.name.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -494,8 +547,21 @@ export default function NewCreationWorkflowPage() {
                       const bTime = b.updatedAt || b.createdAt || '';
                       return new Date(bTime).getTime() - new Date(aTime).getTime();
                     }
-                  })
-                  .map((graph) => (
+                  });
+
+                return filteredGraphs && filteredGraphs.length === 0 ? (
+                  <div style={{ 
+                    padding: '40px', 
+                    textAlign: 'center', 
+                    color: '#6b8578',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(139, 166, 154, 0.25)'
+                  }}>
+                    搜索结果为空，未找到匹配的图谱
+                  </div>
+                ) : (
+                  filteredGraphs?.map((graph) => (
                     <div
                       key={graph.id}
                       className={styles.projectCard}
@@ -517,12 +583,12 @@ export default function NewCreationWorkflowPage() {
                             <div className={styles.projectCardStats}>
                               {graph.nodeCount !== undefined && (
                                 <span className={styles.projectCardStat}>
-                                  📊 {graph.nodeCount} 节点
+                                  {graph.nodeCount} 节点
                                 </span>
                               )}
                               {graph.edgeCount !== undefined && (
                                 <span className={styles.projectCardStat}>
-                                  🔗 {graph.edgeCount} 边
+                                  {graph.edgeCount} 边
                                 </span>
                               )}
                             </div>
@@ -531,7 +597,8 @@ export default function NewCreationWorkflowPage() {
                       </div>
                     </div>
                   ))
-              )}
+                );
+              })()}
             </>
           )}
         </div>
