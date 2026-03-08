@@ -177,6 +177,7 @@
 .searchButton:hover {
   background: rgba(90, 122, 110, 0.1);
   color: #3d5a50;
+  transform: translateY(-50%);
 }
 
 .searchButton:focus-visible {
