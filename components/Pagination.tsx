@@ -60,25 +60,28 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         disabled={currentPage === 1}
         style={{
           padding: '8px 16px',
-          background: currentPage === 1 ? '#f5f5f5' : 'white',
-          color: currentPage === 1 ? '#ccc' : '#666',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
+          background: currentPage === 1 ? 'rgba(107, 142, 133, 0.1)' : 'rgba(255, 255, 255, 0.9)',
+          color: currentPage === 1 ? '#b0b0b0' : '#6b8e85',
+          border: '1px solid rgba(107, 142, 133, 0.2)',
+          borderRadius: '6px',
           fontSize: '14px',
           fontWeight: '500',
           cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-          transition: 'all 0.2s ease'
+          transition: 'all 0.3s ease',
+          boxShadow: currentPage === 1 ? 'none' : '0 2px 4px rgba(0, 0, 0, 0.05)'
         }}
         onMouseEnter={(e) => {
           if (currentPage !== 1) {
-            e.currentTarget.style.borderColor = '#00bfa5'
-            e.currentTarget.style.color = '#00bfa5'
+            e.currentTarget.style.background = '#6b8e85'
+            e.currentTarget.style.color = 'white'
+            e.currentTarget.style.boxShadow = '0 4px 8px rgba(107, 142, 133, 0.2)'
           }
         }}
         onMouseLeave={(e) => {
           if (currentPage !== 1) {
-            e.currentTarget.style.borderColor = '#ddd'
-            e.currentTarget.style.color = '#666'
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)'
+            e.currentTarget.style.color = '#6b8e85'
+            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)'
           }
         }}
       >
@@ -93,7 +96,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
               key={`ellipsis-${index}`}
               style={{
                 padding: '8px 12px',
-                color: '#999',
+                color: '#a0a0a0',
                 fontSize: '14px'
               }}
             >
@@ -112,25 +115,28 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             style={{
               padding: '8px 12px',
               minWidth: '40px',
-              background: isActive ? '#00bfa5' : 'white',
-              color: isActive ? 'white' : '#666',
-              border: `1px solid ${isActive ? '#00bfa5' : '#ddd'}`,
-              borderRadius: '8px',
+              background: isActive ? '#6b8e85' : 'rgba(255, 255, 255, 0.9)',
+              color: isActive ? 'white' : '#6b8e85',
+              border: `1px solid ${isActive ? '#6b8e85' : 'rgba(107, 142, 133, 0.2)'}`,
+              borderRadius: '6px',
               fontSize: '14px',
               fontWeight: isActive ? '600' : '500',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.3s ease',
+              boxShadow: isActive ? '0 4px 8px rgba(107, 142, 133, 0.2)' : '0 2px 4px rgba(0, 0, 0, 0.05)'
             }}
             onMouseEnter={(e) => {
               if (!isActive) {
-                e.currentTarget.style.borderColor = '#00bfa5'
-                e.currentTarget.style.color = '#00bfa5'
+                e.currentTarget.style.background = 'rgba(107, 142, 133, 0.15)'
+                e.currentTarget.style.borderColor = '#6b8e85'
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(107, 142, 133, 0.15)'
               }
             }}
             onMouseLeave={(e) => {
               if (!isActive) {
-                e.currentTarget.style.borderColor = '#ddd'
-                e.currentTarget.style.color = '#666'
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)'
+                e.currentTarget.style.borderColor = 'rgba(107, 142, 133, 0.2)'
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)'
               }
             }}
           >
@@ -145,25 +151,28 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         disabled={currentPage === totalPages}
         style={{
           padding: '8px 16px',
-          background: currentPage === totalPages ? '#f5f5f5' : 'white',
-          color: currentPage === totalPages ? '#ccc' : '#666',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
+          background: currentPage === totalPages ? 'rgba(107, 142, 133, 0.1)' : 'rgba(255, 255, 255, 0.9)',
+          color: currentPage === totalPages ? '#b0b0b0' : '#6b8e85',
+          border: '1px solid rgba(107, 142, 133, 0.2)',
+          borderRadius: '6px',
           fontSize: '14px',
           fontWeight: '500',
           cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-          transition: 'all 0.2s ease'
+          transition: 'all 0.3s ease',
+          boxShadow: currentPage === totalPages ? 'none' : '0 2px 4px rgba(0, 0, 0, 0.05)'
         }}
         onMouseEnter={(e) => {
           if (currentPage !== totalPages) {
-            e.currentTarget.style.borderColor = '#00bfa5'
-            e.currentTarget.style.color = '#00bfa5'
+            e.currentTarget.style.background = '#6b8e85'
+            e.currentTarget.style.color = 'white'
+            e.currentTarget.style.boxShadow = '0 4px 8px rgba(107, 142, 133, 0.2)'
           }
         }}
         onMouseLeave={(e) => {
           if (currentPage !== totalPages) {
-            e.currentTarget.style.borderColor = '#ddd'
-            e.currentTarget.style.color = '#666'
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)'
+            e.currentTarget.style.color = '#6b8e85'
+            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)'
           }
         }}
       >

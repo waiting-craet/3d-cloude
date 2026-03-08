@@ -11,6 +11,7 @@ import PaperWorkCard from '@/components/PaperWorkCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorMessage from '@/components/ErrorMessage'
 import PaperFooter from '@/components/PaperFooter'
+import Pagination from '@/components/Pagination'
 import { useUserStore } from '@/lib/userStore'
 
 // Project type definition
@@ -67,6 +68,10 @@ export default function LandingPage() {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 12
 
   const { isLoggedIn, logout, initializeFromStorage } = useUserStore()
 
@@ -156,6 +161,7 @@ export default function LandingPage() {
     // Switch to project graphs view
     setSelectedProject(project)
     setViewMode('projectGraphs')
+    setCurrentPage(1) // Reset to first page
     
     // Fetch graphs for this project
     fetchProjectGraphs(projectId)
@@ -189,10 +195,12 @@ export default function LandingPage() {
     setGraphs([])
     setGraphsError(null)
     setSearchQuery('') // Clear search when going back
+    setCurrentPage(1) // Reset to first page
   }, [])
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
+    setCurrentPage(1) // Reset to first page when searching
   }, [])
 
   // Retry loading projects
@@ -213,8 +221,16 @@ export default function LandingPage() {
       )
     }
     
-    return filtered.slice(0, 12)
-  }, [projects, searchQuery])()
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    
+    return {
+      items: filtered.slice(startIndex, endIndex),
+      totalItems: filtered.length,
+      totalPages: Math.ceil(filtered.length / itemsPerPage)
+    }
+  }, [projects, searchQuery, currentPage])()
 
   // Filter graphs based on search query
   const displayGraphs = useCallback(() => {
@@ -229,8 +245,16 @@ export default function LandingPage() {
       )
     }
     
-    return filtered
-  }, [graphs, searchQuery])()
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    
+    return {
+      items: filtered.slice(startIndex, endIndex),
+      totalItems: filtered.length,
+      totalPages: Math.ceil(filtered.length / itemsPerPage)
+    }
+  }, [graphs, searchQuery, currentPage])()
 
   return (
     <main style={{
@@ -295,7 +319,7 @@ export default function LandingPage() {
               alignItems: 'center'
             }}>
               <span style={{ color: '#6b8e85', fontSize: '14px' }}>
-                搜索 "{searchQuery}" 找到 {viewMode === 'gallery' ? displayProjects.length : displayGraphs.length} 个结果
+                搜索 "{searchQuery}" 找到 {viewMode === 'gallery' ? displayProjects.totalItems : displayGraphs.totalItems} 个结果
               </span>
               <button
                 onClick={() => setSearchQuery('')}
@@ -351,7 +375,7 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {!loading && !error && displayProjects.length === 0 && (
+              {!loading && !error && displayProjects.items.length === 0 && (
                 <div style={{
                   textAlign: 'center',
                   padding: '60px 20px',
@@ -373,16 +397,25 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {!loading && !error && displayProjects.length > 0 && (
-                <PaperWorkGrid columns={4} gap="20px">
-                  {displayProjects.map(project => (
-                    <PaperWorkCard
-                      key={project.id}
-                      project={project}
-                      onClick={handleProjectClick}
-                    />
-                  ))}
-                </PaperWorkGrid>
+              {!loading && !error && displayProjects.items.length > 0 && (
+                <>
+                  <PaperWorkGrid columns={4} gap="20px">
+                    {displayProjects.items.map(project => (
+                      <PaperWorkCard
+                        key={project.id}
+                        project={project}
+                        onClick={handleProjectClick}
+                      />
+                    ))}
+                  </PaperWorkGrid>
+                  
+                  {/* Pagination for projects */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={displayProjects.totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </>
               )}
             </>
           )}
@@ -405,7 +438,7 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {!graphsLoading && !graphsError && displayGraphs.length === 0 && (
+              {!graphsLoading && !graphsError && displayGraphs.items.length === 0 && (
                 <div style={{
                   textAlign: 'center',
                   padding: '60px 20px',
@@ -427,24 +460,33 @@ export default function LandingPage() {
                 </div>
               )}
 
-              {!graphsLoading && !graphsError && displayGraphs.length > 0 && (
-                <PaperWorkGrid columns={4} gap="20px">
-                  {displayGraphs.map(graph => (
-                    <PaperWorkCard
-                      key={graph.id}
-                      project={{
-                        id: graph.id,
-                        name: graph.name,
-                        description: graph.description,
-                        graphCount: graph.nodeCount,
-                        createdAt: graph.createdAt,
-                        updatedAt: graph.updatedAt,
-                        userId: selectedProject?.userId || '',
-                      }}
-                      onClick={(graphId) => router.push(`/graph?graphId=${graphId}`)}
-                    />
-                  ))}
-                </PaperWorkGrid>
+              {!graphsLoading && !graphsError && displayGraphs.items.length > 0 && (
+                <>
+                  <PaperWorkGrid columns={4} gap="20px">
+                    {displayGraphs.items.map(graph => (
+                      <PaperWorkCard
+                        key={graph.id}
+                        project={{
+                          id: graph.id,
+                          name: graph.name,
+                          description: graph.description,
+                          graphCount: graph.nodeCount,
+                          createdAt: graph.createdAt,
+                          updatedAt: graph.updatedAt,
+                          userId: selectedProject?.userId || '',
+                        }}
+                        onClick={(graphId) => router.push(`/graph?graphId=${graphId}`)}
+                      />
+                    ))}
+                  </PaperWorkGrid>
+                  
+                  {/* Pagination for graphs */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={displayGraphs.totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </>
               )}
             </>
           )}
