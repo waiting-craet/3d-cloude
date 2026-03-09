@@ -475,7 +475,7 @@ export default function LandingPage() {
                           updatedAt: graph.updatedAt,
                           userId: selectedProject?.userId || '',
                         }}
-                        onClick={(graphId) => router.push(`/graph?graphId=${graphId}`)}
+                        onClick={(graphId) => router.push(`/graph?graphId=${graphId}&from=homepage`)}
                       />
                     ))}
                   </PaperWorkGrid>

@@ -755,8 +755,7 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
         </div>
         )}
 
-        {/* 搜索框 - 仅在完整模式下显示 */}
-        {mode === 'full' && (
+        {/* 搜索框 */}
         <div style={{ position: 'relative', flex: '0 0 400px' }}>
           <input
             type="text"
@@ -890,12 +889,12 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
             </div>
           )}
         </div>
-        )}
 
-        {/* 右侧按钮区域 */}
+        {/* 右侧按钮区域 - 仅在完整模式下显示 */}
+        {mode === 'full' && (
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* 管理员专属：快速创建按钮 - 仅在完整模式下显示 */}
-          {mode === 'full' && isLoggedIn && (
+          {/* 管理员专属：快速创建按钮 */}
+          {isLoggedIn && (
             <button
               onClick={() => router.push('/workflow')}
               style={{
@@ -930,8 +929,8 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
             </button>
           )}
 
-          {/* 管理员专属：新建图谱按钮 - 仅在完整模式下显示 */}
-          {mode === 'full' && isLoggedIn && (
+          {/* 管理员专属：新建图谱按钮 */}
+          {isLoggedIn && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               style={{
@@ -965,6 +964,7 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
             </button>
           )}
         </div>
+        )}
       </nav>
 
       {/* 新建项目弹窗 */}
