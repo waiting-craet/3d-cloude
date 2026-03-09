@@ -13,6 +13,8 @@ COPY public ./public
 COPY prisma ./prisma
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
+RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
+
 USER nextjs
 
 EXPOSE 3000
