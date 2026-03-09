@@ -5,6 +5,7 @@ import { useGraphStore } from '@/lib/store'
 import { getThemeConfig } from '@/lib/theme'
 import { EditableInput } from './EditableInput'
 import { InlineImageUpload } from './InlineImageUpload'
+import { InlineVideoUpload } from './InlineVideoUpload'
 import { ColorPicker } from './ColorPicker'
 import { ShapeSelector } from './ShapeSelector'
 import { SizeSelector } from './SizeSelector'
@@ -21,6 +22,7 @@ export default function NodeDetailPanel() {
   const [editedName, setEditedName] = useState('')
   const [editedDescription, setEditedDescription] = useState('')
   const [editedImageUrl, setEditedImageUrl] = useState('')
+  const [editedVideoUrl, setEditedVideoUrl] = useState('')
   const [editedColor, setEditedColor] = useState('')
   const [editedTextColor, setEditedTextColor] = useState('')
   const [colorMode, setColorMode] = useState<'node' | 'text'>('node')
@@ -32,6 +34,7 @@ export default function NodeDetailPanel() {
     name: '',
     description: '',
     imageUrl: '',
+    videoUrl: '',
     color: '',
     textColor: '',
     shape: '',
@@ -43,6 +46,7 @@ export default function NodeDetailPanel() {
     name: '',
     description: '',
     imageUrl: '',
+    videoUrl: '',
     color: '',
     textColor: '',
     shape: '',
@@ -53,6 +57,7 @@ export default function NodeDetailPanel() {
       name: '',
       description: '',
       imageUrl: '',
+      videoUrl: '',
       color: '',
       textColor: '',
       shape: '',
@@ -66,6 +71,7 @@ export default function NodeDetailPanel() {
       name: editedName,
       description: editedDescription,
       imageUrl: editedImageUrl,
+      videoUrl: editedVideoUrl,
       color: editedColor,
       textColor: editedTextColor,
       shape: editedShape,
@@ -74,7 +80,7 @@ export default function NodeDetailPanel() {
       isDeleting: isDeleting,
       originalValues: originalValues
     }
-  }, [editedName, editedDescription, editedImageUrl, editedColor, editedTextColor, editedShape, editedSize, selectedNode?.id, isDeleting, originalValues])
+  }, [editedName, editedDescription, editedImageUrl, editedVideoUrl, editedColor, editedTextColor, editedShape, editedSize, selectedNode?.id, isDeleting, originalValues])
 
   useEffect(() => {
     if (selectedNode) {
@@ -96,6 +102,7 @@ export default function NodeDetailPanel() {
       setEditedName(selectedNode.name || '')
       setEditedDescription(selectedNode.description || '')
       setEditedImageUrl(selectedNode.imageUrl || '')
+      setEditedVideoUrl(selectedNode.videoUrl || '')
       setEditedColor(originalColor)
       setEditedTextColor(originalTextColor)
       setEditedShape(originalShape)
@@ -106,6 +113,7 @@ export default function NodeDetailPanel() {
         name: selectedNode.name || '',
         description: selectedNode.description || '',
         imageUrl: selectedNode.imageUrl || '',
+        videoUrl: selectedNode.videoUrl || '',
         color: originalColor,
         textColor: originalTextColor,
         shape: originalShape,
@@ -140,7 +148,8 @@ export default function NodeDetailPanel() {
     return (
       editedName !== originalValues.name ||
       editedDescription !== originalValues.description ||
-      editedImageUrl !== originalValues.imageUrl
+      editedImageUrl !== originalValues.imageUrl ||
+      editedVideoUrl !== originalValues.videoUrl
     )
   }
 
@@ -249,6 +258,7 @@ export default function NodeDetailPanel() {
           name: editedName,
           description: editedDescription,
           imageUrl: editedImageUrl,
+          videoUrl: editedVideoUrl,
         }),
       })
 
@@ -263,6 +273,7 @@ export default function NodeDetailPanel() {
         name: editedName,
         description: editedDescription,
         imageUrl: editedImageUrl,
+        videoUrl: editedVideoUrl,
       })
 
       return true
@@ -325,7 +336,8 @@ export default function NodeDetailPanel() {
         const hasBasicChanges = 
           state.name !== state.originalValues.name ||
           state.description !== state.originalValues.description ||
-          state.imageUrl !== state.originalValues.imageUrl
+          state.imageUrl !== state.originalValues.imageUrl ||
+          state.videoUrl !== state.originalValues.videoUrl
 
         // 检查外观修改
         const hasAppearanceChanges = 
@@ -354,6 +366,7 @@ export default function NodeDetailPanel() {
               name: state.name,
               description: state.description,
               imageUrl: state.imageUrl,
+              videoUrl: state.videoUrl,
             }),
           })
           .then(response => {
@@ -690,6 +703,14 @@ export default function NodeDetailPanel() {
               currentImageUrl={editedImageUrl}
               onImageChange={setEditedImageUrl}
               disabled={isSaving || navigationMode === 'readonly'}
+            />
+
+            <InlineVideoUpload
+              nodeId={selectedNode.id}
+              currentVideoUrl={editedVideoUrl}
+              onVideoChange={setEditedVideoUrl}
+              disabled={isSaving}
+              readonly={navigationMode === 'readonly'}
             />
           </>
         )}
