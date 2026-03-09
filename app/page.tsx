@@ -258,11 +258,15 @@ export default function LandingPage() {
   }, [graphs, searchQuery, currentPage])()
 
   return (
-    <main style={{
+    <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #e8f0ed 0%, #d4e4df 100%)',
-      color: '#333'
+      display: 'flex',
+      flexDirection: 'column'
     }}>
+      <main style={{
+        flex: '1',
+        color: '#333'
+      }}>
       {/* Skip to main content link for keyboard navigation */}
       <a 
         href="#main-content" 
@@ -296,7 +300,10 @@ export default function LandingPage() {
       />
 
       {/* Add padding to account for fixed navbar */}
-      <div id="main-content" style={{ paddingTop: '64px' }}>
+      <div id="main-content" style={{ 
+        paddingTop: '64px',
+        background: 'linear-gradient(135deg, #e8f0ed 0%, #d4e4df 100%)'
+      }}>
         {/* Hero Section */}
         <PaperHeroSection
           title="构建与发现知识的无尽脉络"
@@ -494,6 +501,7 @@ export default function LandingPage() {
           )}
         </PaperGallerySection>
       </div>
+    </main>
 
       {/* Footer */}
       <PaperFooter />
@@ -503,6 +511,6 @@ export default function LandingPage() {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
       />
-    </main>
+    </div>
   )
 }

@@ -280,6 +280,9 @@ async function handleSaveGraph(request: NextRequest) {
               x: 0,
               y: 0,
               z: 0,
+              color: '#3b82f6',
+              size: 2.0,
+              shape: 'sphere',
             },
           });
         })
