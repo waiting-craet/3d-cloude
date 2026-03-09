@@ -270,10 +270,14 @@ async function handleSaveGraph(request: NextRequest) {
       // Step 3: Create new nodes
       const createdNodes = await Promise.all(
         mergeResult.nodesToCreate.map(async (nodeData: NodeToCreate) => {
+          // Extract description from properties if it exists
+          const description = nodeData.properties?.description || '';
+          
           return await tx.node.create({
             data: {
               name: nodeData.name,
               type: nodeData.type || 'entity',
+              description: description, // Save description to dedicated field
               metadata: JSON.stringify(nodeData.properties || {}),
               projectId: body.projectId,
               graphId: graph.id,
@@ -298,9 +302,19 @@ async function handleSaveGraph(request: NextRequest) {
       // Step 4: Update existing nodes (merge)
       await Promise.all(
         mergeResult.nodesToUpdate.map(async (update: NodeToUpdate) => {
+          // Parse metadata to extract description
+          let description = '';
+          try {
+            const metadata = JSON.parse(update.updates.metadata);
+            description = metadata.description || '';
+          } catch (error) {
+            console.warn('[AI Save Graph] Failed to parse metadata for description:', error);
+          }
+          
           return await tx.node.update({
             where: { id: update.id },
             data: {
+              description: description, // Update description field
               metadata: update.updates.metadata,
               updatedAt: new Date(),
             },

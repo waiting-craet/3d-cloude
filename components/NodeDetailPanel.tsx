@@ -9,6 +9,7 @@ import { InlineVideoUpload } from './InlineVideoUpload'
 import { ColorPicker } from './ColorPicker'
 import { ShapeSelector } from './ShapeSelector'
 import { SizeSelector } from './SizeSelector'
+import MediaPreviewModal from './MediaPreviewModal'
 
 export default function NodeDetailPanel() {
   const { selectedNode, setSelectedNode, deleteNode, fetchGraph, updateNodeLocal, updateNode, theme, navigationMode } = useGraphStore()
@@ -16,6 +17,7 @@ export default function NodeDetailPanel() {
   const [isSaving, setIsSaving] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false) // 标记是否正在删除
+  const [previewMedia, setPreviewMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null)
 
   const themeConfig = getThemeConfig(theme)
 
@@ -515,31 +517,45 @@ export default function NodeDetailPanel() {
     }
   }
 
+  // 判断URL是否为视频
+  const isVideoUrl = (url: string): boolean => {
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv']
+    const lowerUrl = url.toLowerCase()
+    return videoExtensions.some(ext => lowerUrl.includes(ext))
+  }
+
+  // 处理媒体点击
+  const handleMediaClick = (url: string) => {
+    const type = isVideoUrl(url) ? 'video' : 'image'
+    setPreviewMedia({ url, type })
+  }
+
   if (!selectedNode) return null
 
   return (
-    <div
-      onClick={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      style={{
-        position: 'fixed',
-        top: '70px',
-        right: '20px',
-        width: '380px',
-        maxHeight: 'calc(100vh - 100px)',
-        background: themeConfig.panelBackground,
-        borderRadius: '16px',
-        boxShadow: themeConfig.panelShadow,
-        zIndex: 1000,
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        border: `1px solid ${themeConfig.panelBorder}`,
-        animation: 'slideInRight 0.3s ease-out',
-        transition: 'all 0.3s ease',
-      }}>
+    <>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        style={{
+          position: 'fixed',
+          top: '70px',
+          right: '20px',
+          width: '380px',
+          maxHeight: 'calc(100vh - 100px)',
+          background: themeConfig.panelBackground,
+          borderRadius: '16px',
+          boxShadow: themeConfig.panelShadow,
+          zIndex: 1000,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          border: `1px solid ${themeConfig.panelBorder}`,
+          animation: 'slideInRight 0.3s ease-out',
+          transition: 'all 0.3s ease',
+        }}>
       <div style={{
         padding: '24px',
         background: themeConfig.panelHeaderBackground,
@@ -678,45 +694,177 @@ export default function NodeDetailPanel() {
           </>
         ) : (
           <>
-            <EditableInput
-              label="名称"
-              value={editedName}
-              onChange={setEditedName}
-              placeholder="输入节点名称"
-              maxLength={100}
-              disabled={isSaving || navigationMode === 'readonly'}
-            />
+            {/* 只读模式：显示只读的名称和描述 */}
+            {navigationMode === 'readonly' ? (
+              <>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '8px',
+                  }}>
+                    名称
+                  </label>
+                  <div style={{
+                    padding: '12px',
+                    background: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    minHeight: '44px',
+                  }}>
+                    {editedName || '无名称'}
+                  </div>
+                </div>
 
-            <EditableInput
-              label="描述"
-              value={editedDescription}
-              onChange={setEditedDescription}
-              placeholder="输入节点描述"
-              maxLength={1000}
-              multiline
-              rows={4}
-              disabled={isSaving || navigationMode === 'readonly'}
-            />
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '8px',
+                  }}>
+                    描述
+                  </label>
+                  <div style={{
+                    padding: '12px',
+                    background: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    minHeight: '100px',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    {editedDescription || '无描述'}
+                  </div>
+                </div>
 
-            <InlineImageUpload
-              nodeId={selectedNode.id}
-              currentImageUrl={editedImageUrl}
-              onImageChange={setEditedImageUrl}
-              disabled={isSaving || navigationMode === 'readonly'}
-            />
+                {/* 只读模式下的图片/视频显示 */}
+                {editedImageUrl && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '8px',
+                    }}>
+                      {isVideoUrl(editedImageUrl) ? '节点视频' : '节点图片'}
+                    </label>
+                    <div
+                      onClick={() => handleMediaClick(editedImageUrl)}
+                      style={{
+                        width: '100%',
+                        height: '200px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: '2px solid #e5e7eb',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.02)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 182, 255, 0.3)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = 'none'
+                      }}
+                    >
+                      {isVideoUrl(editedImageUrl) ? (
+                        <video
+                          src={editedImageUrl}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            pointerEvents: 'none',
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={editedImageUrl}
+                          alt="节点图片"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      )}
+                      {/* 放大图标提示 */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(0, 0, 0, 0.6)',
+                        color: 'white',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        backdropFilter: 'blur(4px)',
+                      }}>
+                        <span style={{ fontSize: '14px' }}>🔍</span>
+                        点击预览
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* 编辑模式：可编辑的输入框 */}
+                <EditableInput
+                  label="名称"
+                  value={editedName}
+                  onChange={setEditedName}
+                  placeholder="输入节点名称"
+                  maxLength={100}
+                  disabled={isSaving}
+                />
 
-            <InlineVideoUpload
-              nodeId={selectedNode.id}
-              currentVideoUrl={editedVideoUrl}
-              onVideoChange={setEditedVideoUrl}
-              disabled={isSaving}
-              readonly={navigationMode === 'readonly'}
-            />
+                <EditableInput
+                  label="描述"
+                  value={editedDescription}
+                  onChange={setEditedDescription}
+                  placeholder="输入节点描述"
+                  maxLength={1000}
+                  multiline
+                  rows={4}
+                  disabled={isSaving}
+                />
+
+                <InlineImageUpload
+                  nodeId={selectedNode.id}
+                  currentImageUrl={editedImageUrl}
+                  onImageChange={setEditedImageUrl}
+                  disabled={isSaving}
+                  onPreviewClick={handleMediaClick}
+                />
+
+                <InlineVideoUpload
+                  nodeId={selectedNode.id}
+                  currentVideoUrl={editedVideoUrl}
+                  onVideoChange={setEditedVideoUrl}
+                  disabled={isSaving}
+                  readonly={(navigationMode as 'full' | 'readonly') === 'readonly'}
+                />
+              </>
+            )}
           </>
         )}
       </div>
 
-      {isAdmin && navigationMode !== 'readonly' && (
+      {navigationMode !== 'readonly' && (
         <div style={{
           padding: '20px',
           borderTop: `1px solid ${themeConfig.dividerColor}`,
@@ -810,5 +958,15 @@ export default function NodeDetailPanel() {
         </div>
       )}
     </div>
+
+    {/* 媒体预览模态框 */}
+    {previewMedia && (
+      <MediaPreviewModal
+        mediaUrl={previewMedia.url}
+        mediaType={previewMedia.type}
+        onClose={() => setPreviewMedia(null)}
+      />
+    )}
+  </>
   )
 }
