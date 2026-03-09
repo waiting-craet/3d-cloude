@@ -10,7 +10,7 @@ import { ShapeSelector } from './ShapeSelector'
 import { SizeSelector } from './SizeSelector'
 
 export default function NodeDetailPanel() {
-  const { selectedNode, setSelectedNode, deleteNode, fetchGraph, updateNodeLocal, updateNode, theme } = useGraphStore()
+  const { selectedNode, setSelectedNode, deleteNode, fetchGraph, updateNodeLocal, updateNode, theme, navigationMode } = useGraphStore()
   const [isAdmin, setIsAdmin] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
@@ -648,19 +648,19 @@ export default function NodeDetailPanel() {
             <ColorPicker
               value={colorMode === 'node' ? editedColor : editedTextColor}
               onChange={handleColorChange}
-              disabled={isSaving}
+              disabled={isSaving || navigationMode === 'readonly'}
             />
 
             <ShapeSelector
               value={editedShape}
               onChange={handleShapeChange}
-              disabled={isSaving}
+              disabled={isSaving || navigationMode === 'readonly'}
             />
 
             <SizeSelector
               value={editedSize}
               onChange={handleSizeChange}
-              disabled={isSaving}
+              disabled={isSaving || navigationMode === 'readonly'}
             />
           </>
         ) : (
@@ -671,7 +671,7 @@ export default function NodeDetailPanel() {
               onChange={setEditedName}
               placeholder="输入节点名称"
               maxLength={100}
-              disabled={isSaving}
+              disabled={isSaving || navigationMode === 'readonly'}
             />
 
             <EditableInput
@@ -682,20 +682,20 @@ export default function NodeDetailPanel() {
               maxLength={1000}
               multiline
               rows={4}
-              disabled={isSaving}
+              disabled={isSaving || navigationMode === 'readonly'}
             />
 
             <InlineImageUpload
               nodeId={selectedNode.id}
               currentImageUrl={editedImageUrl}
               onImageChange={setEditedImageUrl}
-              disabled={isSaving}
+              disabled={isSaving || navigationMode === 'readonly'}
             />
           </>
         )}
       </div>
 
-      {isAdmin && (
+      {isAdmin && navigationMode !== 'readonly' && (
         <div style={{
           padding: '20px',
           borderTop: `1px solid ${themeConfig.dividerColor}`,

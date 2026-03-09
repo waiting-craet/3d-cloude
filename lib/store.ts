@@ -122,6 +122,7 @@ export interface GraphStore {
   currentGraph: KnowledgeGraph | null
   theme: 'light' | 'dark'
   hasUnsavedChanges: boolean
+  navigationMode: 'full' | 'readonly'
   setNodes: (nodes: Node[]) => void
   setEdges: (edges: Edge[]) => void
   setSelectedNode: (node: Node | null) => void
@@ -135,6 +136,7 @@ export interface GraphStore {
   setTheme: (theme: 'light' | 'dark') => void
   toggleTheme: () => void
   setHasUnsavedChanges: (value: boolean) => void
+  setNavigationMode: (mode: 'full' | 'readonly') => void
   addNode: (node: Partial<Node>) => Promise<void>
   addEdge: (edge: Partial<Edge>) => Promise<void>
   updateNodePosition: (id: string, x: number, y: number, z: number) => void
@@ -163,6 +165,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   currentGraph: null,
   theme: 'dark',
   hasUnsavedChanges: false,
+  navigationMode: 'full',
   
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -175,6 +178,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setCurrentProject: (project) => set({ currentProject: project }),
   setCurrentGraph: (graph) => set({ currentGraph: graph }),
   setHasUnsavedChanges: (value) => set({ hasUnsavedChanges: value }),
+  setNavigationMode: (mode) => set({ navigationMode: mode }),
   
   setTheme: (theme: 'light' | 'dark') => {
     set({ theme })

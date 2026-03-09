@@ -8,11 +8,8 @@ import TopNavbar from '@/components/TopNavbar'
 import NodeDetailPanel from '@/components/NodeDetailPanel'
 import FloatingAddButton from '@/components/FloatingAddButton'
 
-// 导航模式类型
-type NavigationMode = 'full' | 'readonly'
-
 // 根据来源确定导航模式
-function determineNavigationMode(referrer: string | undefined): NavigationMode {
+function determineNavigationMode(referrer: string | undefined): 'full' | 'readonly' {
   // 如果没有referrer，默认使用完整模式（可能是刷新页面或直接访问）
   if (!referrer) {
     return 'full'
@@ -41,10 +38,9 @@ export default function GraphPage() {
   const graphId = searchParams.get('graphId')
   const fromParam = searchParams.get('from')
   
-  const { theme, setTheme, loadGraphById, currentGraph } = useGraphStore()
+  const { theme, setTheme, loadGraphById, currentGraph, navigationMode, setNavigationMode } = useGraphStore()
   const [isInitializing, setIsInitializing] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [navigationMode, setNavigationMode] = useState<NavigationMode>('full')
 
   // 检测导航来源并设置模式
   useEffect(() => {

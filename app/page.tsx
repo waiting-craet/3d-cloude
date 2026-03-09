@@ -8,6 +8,7 @@ import PaperHeroSection from '@/components/PaperHeroSection'
 import { PaperGallerySection } from '@/components/PaperGallerySection'
 import { PaperWorkGrid } from '@/components/PaperWorkGrid'
 import PaperWorkCard from '@/components/PaperWorkCard'
+import GraphCard from '@/components/GraphCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorMessage from '@/components/ErrorMessage'
 import PaperFooter from '@/components/PaperFooter'
@@ -464,16 +465,17 @@ export default function LandingPage() {
                 <>
                   <PaperWorkGrid columns={4} gap="20px">
                     {displayGraphs.items.map(graph => (
-                      <PaperWorkCard
+                      <GraphCard
                         key={graph.id}
-                        project={{
+                        graph={{
                           id: graph.id,
                           name: graph.name,
-                          description: graph.description,
-                          graphCount: graph.nodeCount,
-                          createdAt: graph.createdAt,
-                          updatedAt: graph.updatedAt,
-                          userId: selectedProject?.userId || '',
+                          description: graph.description || null,
+                          nodeCount: graph.nodeCount,
+                          edgeCount: graph.edgeCount,
+                          createdAt: new Date(graph.createdAt),
+                          updatedAt: new Date(graph.updatedAt),
+                          projectId: selectedProject?.id || '',
                         }}
                         onClick={(graphId) => router.push(`/graph?graphId=${graphId}&from=homepage`)}
                       />
