@@ -1,10 +1,43 @@
 ﻿'use client'
 
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useFrame, ThreeEvent, useThree } from '@react-three/fiber'
 import { Text } from '@react-three/drei'
 import { useGraphStore } from '@/lib/store'
 import * as THREE from 'three'
+
+/**
+ * Throttle function to limit execution frequency
+ * @param func Function to throttle
+ * @param limit Time limit in milliseconds (16ms = ~60fps)
+ */
+function throttle<T extends (...args: any[]) => void>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean = false
+  let lastArgs: Parameters<T> | null = null
+  let timeoutId: NodeJS.Timeout | null = null
+
+  return function (this: any, ...args: Parameters<T>) {
+    if (!inThrottle) {
+      func.apply(this, args)
+      inThrottle = true
+      
+      setTimeout(() => {
+        inThrottle = false
+        // Execute with last args if there were additional calls during throttle
+        if (lastArgs) {
+          func.apply(this, lastArgs)
+          lastArgs = null
+        }
+      }, limit)
+    } else {
+      // Store the latest args to execute after throttle period
+      lastArgs = args
+    }
+  }
+}
 
 interface BillboardConfig {
   updateThreshold: number
@@ -231,6 +264,14 @@ function Node({ node, onClick, onDrag }: NodeProps) {
   const isSelected = selectedNode?.id === node.id
   const shape = node.shape || 'sphere'
 
+  // Create throttled drag handler (16ms = ~60fps)
+  const throttledOnDrag = useCallback(
+    throttle((node: any, position: THREE.Vector3) => {
+      onDrag(node, position)
+    }, 16),
+    [onDrag]
+  )
+
   useFrame(() => {
     if (meshRef.current) {
       const targetScale = hovered ? 1.15 : isSelected ? 1.2 : 1
@@ -274,7 +315,8 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       raycaster.ray.intersectPlane(plane, intersection)
 
       if (intersection) {
-        onDrag(node, intersection)
+        // Use throttled drag handler to limit updates to ~60fps
+        throttledOnDrag(node, intersection)
         hasMoved.current = true
       }
     }
@@ -304,7 +346,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       window.removeEventListener('pointermove', handleGlobalPointerMove)
       window.removeEventListener('pointerup', handleGlobalPointerUp)
     }
-  }, [isPressed, camera, node, onDrag, setIsDragging])
+  }, [isPressed, camera, node, throttledOnDrag, setIsDragging])
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
