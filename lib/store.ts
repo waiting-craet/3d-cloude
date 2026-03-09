@@ -1,5 +1,72 @@
 import { create } from 'zustand'
 
+// Throttle function for caching
+let cacheTimer: NodeJS.Timeout | null = null
+const CACHE_THROTTLE_MS = 1000 // 1 second throttle
+
+function cacheNodePositions(graphId: string, nodes: Node[]) {
+  if (cacheTimer) {
+    clearTimeout(cacheTimer)
+  }
+  
+  cacheTimer = setTimeout(() => {
+    try {
+      const cacheKey = `graph_positions_${graphId}`
+      const positionsData = {
+        graphId,
+        positions: nodes.map(node => ({
+          id: node.id,
+          x: node.x,
+          y: node.y,
+          z: node.z,
+        })),
+        timestamp: new Date().toISOString(),
+      }
+      
+      localStorage.setItem(cacheKey, JSON.stringify(positionsData))
+      console.log('✅ [缓存] 节点位置已缓存到 localStorage:', nodes.length, '个节点')
+    } catch (error) {
+      console.warn('⚠️ [缓存] 无法缓存节点位置到 localStorage:', error)
+    }
+  }, CACHE_THROTTLE_MS)
+}
+
+function restoreCachedPositions(graphId: string): Array<{ id: string; x: number; y: number; z: number }> | null {
+  try {
+    const cacheKey = `graph_positions_${graphId}`
+    const cached = localStorage.getItem(cacheKey)
+    
+    if (!cached) {
+      return null
+    }
+    
+    const data = JSON.parse(cached)
+    
+    // Validate cache data
+    if (!data.graphId || data.graphId !== graphId || !Array.isArray(data.positions)) {
+      console.warn('⚠️ [缓存] 缓存数据格式无效，清除缓存')
+      localStorage.removeItem(cacheKey)
+      return null
+    }
+    
+    // Check if cache is not too old (e.g., 24 hours)
+    const cacheAge = Date.now() - new Date(data.timestamp).getTime()
+    const MAX_CACHE_AGE = 24 * 60 * 60 * 1000 // 24 hours
+    
+    if (cacheAge > MAX_CACHE_AGE) {
+      console.log('⚠️ [缓存] 缓存已过期，清除缓存')
+      localStorage.removeItem(cacheKey)
+      return null
+    }
+    
+    console.log('✅ [缓存] 从 localStorage 恢复节点位置:', data.positions.length, '个节点')
+    return data.positions
+  } catch (error) {
+    console.warn('⚠️ [缓存] 无法从 localStorage 恢复节点位置:', error)
+    return null
+  }
+}
+
 export interface Node {
   id: string
   name: string
@@ -54,6 +121,8 @@ export interface GraphStore {
   currentProject: Project | null
   currentGraph: KnowledgeGraph | null
   theme: 'light' | 'dark'
+  hasUnsavedChanges: boolean
+  navigationMode: 'full' | 'readonly'
   setNodes: (nodes: Node[]) => void
   setEdges: (edges: Edge[]) => void
   setSelectedNode: (node: Node | null) => void
@@ -66,6 +135,8 @@ export interface GraphStore {
   setCurrentGraph: (graph: KnowledgeGraph | null) => void
   setTheme: (theme: 'light' | 'dark') => void
   toggleTheme: () => void
+  setHasUnsavedChanges: (value: boolean) => void
+  setNavigationMode: (mode: 'full' | 'readonly') => void
   addNode: (node: Partial<Node>) => Promise<void>
   addEdge: (edge: Partial<Edge>) => Promise<void>
   updateNodePosition: (id: string, x: number, y: number, z: number) => void
@@ -93,6 +164,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   currentProject: null,
   currentGraph: null,
   theme: 'dark',
+  hasUnsavedChanges: false,
+  navigationMode: 'full',
   
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -104,6 +177,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setProjects: (projects) => set({ projects }),
   setCurrentProject: (project) => set({ currentProject: project }),
   setCurrentGraph: (graph) => set({ currentGraph: graph }),
+  setHasUnsavedChanges: (value) => set({ hasUnsavedChanges: value }),
+  setNavigationMode: (mode) => set({ navigationMode: mode }),
   
   setTheme: (theme: 'light' | 'dark') => {
     set({ theme })
@@ -243,6 +318,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   },
   
   updateNodePosition: (id, x, y, z) => {
+    // Validate coordinates are finite numbers
+    if (!isFinite(x) || !isFinite(y) || !isFinite(z)) {
+      console.error('Invalid node position: coordinates must be finite numbers', { id, x, y, z })
+      return
+    }
+    
     set((state) => ({
       nodes: state.nodes.map((node) =>
         node.id === id ? { ...node, x, y, z } : node
@@ -250,7 +331,14 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       selectedNode: state.selectedNode?.id === id 
         ? { ...state.selectedNode, x, y, z }
         : state.selectedNode,
+      hasUnsavedChanges: true,
     }))
+    
+    // Cache positions to localStorage with throttling
+    const state = get()
+    if (state.currentGraph?.id) {
+      cacheNodePositions(state.currentGraph.id, state.nodes)
+    }
   },
 
   updateNode: async (id, updates) => {
@@ -338,23 +426,114 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       console.log('🔄 正在加载图谱数据:', currentGraph.name, currentGraph.id)
       set({ isLoading: true })
       
-      // 使用图谱专属API加载数据
-      const [nodesRes, edgesRes] = await Promise.all([
-        fetch(`/api/graphs/${currentGraph.id}/nodes`),
+      // 使用图谱专属API加载数据（包括完整的图谱信息以获取settings）
+      const [graphRes, edgesRes] = await Promise.all([
+        fetch(`/api/graphs/${currentGraph.id}`),
         fetch(`/api/graphs/${currentGraph.id}/edges`),
       ])
       
-      if (nodesRes.ok && edgesRes.ok) {
-        const nodesData = await nodesRes.json()
+      if (graphRes.ok && edgesRes.ok) {
+        const graphData = await graphRes.json()
         const edgesData = await edgesRes.json()
         
-        const nodes = nodesData.nodes || []
+        let nodes = graphData.nodes || []
         const edges = edgesData.edges || []
+        const graph = graphData.graph
+        
+        // 尝试恢复保存的位置数据（优先级：数据库 > localStorage）
+        let positionsRestored = false
+        
+        // 首先尝试从数据库的 settings.workflowPositions 恢复
+        if (graph?.settings) {
+          try {
+            const settings = typeof graph.settings === 'string' 
+              ? JSON.parse(graph.settings) 
+              : graph.settings
+            
+            if (settings.workflowPositions?.nodes && Array.isArray(settings.workflowPositions.nodes)) {
+              const savedPositions = settings.workflowPositions.nodes
+              console.log('🔄 [fetchGraph] 发现数据库中保存的位置数据，应用到节点...')
+              console.log('   保存的位置数:', savedPositions.length)
+              
+              // 检查保存的位置数据是否包含 z 坐标字段（不检查值，因为 z=0 是有效的）
+              const hasZCoordinate = savedPositions.some((p: any) => p.z !== undefined)
+              
+              if (!hasZCoordinate) {
+                console.warn('⚠️ [fetchGraph] 保存的位置数据缺少 z 坐标字段（可能是旧的 2D 数据），跳过恢复')
+                console.log('   建议：重新拖拽节点并保存以更新位置数据')
+              } else {
+                // Create a map for quick lookup
+                const savedMap = new Map(savedPositions.map((p: any) => [p.id, p]))
+                
+                // Apply saved positions to nodes
+                nodes = nodes.map(node => {
+                  const saved = savedMap.get(node.id)
+                  if (saved) {
+                    // 恢复完整的 3D 坐标（x, y, z）
+                    // 注意：z=0 是有效的坐标值，不应该被跳过
+                    return {
+                      ...node,
+                      x: saved.x,
+                      y: saved.y,
+                      z: saved.z !== undefined ? saved.z : (node.z || 0), // 优先使用保存的 z，否则使用原有 z
+                    }
+                  }
+                  return node
+                })
+                
+                positionsRestored = true
+                console.log('✅ [fetchGraph] 已应用数据库中保存的位置数据')
+                
+                // 清除 localStorage 缓存（因为数据库数据更权威）
+                try {
+                  const cacheKey = `graph_positions_${currentGraph.id}`
+                  localStorage.removeItem(cacheKey)
+                } catch (error) {
+                  console.warn('⚠️ [fetchGraph] 清除缓存失败:', error)
+                }
+              }
+            }
+          } catch (error) {
+            console.warn('⚠️ [fetchGraph] 解析 settings 失败:', error)
+          }
+        }
+        
+        // 如果数据库中没有保存的位置，尝试从 localStorage 恢复缓存
+        if (!positionsRestored) {
+          const cachedPositions = restoreCachedPositions(currentGraph.id)
+          
+          if (cachedPositions && cachedPositions.length > 0) {
+            console.log('🔄 [fetchGraph] 发现 localStorage 缓存的位置数据，应用到节点...')
+            
+            // Create a map for quick lookup
+            const cachedMap = new Map(cachedPositions.map(p => [p.id, p]))
+            
+            // Apply cached positions to nodes
+            nodes = nodes.map(node => {
+              const cached = cachedMap.get(node.id)
+              if (cached) {
+                return {
+                  ...node,
+                  x: cached.x,
+                  y: cached.y,
+                  z: cached.z,
+                }
+              }
+              return node
+            })
+            
+            positionsRestored = true
+            console.log('✅ [fetchGraph] 已应用 localStorage 缓存的位置数据')
+            
+            // Mark as having unsaved changes since we restored from cache
+            set({ hasUnsavedChanges: true })
+          }
+        }
         
         console.log('✅ 图谱数据加载成功:', nodes.length, '个节点,', edges.length, '条边')
         set({ nodes, edges, isLoading: false })
       } else {
-        console.error('❌ 获取数据失败 - 节点:', nodesRes.status, '边:', edgesRes.status)
+        console.error('❌ 获取数据失败 - 图谱:', graphRes.status, '边:', edgesRes.status)
         set({ nodes: [], edges: [], isLoading: false })
       }
     } catch (error) {
@@ -404,17 +583,103 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         settings: graph.settings,  // 包含settings字段（保存的位置数据）
       }
       
-      // 4. 更新状态
+      // 4. 尝试恢复保存的位置数据（优先级：数据库 > localStorage）
+      let finalNodes = nodes || []
+      let positionsRestored = false
+      let restoredFromCache = false
+      
+      // 4.1 首先尝试从数据库的 settings.workflowPositions 恢复
+      if (graph.settings) {
+        try {
+          const settings = typeof graph.settings === 'string' 
+            ? JSON.parse(graph.settings) 
+            : graph.settings
+          
+          if (settings.workflowPositions?.nodes && Array.isArray(settings.workflowPositions.nodes)) {
+            const savedPositions = settings.workflowPositions.nodes
+            console.log('🔄 [loadGraphById] 发现数据库中保存的位置数据，应用到节点...')
+            console.log('   保存的位置数:', savedPositions.length)
+            console.log('   保存时间:', settings.workflowPositions.lastSaved)
+            
+            // Create a map for quick lookup
+            const savedMap = new Map(savedPositions.map((p: any) => [p.id, p]))
+            
+            // Apply saved positions to nodes
+            finalNodes = finalNodes.map(node => {
+              const saved = savedMap.get(node.id)
+              if (saved) {
+                // 恢复完整的 3D 坐标（x, y, z）
+                return {
+                  ...node,
+                  x: saved.x,
+                  y: saved.y,
+                  z: saved.z !== undefined ? saved.z : (node.z || 0), // 优先使用保存的 z，否则使用原有 z
+                }
+              }
+              return node
+            })
+            
+            positionsRestored = true
+            console.log('✅ [loadGraphById] 已应用数据库中保存的位置数据')
+            
+            // 清除 localStorage 缓存（因为数据库数据更权威）
+            try {
+              const cacheKey = `graph_positions_${graphId}`
+              localStorage.removeItem(cacheKey)
+              console.log('🗑️ [loadGraphById] 已清除 localStorage 缓存')
+            } catch (error) {
+              console.warn('⚠️ [loadGraphById] 清除缓存失败:', error)
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️ [loadGraphById] 解析 settings 失败:', error)
+        }
+      }
+      
+      // 4.2 如果数据库中没有保存的位置，尝试从 localStorage 恢复缓存
+      if (!positionsRestored) {
+        const cachedPositions = restoreCachedPositions(graphId)
+        
+        if (cachedPositions && cachedPositions.length > 0) {
+          console.log('🔄 [loadGraphById] 发现 localStorage 缓存的位置数据，应用到节点...')
+          
+          // Create a map for quick lookup
+          const cachedMap = new Map(cachedPositions.map(p => [p.id, p]))
+          
+          // Apply cached positions to nodes
+          finalNodes = finalNodes.map(node => {
+            const cached = cachedMap.get(node.id)
+            if (cached) {
+              return {
+                ...node,
+                x: cached.x,
+                y: cached.y,
+                z: cached.z,
+              }
+            }
+            return node
+          })
+          
+          positionsRestored = true
+          restoredFromCache = true
+          console.log('✅ [loadGraphById] 已应用 localStorage 缓存的位置数据')
+          
+          // Mark as having unsaved changes since we restored from cache
+          set({ hasUnsavedChanges: true })
+        }
+      }
+      
+      // 5. 更新状态
       set({
         currentProject: project || null,
         currentGraph: knowledgeGraph,
-        nodes: nodes || [],
+        nodes: finalNodes,
         edges: edges || [],
         isLoading: false,
         error: null,
       })
       
-      // 5. 保存到 localStorage
+      // 6. 保存到 localStorage
       if (project) {
         localStorage.setItem('currentProjectId', project.id)
       }

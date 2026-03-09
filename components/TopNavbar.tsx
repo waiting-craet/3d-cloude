@@ -22,8 +22,10 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
     currentProject, 
     currentGraph,
     theme,
+    hasUnsavedChanges,
     setProjects,
     setSelectedNode,
+    setHasUnsavedChanges,
     createProject,
     addGraphToProject,
     switchGraph,
@@ -37,6 +39,11 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [showProjectMenu, setShowProjectMenu] = useState(false)
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null)
+  
+  // 保存按钮状态
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   
   const projectMenuRef = useRef<HTMLDivElement>(null)
 
@@ -151,6 +158,28 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
   useEffect(() => {
     initializeFromStorage()
   }, [initializeFromStorage])
+  
+  // 清除保存成功提示
+  useEffect(() => {
+    if (saveSuccess) {
+      const timer = setTimeout(() => {
+        setSaveSuccess(false)
+      }, 3000) // 3秒后清除成功提示
+      
+      return () => clearTimeout(timer)
+    }
+  }, [saveSuccess])
+  
+  // 清除保存错误提示
+  useEffect(() => {
+    if (saveError) {
+      const timer = setTimeout(() => {
+        setSaveError(null)
+      }, 5000) // 5秒后清除错误提示
+      
+      return () => clearTimeout(timer)
+    }
+  }, [saveError])
 
   // 点击外部关闭项目菜单
   useEffect(() => {
@@ -172,6 +201,132 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
 
   const handleLogout = () => {
     logout()
+  }
+
+  // 保存节点位置处理函数
+  const handleSavePositions = async () => {
+    // 验证图谱 ID 存在
+    if (!currentGraph?.id) {
+      console.error('❌ [保存位置] 图谱 ID 不存在')
+      setSaveError('请先选择一个图谱')
+      return
+    }
+
+    // 验证节点数组不为空
+    if (!nodes || nodes.length === 0) {
+      console.error('❌ [保存位置] 节点数组为空')
+      setSaveError('没有节点需要保存')
+      return
+    }
+
+    console.log('🔄 [保存位置] 开始保存节点位置...')
+    console.log('   图谱 ID:', currentGraph.id)
+    console.log('   节点数量:', nodes.length)
+
+    setIsSaving(true)
+    setSaveError(null)
+    setSaveSuccess(false)
+
+    try {
+      // 在保存前验证所有节点坐标
+      const invalidNodes = nodes.filter(node => 
+        !isFinite(node.x) || !isFinite(node.y) || !isFinite(node.z)
+      )
+      
+      if (invalidNodes.length > 0) {
+        console.error('❌ [保存位置] 发现无效坐标的节点:', invalidNodes.map(n => ({
+          id: n.id,
+          name: n.name,
+          x: n.x,
+          y: n.y,
+          z: n.z,
+        })))
+        setSaveError(`发现 ${invalidNodes.length} 个节点坐标无效，无法保存`)
+        return
+      }
+      
+      // 将三维坐标（x, y, z）保存到数据库
+      const nodePositions = nodes.map(node => ({
+        id: node.id,
+        x: node.x,
+        y: node.y,
+        z: node.z,  // 保存 z 坐标（3D 位置）
+      }))
+
+      // 构建包含 graphId、nodes 和 metadata 的请求负载
+      const payload = {
+        graphId: currentGraph.id,
+        nodes: nodePositions,
+        metadata: {
+          is3D: true,  // 设置 is3D 标志
+          savedAt: new Date().toISOString(),
+        },
+      }
+
+      console.log('📤 [保存位置] 发送请求:', {
+        graphId: payload.graphId,
+        nodeCount: payload.nodes.length,
+        metadata: payload.metadata,
+      })
+
+      // 调用 POST /api/graphs/save-positions API
+      const response = await fetch('/api/graphs/save-positions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await response.json()
+
+      // 根据 success 字段判断操作结果
+      if (response.ok && data.success) {
+        console.log('✅ [保存位置] 保存成功')
+        setSaveSuccess(true)
+        setHasUnsavedChanges(false)
+        
+        // 清除本地缓存（如果有的话）
+        try {
+          localStorage.removeItem(`graph_positions_${currentGraph.id}`)
+        } catch (error) {
+          console.warn('⚠️ [保存位置] 清除本地缓存失败:', error)
+        }
+      } else {
+        // 处理错误响应
+        let errorMessage = data.error || data.message || '保存失败'
+        
+        // 根据状态码显示相应错误消息
+        if (response.status === 401) {
+          errorMessage = '请先登录'
+        } else if (response.status === 403) {
+          errorMessage = '无权限修改此图谱'
+        } else if (response.status === 404) {
+          errorMessage = '图谱不存在或已被删除'
+        } else if (response.status >= 500) {
+          errorMessage = '服务器错误，请稍后重试'
+        }
+
+        console.error('❌ [保存位置] 保存失败:', errorMessage)
+        console.error('   响应状态:', response.status)
+        console.error('   响应数据:', data)
+        
+        setSaveError(errorMessage)
+      }
+    } catch (error) {
+      // 捕获网络错误并显示友好提示
+      console.error('❌ [保存位置] 网络错误:', error)
+      console.error('   错误详情:', {
+        message: error instanceof Error ? error.message : '未知错误',
+        stack: error instanceof Error ? error.stack : undefined,
+        type: error instanceof Error ? error.constructor.name : typeof error,
+      })
+      
+      const errorMessage = error instanceof Error ? error.message : '网络错误，请稍后重试'
+      setSaveError(errorMessage)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   // 获取当前主题配置
@@ -755,8 +910,7 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
         </div>
         )}
 
-        {/* 搜索框 - 仅在完整模式下显示 */}
-        {mode === 'full' && (
+        {/* 搜索框 */}
         <div style={{ position: 'relative', flex: '0 0 400px' }}>
           <input
             type="text"
@@ -890,12 +1044,89 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
             </div>
           )}
         </div>
-        )}
 
-        {/* 右侧按钮区域 */}
+        {/* 右侧按钮区域 - 仅在完整模式下显示 */}
+        {mode === 'full' && (
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* 管理员专属：快速创建按钮 - 仅在完整模式下显示 */}
-          {mode === 'full' && isLoggedIn && (
+          {/* 保存按钮 - 仅在完整模式下显示 */}
+          {currentGraph && (
+            <button
+              onClick={handleSavePositions}
+              disabled={isSaving || !hasUnsavedChanges}
+              style={{
+                padding: '10px 18px',
+                background: hasUnsavedChanges 
+                  ? (isSaving ? 'rgba(255, 193, 7, 0.6)' : 'linear-gradient(135deg, #FFC107 0%, #FFB300 100%)')
+                  : 'rgba(128, 128, 128, 0.3)',
+                border: hasUnsavedChanges ? '1px solid rgba(255, 193, 7, 0.5)' : '1px solid rgba(128, 128, 128, 0.3)',
+                borderRadius: '8px',
+                color: hasUnsavedChanges ? 'white' : 'rgba(255, 255, 255, 0.5)',
+                cursor: (isSaving || !hasUnsavedChanges) ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                boxShadow: hasUnsavedChanges ? '0 2px 8px rgba(255, 193, 7, 0.3)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                opacity: (isSaving || !hasUnsavedChanges) ? 0.6 : 1,
+              }}
+              onMouseOver={(e) => {
+                if (!isSaving && hasUnsavedChanges) {
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #FFD54F 0%, #FFC107 100%)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.4)'
+                }
+              }}
+              onMouseOut={(e) => {
+                if (!isSaving && hasUnsavedChanges) {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #FFC107 0%, #FFB300 100%)'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.3)'
+                }
+              }}
+              title={
+                !hasUnsavedChanges 
+                  ? '没有未保存的更改' 
+                  : isSaving 
+                    ? '正在保存...' 
+                    : '保存节点位置'
+              }
+            >
+              {isSaving ? (
+                <>
+                  <span style={{ 
+                    fontSize: '16px',
+                    animation: 'spin 1s linear infinite',
+                  }}>⟳</span>
+                  <span>保存中...</span>
+                </>
+              ) : saveSuccess ? (
+                <>
+                  <span style={{ fontSize: '16px' }}>✓</span>
+                  <span>已保存</span>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: '16px' }}>💾</span>
+                  <span>保存位置</span>
+                  {hasUnsavedChanges && (
+                    <span style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#FF5252',
+                      display: 'inline-block',
+                      marginLeft: '2px',
+                    }} />
+                  )}
+                </>
+              )}
+            </button>
+          )}
+          
+          {/* 管理员专属：快速创建按钮 */}
+          {isLoggedIn && (
             <button
               onClick={() => router.push('/workflow')}
               style={{
@@ -930,8 +1161,8 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
             </button>
           )}
 
-          {/* 管理员专属：新建图谱按钮 - 仅在完整模式下显示 */}
-          {mode === 'full' && isLoggedIn && (
+          {/* 管理员专属：新建图谱按钮 */}
+          {isLoggedIn && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               style={{
@@ -965,6 +1196,7 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
             </button>
           )}
         </div>
+        )}
       </nav>
 
       {/* 新建项目弹窗 */}
@@ -987,6 +1219,18 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
           isDeleting={isDeleting}
         />
       )}
+      
+      {/* 添加旋转动画的样式 */}
+      <style jsx>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </>
   )
 }

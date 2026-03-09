@@ -8,11 +8,8 @@ import TopNavbar from '@/components/TopNavbar'
 import NodeDetailPanel from '@/components/NodeDetailPanel'
 import FloatingAddButton from '@/components/FloatingAddButton'
 
-// 导航模式类型
-type NavigationMode = 'full' | 'readonly'
-
 // 根据来源确定导航模式
-function determineNavigationMode(referrer: string | undefined): NavigationMode {
+function determineNavigationMode(referrer: string | undefined): 'full' | 'readonly' {
   // 如果没有referrer，默认使用完整模式（可能是刷新页面或直接访问）
   if (!referrer) {
     return 'full'
@@ -39,19 +36,25 @@ function determineNavigationMode(referrer: string | undefined): NavigationMode {
 export default function GraphPage() {
   const searchParams = useSearchParams()
   const graphId = searchParams.get('graphId')
+  const fromParam = searchParams.get('from')
   
-  const { theme, setTheme, loadGraphById, currentGraph } = useGraphStore()
+  const { theme, setTheme, loadGraphById, currentGraph, navigationMode, setNavigationMode } = useGraphStore()
   const [isInitializing, setIsInitializing] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [navigationMode, setNavigationMode] = useState<NavigationMode>('full')
 
   // 检测导航来源并设置模式
   useEffect(() => {
+    // 优先检查URL参数
+    if (fromParam === 'homepage') {
+      setNavigationMode('readonly')
+      return
+    }
+    
     // 获取referrer（来源页面）
     const referrer = document.referrer
     const mode = determineNavigationMode(referrer)
     setNavigationMode(mode)
-  }, [])
+  }, [fromParam])
 
   // 强制使用明亮主题
   useEffect(() => {

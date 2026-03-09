@@ -7,6 +7,7 @@ interface InlineImageUploadProps {
   currentImageUrl?: string
   onImageChange: (url: string) => void
   disabled?: boolean
+  onPreviewClick?: (url: string) => void
 }
 
 export function InlineImageUpload({
@@ -14,6 +15,7 @@ export function InlineImageUpload({
   currentImageUrl,
   onImageChange,
   disabled = false,
+  onPreviewClick,
 }: InlineImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null)
@@ -108,12 +110,44 @@ export function InlineImageUpload({
           <img
             src={preview}
             alt="节点图片"
+            onClick={() => onPreviewClick?.(preview)}
             style={{
               width: '100%',
               height: '100%',
               objectFit: 'cover',
+              cursor: onPreviewClick ? 'pointer' : 'default',
             }}
           />
+          {onPreviewClick && (
+            <div
+              onClick={() => onPreviewClick(preview)}
+              style={{
+                position: 'absolute',
+                top: '8px',
+                left: '8px',
+                background: 'rgba(0, 0, 0, 0.6)',
+                color: 'white',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backdropFilter: 'blur(4px)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.8)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>🔍</span>
+              点击预览
+            </div>
+          )}
           {!disabled && (
             <button
               onClick={handleRemove}

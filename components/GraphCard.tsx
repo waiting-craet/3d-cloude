@@ -9,8 +9,8 @@ export interface Graph {
   id: string
   name: string
   description: string | null
-  nodeCount: number
-  edgeCount: number
+  nodeCount: number      // 节点数量（非负整数）
+  edgeCount: number      // 边数量（非负整数）
   createdAt: Date
   updatedAt: Date
   projectId: string
@@ -21,6 +21,24 @@ export interface GraphCardProps {
   graph: Graph
   onClick: (graphId: string) => void
 }
+
+/**
+ * GraphCard - 图谱卡片组件
+ * 
+ * 显示单个图谱的卡片，包含图标、名称和统计信息。
+ * 统计信息格式为"包括X个节点，Y个关系"。
+ * 
+ * @param {GraphCardProps} props - 组件属性
+ * @param {Graph} props.graph - 图谱数据对象
+ * @param {Function} props.onClick - 点击卡片时的回调函数
+ * @returns {JSX.Element} 图谱卡片组件
+ * 
+ * @example
+ * <GraphCard 
+ *   graph={graphData} 
+ *   onClick={(id) => router.push(`/3d-editor?graphId=${id}`)}
+ * />
+ */
 
 export default function GraphCard({ graph, onClick }: GraphCardProps) {
   const [imageError, setImageError] = useState(false)
@@ -62,14 +80,7 @@ export default function GraphCard({ graph, onClick }: GraphCardProps) {
           {graph.name}
         </h3>
         <div className={styles.stats}>
-          <span className={styles.statItem}>
-            <span className={styles.statIcon}>🔵</span>
-            {graph.nodeCount} 节点
-          </span>
-          <span className={styles.statItem}>
-            <span className={styles.statIcon}>🔗</span>
-            {graph.edgeCount} 边
-          </span>
+          包括{Math.max(0, graph.nodeCount)}个节点，{Math.max(0, graph.edgeCount)}个关系
         </div>
       </div>
     </div>
