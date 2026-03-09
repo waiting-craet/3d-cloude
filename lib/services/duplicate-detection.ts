@@ -719,3 +719,47 @@ export async function detectAndFilterDuplicates(
     throw error
   }
 }
+
+// Types required by merge-resolution service
+
+export enum ConflictType {
+  DUPLICATE_NODES = 'DUPLICATE_NODES',
+  CONFLICTING_EDGES = 'CONFLICTING_EDGES',
+  MISSING_REFERENCES = 'MISSING_REFERENCES',
+  CONTENT_CONFLICTS = 'CONTENT_CONFLICTS',
+}
+
+export interface DetectedConflict {
+  type: ConflictType;
+  affectedItems: {
+    newItem?: any;
+    existingItem?: any;
+  };
+  confidence: {
+    overall: number;
+  };
+  description?: string;
+}
+
+export interface ResolutionOption {
+  id: string;
+  label: string;
+  description: string;
+  action: string;
+  isDefault?: boolean;
+}
+
+export interface ConflictAnalysisResult {
+  conflicts: DetectedConflict[];
+  summary: {
+    total: number;
+    byType: Record<ConflictType, number>;
+  };
+}
+
+export interface ClassifiedConflicts {
+  duplicateNodes: DetectedConflict[];
+  conflictingEdges: DetectedConflict[];
+  missingReferences: DetectedConflict[];
+  contentConflicts: DetectedConflict[];
+}
