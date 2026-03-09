@@ -125,8 +125,8 @@ export async function POST(request: NextRequest) {
               x: nodeData.x || 0,
               y: nodeData.y || 0,
               z: nodeData.z || 0,
-              color: nodeData.color || '#00bfa5',
-              size: nodeData.size || 1,
+              color: nodeData.color || '#3b82f6',
+              size: nodeData.size || 2.0,
               shape: nodeData.shape || 'sphere',
               projectId: projectId,
               graphId: graphId
