@@ -451,32 +451,42 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
               console.log('🔄 [fetchGraph] 发现数据库中保存的位置数据，应用到节点...')
               console.log('   保存的位置数:', savedPositions.length)
               
-              // Create a map for quick lookup
-              const savedMap = new Map(savedPositions.map((p: any) => [p.id, p]))
+              // 检查保存的位置数据是否包含 z 坐标字段（不检查值，因为 z=0 是有效的）
+              const hasZCoordinate = savedPositions.some((p: any) => p.z !== undefined)
               
-              // Apply saved positions to nodes
-              nodes = nodes.map(node => {
-                const saved = savedMap.get(node.id)
-                if (saved) {
-                  return {
-                    ...node,
-                    x: saved.x,
-                    y: saved.y,
-                    z: node.z || 0, // 保持原有z坐标
+              if (!hasZCoordinate) {
+                console.warn('⚠️ [fetchGraph] 保存的位置数据缺少 z 坐标字段（可能是旧的 2D 数据），跳过恢复')
+                console.log('   建议：重新拖拽节点并保存以更新位置数据')
+              } else {
+                // Create a map for quick lookup
+                const savedMap = new Map(savedPositions.map((p: any) => [p.id, p]))
+                
+                // Apply saved positions to nodes
+                nodes = nodes.map(node => {
+                  const saved = savedMap.get(node.id)
+                  if (saved) {
+                    // 恢复完整的 3D 坐标（x, y, z）
+                    // 注意：z=0 是有效的坐标值，不应该被跳过
+                    return {
+                      ...node,
+                      x: saved.x,
+                      y: saved.y,
+                      z: saved.z !== undefined ? saved.z : (node.z || 0), // 优先使用保存的 z，否则使用原有 z
+                    }
                   }
+                  return node
+                })
+                
+                positionsRestored = true
+                console.log('✅ [fetchGraph] 已应用数据库中保存的位置数据')
+                
+                // 清除 localStorage 缓存（因为数据库数据更权威）
+                try {
+                  const cacheKey = `graph_positions_${currentGraph.id}`
+                  localStorage.removeItem(cacheKey)
+                } catch (error) {
+                  console.warn('⚠️ [fetchGraph] 清除缓存失败:', error)
                 }
-                return node
-              })
-              
-              positionsRestored = true
-              console.log('✅ [fetchGraph] 已应用数据库中保存的位置数据')
-              
-              // 清除 localStorage 缓存（因为数据库数据更权威）
-              try {
-                const cacheKey = `graph_positions_${currentGraph.id}`
-                localStorage.removeItem(cacheKey)
-              } catch (error) {
-                console.warn('⚠️ [fetchGraph] 清除缓存失败:', error)
               }
             }
           } catch (error) {
@@ -594,14 +604,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             finalNodes = finalNodes.map(node => {
               const saved = savedMap.get(node.id)
               if (saved) {
-                // 对于3D图谱，使用保存的x, y作为x, y坐标，z保持原值或设为0
-                // 如果metadata中标记了is3D，说明保存的是3D位置
-                const is3D = settings.workflowPositions.metadata?.is3D
+                // 恢复完整的 3D 坐标（x, y, z）
                 return {
                   ...node,
                   x: saved.x,
                   y: saved.y,
-                  z: is3D ? (node.z || 0) : (node.z || 0), // 保持原有z坐标
+                  z: saved.z !== undefined ? saved.z : (node.z || 0), // 优先使用保存的 z，否则使用原有 z
                 }
               }
               return node

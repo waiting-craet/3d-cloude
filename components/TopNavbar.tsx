@@ -245,11 +245,12 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
         return
       }
       
-      // 将三维坐标（x, y, z）转换为 API 期望的二维格式（id, x, y）
+      // 将三维坐标（x, y, z）保存到数据库
       const nodePositions = nodes.map(node => ({
         id: node.id,
         x: node.x,
         y: node.y,
+        z: node.z,  // 保存 z 坐标（3D 位置）
       }))
 
       // 构建包含 graphId、nodes 和 metadata 的请求负载
