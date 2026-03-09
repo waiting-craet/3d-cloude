@@ -40,8 +40,9 @@ if (typeof document !== 'undefined') {
 export interface PreviewNode {
   id: string
   name: string
-  type: string
-  properties: Record<string, any>
+  description?: string  // Optional description
+  type?: string  // Optional, for backward compatibility
+  properties?: Record<string, any>  // Optional, for backward compatibility
   isDuplicate?: boolean
   duplicateOf?: string
   conflicts?: Array<{
@@ -59,7 +60,7 @@ export interface PreviewEdge {
   fromNodeId: string
   toNodeId: string
   label: string
-  properties: Record<string, any>
+  properties?: Record<string, any>  // Optional, for backward compatibility
   isRedundant?: boolean
 }
 
@@ -1496,78 +1497,7 @@ function StatsSection({
         </div>
       )}
 
-      {/* Validation Status */}
-      <div>
-        <h3 style={{ 
-          color: 'white', 
-          fontSize: '18px', 
-          fontWeight: '600', 
-          margin: '0 0 16px 0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          🛡️ 验证状态
-        </h3>
-        <div style={{ 
-          padding: '20px',
-          background: validationStatus.isValid 
-            ? 'rgba(16, 185, 129, 0.1)' 
-            : 'rgba(239, 68, 68, 0.1)',
-          border: `1px solid ${validationStatus.isValid 
-            ? 'rgba(16, 185, 129, 0.3)' 
-            : 'rgba(239, 68, 68, 0.3)'}`,
-          borderRadius: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              fontSize: '24px'
-            }}>
-              {validationStatus.isValid ? '✅' : validationStatus.hasUnresolvedConflicts ? '⚠️' : '❌'}
-            </div>
-            <div>
-              <div style={{ 
-                color: 'white', 
-                fontSize: '16px', 
-                fontWeight: '600',
-                marginBottom: '4px'
-              }}>
-                {validationStatus.status}
-              </div>
-              <div style={{ 
-                color: 'rgba(255, 255, 255, 0.7)', 
-                fontSize: '14px'
-              }}>
-                {validationStatus.isValid 
-                  ? '所有冲突已解决，数据完整，可以保存'
-                  : validationStatus.hasUnresolvedConflicts 
-                    ? '请在冲突标签页解决所有冲突后再保存'
-                    : '请检查并完善节点数据'}
-              </div>
-            </div>
-          </div>
-          {conflictStats.resolutionProgress > 0 && conflictStats.resolutionProgress < 100 && (
-            <div style={{ 
-              width: '120px',
-              height: '8px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '4px',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                width: `${conflictStats.resolutionProgress}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, rgba(251, 191, 36, 0.8) 0%, rgba(16, 185, 129, 1) 100%)',
-                borderRadius: '4px',
-                transition: 'width 0.3s ease'
-              }} />
-            </div>
-          )}
-        </div>
-      </div>
+
     </div>
   )
 }
@@ -1871,7 +1801,7 @@ function ConflictItem({
                 alignItems: 'center',
                 gap: '12px'
               }}>
-                <span>类型: {node.type}</span>
+                {node.description && <span>{node.description}</span>}
                 {node.duplicateOf && <span>• 与现有节点冲突</span>}
                 {node.conflicts && <span>• {node.conflicts.length} 个属性冲突</span>}
               </div>
@@ -2208,13 +2138,12 @@ function EditingSection({
   const [activeEditor, setActiveEditor] = useState<'nodes' | 'edges'>('nodes')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'duplicate' | 'normal'>('all')
-  const [isCreatingNode, setIsCreatingNode] = useState(false)
-  const [isCreatingEdge, setIsCreatingEdge] = useState(false)
 
   // Filter nodes based on search and filter criteria
   const filteredNodes = nodes.filter(node => {
     const matchesSearch = node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         node.type.toLowerCase().includes(searchTerm.toLowerCase())
+                         (node.type?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                         (node.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
     
     const matchesFilter = filterType === 'all' || 
                          (filterType === 'duplicate' && node.isDuplicate) ||
@@ -2268,35 +2197,6 @@ function EditingSection({
             🔗 边编辑 ({edges.length})
           </button>
         </div>
-
-        {/* Create New Button */}
-        <button
-          onClick={() => activeEditor === 'nodes' ? setIsCreatingNode(true) : setIsCreatingEdge(true)}
-          style={{
-            padding: '12px 20px',
-            background: 'linear-gradient(135deg, #16a085 0%, #27ae60 100%)',
-            border: 'none',
-            borderRadius: '8px',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)'
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(22, 160, 133, 0.4)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)'
-            e.currentTarget.style.boxShadow = 'none'
-          }}
-        >
-          ➕ 新建{activeEditor === 'nodes' ? '节点' : '边'}
-        </button>
       </div>
 
       {/* Search and Filter Controls */}
@@ -2584,31 +2484,6 @@ function EditingSection({
           )}
         </div>
       </div>
-
-      {/* Create Node Modal */}
-      {isCreatingNode && (
-        <CreateNodeModal
-          onClose={() => setIsCreatingNode(false)}
-          onNodeCreate={(newNode) => {
-            // This would integrate with the node manager service
-            console.log('Creating new node:', newNode)
-            setIsCreatingNode(false)
-          }}
-        />
-      )}
-
-      {/* Create Edge Modal */}
-      {isCreatingEdge && (
-        <CreateEdgeModal
-          nodes={nodes}
-          onClose={() => setIsCreatingEdge(false)}
-          onEdgeCreate={(newEdge) => {
-            // This would integrate with the relationship manager service
-            console.log('Creating new edge:', newEdge)
-            setIsCreatingEdge(false)
-          }}
-        />
-      )}
     </div>
   )
 }
@@ -2680,7 +2555,7 @@ function NodeList({
             alignItems: 'center',
             gap: '8px'
           }}>
-            <span>{node.type}</span>
+            {node.description && <span>{node.description.substring(0, 50)}{node.description.length > 50 ? '...' : ''}</span>}
             {node.isDuplicate && <span>• 重复</span>}
             {node.conflicts && node.conflicts.length > 0 && (
               <span>• {node.conflicts.length} 冲突</span>
@@ -2824,7 +2699,7 @@ function NodeEditor({
             编辑节点
           </div>
           <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px' }}>
-            {node.name} ({node.type})
+            {node.name}
           </div>
         </div>
         <button
@@ -2922,7 +2797,7 @@ function NodeEditor({
             />
           </div>
 
-          {/* Type Field */}
+          {/* Description Field */}
           <div>
             <label style={{ 
               display: 'block', 
@@ -2931,13 +2806,13 @@ function NodeEditor({
               fontWeight: '600', 
               marginBottom: '8px' 
             }}>
-              节点类型 *
+              描述
             </label>
-            <input
-              type="text"
-              value={editedNode.type}
-              onChange={(e) => handleFieldChange('type', e.target.value)}
+            <textarea
+              value={editedNode.description || ''}
+              onChange={(e) => handleFieldChange('description', e.target.value)}
               disabled={isLoading}
+              placeholder="输入节点描述（可选）"
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -2948,34 +2823,12 @@ function NodeEditor({
                 fontSize: '14px',
                 outline: 'none',
                 opacity: isLoading ? 0.5 : 1,
-                cursor: isLoading ? 'not-allowed' : 'text'
+                cursor: isLoading ? 'not-allowed' : 'text',
+                minHeight: '100px',
+                resize: 'vertical',
+                fontFamily: 'inherit'
               }}
             />
-          </div>
-
-          {/* Properties */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              color: 'rgba(255, 255, 255, 0.8)', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              marginBottom: '8px' 
-            }}>
-              属性
-            </label>
-            <div style={{
-              padding: '12px 16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '13px',
-              fontFamily: 'monospace',
-              opacity: isLoading ? 0.5 : 1
-            }}>
-              {JSON.stringify(editedNode.properties, null, 2)}
-            </div>
           </div>
         </div>
       </div>
@@ -3130,12 +2983,13 @@ function EdgeEditor({
               fontWeight: '600', 
               marginBottom: '8px' 
             }}>
-              边标签 *
+              关系类型 *
             </label>
             <input
               type="text"
               value={editedEdge.label}
               onChange={(e) => handleFieldChange('label', e.target.value)}
+              placeholder="例如：属于、位于、创建等"
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -3147,30 +3001,6 @@ function EdgeEditor({
                 outline: 'none'
               }}
             />
-          </div>
-
-          {/* Properties */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              color: 'rgba(255, 255, 255, 0.8)', 
-              fontSize: '14px', 
-              fontWeight: '600', 
-              marginBottom: '8px' 
-            }}>
-              属性
-            </label>
-            <div style={{
-              padding: '12px 16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '13px',
-              fontFamily: 'monospace'
-            }}>
-              {JSON.stringify(editedEdge.properties, null, 2)}
-            </div>
           </div>
         </div>
       </div>
@@ -3219,281 +3049,6 @@ function EdgeEditor({
           </button>
         </div>
       )}
-    </div>
-  )
-}
-// Create Node Modal
-function CreateNodeModal({
-  onClose,
-  onNodeCreate
-}: {
-  onClose: () => void
-  onNodeCreate: (node: Partial<PreviewNode>) => void
-}) {
-  const [newNode, setNewNode] = useState({
-    name: '',
-    type: '',
-    properties: {}
-  })
-
-  const handleCreate = () => {
-    if (newNode.name && newNode.type) {
-      onNodeCreate({
-        ...newNode,
-        id: `new-${Date.now()}`,
-        isDuplicate: false
-      })
-    }
-  }
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.6)',
-      backdropFilter: 'blur(4px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 10001
-    }}>
-      <div style={{
-        background: 'linear-gradient(135deg, #2a2a3e 0%, #1e1e2e 100%)',
-        borderRadius: '16px',
-        padding: '24px',
-        width: '400px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
-      }}>
-        <h3 style={{ color: 'white', fontSize: '18px', fontWeight: '600', margin: '0 0 20px 0' }}>
-          创建新节点
-        </h3>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-          <input
-            type="text"
-            placeholder="节点名称"
-            value={newNode.name}
-            onChange={(e) => setNewNode(prev => ({ ...prev, name: e.target.value }))}
-            style={{
-              padding: '12px 16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-          />
-          <input
-            type="text"
-            placeholder="节点类型"
-            value={newNode.type}
-            onChange={(e) => setNewNode(prev => ({ ...prev, type: e.target.value }))}
-            style={{
-              padding: '12px 16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '10px 20px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '6px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '14px',
-              cursor: 'pointer'
-            }}
-          >
-            取消
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={!newNode.name || !newNode.type}
-            style={{
-              padding: '10px 20px',
-              background: newNode.name && newNode.type 
-                ? 'linear-gradient(135deg, #16a085 0%, #27ae60 100%)' 
-                : 'rgba(255, 255, 255, 0.05)',
-              border: 'none',
-              borderRadius: '6px',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: newNode.name && newNode.type ? 'pointer' : 'not-allowed',
-              opacity: newNode.name && newNode.type ? 1 : 0.5
-            }}
-          >
-            创建
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Create Edge Modal
-function CreateEdgeModal({
-  nodes,
-  onClose,
-  onEdgeCreate
-}: {
-  nodes: PreviewNode[]
-  onClose: () => void
-  onEdgeCreate: (edge: Partial<PreviewEdge>) => void
-}) {
-  const [newEdge, setNewEdge] = useState({
-    fromNodeId: '',
-    toNodeId: '',
-    label: '',
-    properties: {}
-  })
-
-  const handleCreate = () => {
-    if (newEdge.fromNodeId && newEdge.toNodeId && newEdge.label) {
-      onEdgeCreate({
-        ...newEdge,
-        id: `new-edge-${Date.now()}`,
-        isRedundant: false
-      })
-    }
-  }
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.6)',
-      backdropFilter: 'blur(4px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 10001
-    }}>
-      <div style={{
-        background: 'linear-gradient(135deg, #2a2a3e 0%, #1e1e2e 100%)',
-        borderRadius: '16px',
-        padding: '24px',
-        width: '400px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
-      }}>
-        <h3 style={{ color: 'white', fontSize: '18px', fontWeight: '600', margin: '0 0 20px 0' }}>
-          创建新边
-        </h3>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-          <select
-            value={newEdge.fromNodeId}
-            onChange={(e) => setNewEdge(prev => ({ ...prev, fromNodeId: e.target.value }))}
-            style={{
-              padding: '12px 16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-          >
-            <option value="" style={{ background: '#1e1e2e' }}>选择起始节点</option>
-            {nodes.map(node => (
-              <option key={node.id} value={node.id} style={{ background: '#1e1e2e' }}>
-                {node.name}
-              </option>
-            ))}
-          </select>
-          
-          <select
-            value={newEdge.toNodeId}
-            onChange={(e) => setNewEdge(prev => ({ ...prev, toNodeId: e.target.value }))}
-            style={{
-              padding: '12px 16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-          >
-            <option value="" style={{ background: '#1e1e2e' }}>选择目标节点</option>
-            {nodes.filter(node => node.id !== newEdge.fromNodeId).map(node => (
-              <option key={node.id} value={node.id} style={{ background: '#1e1e2e' }}>
-                {node.name}
-              </option>
-            ))}
-          </select>
-          
-          <input
-            type="text"
-            placeholder="边标签"
-            value={newEdge.label}
-            onChange={(e) => setNewEdge(prev => ({ ...prev, label: e.target.value }))}
-            style={{
-              padding: '12px 16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '10px 20px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '6px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '14px',
-              cursor: 'pointer'
-            }}
-          >
-            取消
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={!newEdge.fromNodeId || !newEdge.toNodeId || !newEdge.label}
-            style={{
-              padding: '10px 20px',
-              background: newEdge.fromNodeId && newEdge.toNodeId && newEdge.label
-                ? 'linear-gradient(135deg, #16a085 0%, #27ae60 100%)' 
-                : 'rgba(255, 255, 255, 0.05)',
-              border: 'none',
-              borderRadius: '6px',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: newEdge.fromNodeId && newEdge.toNodeId && newEdge.label ? 'pointer' : 'not-allowed',
-              opacity: newEdge.fromNodeId && newEdge.toNodeId && newEdge.label ? 1 : 0.5
-            }}
-          >
-            创建
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
