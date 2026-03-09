@@ -37,6 +37,16 @@ This is a **3D Knowledge Graph Visualization Platform** built with Next.js 14 (A
 
 The app uses a simple cookie-based auth (`userId` cookie). API calls requiring auth need the cookie header: `-b "userId=<user-id>"`.
 
+### Docker deployment (production server)
+
+The project supports Docker deployment via `docker-compose.prebuilt.yml`:
+- **PostgreSQL 16** in Docker (named `db`)
+- **Next.js app** in Docker (named `app`, `Dockerfile.prebuilt` uses pre-built standalone output)
+- App is built locally with `npm run build` (output: standalone), then packaged and deployed
+- Database schema is initialized via raw SQL executed in the PostgreSQL container (Prisma CLI can't download binaries behind the GFW)
+- Nginx reverse proxy on port 80 forwards to container port 3000
+- `COOKIE_SECURE=false` is needed for HTTP-only deployments
+
 ### Gotchas
 
 - ESLint config (`.eslintrc.json`) must exist for `npm run lint` to work non-interactively. If missing, `next lint` prompts interactively. The file should contain `{"extends": "next/core-web-vitals"}`.
