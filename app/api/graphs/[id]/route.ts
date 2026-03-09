@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { del, list } from '@vercel/blob'
+import { deleteFiles, deleteDirectory } from '@/lib/local-storage'
 import { getCurrentUserId, verifyGraphOwnership } from '@/lib/auth'
 
 // 使用 Node.js Runtime
@@ -210,33 +210,15 @@ export async function DELETE(
     })
     console.log(`[DELETE] 数据库删除成功`)
     
-    // 删除 Blob 存储中的文件
+    // 删除本地存储的文件
     let deletedFileCount = 0
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      try {
-        console.log(`[DELETE] 开始删除 Blob 文件...`)
-        // 尝试批量删除图谱文件夹
-        const blobs = await list({ prefix: `graphs/${id}/` })
-        if (blobs.blobs.length > 0) {
-          await Promise.all(blobs.blobs.map(blob => del(blob.url)))
-          deletedFileCount = blobs.blobs.length
-          console.log(`[DELETE] 删除了 ${deletedFileCount} 个 Blob 文件`)
-        }
-        
-        // 删除单独的图片文件
-        if (imageUrls.length > 0) {
-          await Promise.all(
-            imageUrls.map(url => del(url).catch(err => {
-              console.warn(`删除文件失败: ${url}`, err)
-            }))
-          )
-        }
-      } catch (error) {
-        console.warn('删除 Blob 文件时出错:', error)
-        // 不阻塞主流程，继续返回成功
+    try {
+      await deleteDirectory(`graphs/${id}`)
+      if (imageUrls.length > 0) {
+        deletedFileCount = await deleteFiles(imageUrls)
       }
-    } else {
-      console.log(`[DELETE] 未配置 BLOB_READ_WRITE_TOKEN，跳过 Blob 文件删除`)
+    } catch (error) {
+      console.warn('删除本地文件时出错:', error)
     }
     
     console.log(`[DELETE] 删除完成`)

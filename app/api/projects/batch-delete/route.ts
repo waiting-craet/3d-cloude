@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { del, list } from '@vercel/blob';
+import { deleteFiles, deleteDirectory } from '@/lib/local-storage';
 import { getCurrentUserId, verifyProjectOwnership } from '@/lib/auth';
 
 // 使用 Node.js Runtime
@@ -204,37 +204,14 @@ async function deleteProject(projectId: string, userId: string): Promise<Project
 
     console.log(`[BatchDelete] 项目 ${projectName} 已从数据库删除`);
 
-    // 任务 3.4: 删除 Blob 文件（失败不阻止数据库删除）
     let deletedFileCount = 0;
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      try {
-        // 尝试批量删除项目文件夹
-        const blobs = await list({ prefix: `projects/${projectId}/` });
-        if (blobs.blobs.length > 0) {
-          await Promise.all(blobs.blobs.map(blob => del(blob.url)));
-          deletedFileCount += blobs.blobs.length;
-        }
-
-        // 删除单独的文件
-        if (blobUrls.length > 0) {
-          const deleteResults = await Promise.allSettled(
-            blobUrls.map(url => del(url))
-          );
-          
-          deleteResults.forEach((result, index) => {
-            if (result.status === 'fulfilled') {
-              deletedFileCount++;
-            } else {
-              console.warn(`[BatchDelete] Blob 删除失败: ${blobUrls[index]}`, result.reason);
-            }
-          });
-        }
-
-        console.log(`[BatchDelete] 项目 ${projectName} 已删除 ${deletedFileCount} 个 Blob 文件`);
-      } catch (error) {
-        console.warn(`[BatchDelete] 项目 ${projectName} Blob 删除时出错:`, error);
-        // 不阻止主流程，继续返回成功
+    try {
+      await deleteDirectory(`projects/${projectId}`);
+      if (blobUrls.length > 0) {
+        deletedFileCount = await deleteFiles(blobUrls);
       }
+    } catch (error) {
+      console.warn(`[BatchDelete] 项目 ${projectName} 文件删除时出错:`, error);
     }
 
     return {

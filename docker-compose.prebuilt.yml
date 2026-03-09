@@ -25,9 +25,12 @@ services:
       DATABASE_URL: "postgresql://kguser:KGraph2026!@db:5432/knowledgegraph"
       COOKIE_SECURE: "false"
       NODE_ENV: production
+    volumes:
+      - uploads:/app/public/uploads
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   pgdata:
+  uploads:
