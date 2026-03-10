@@ -10,7 +10,7 @@ function getAbsolutePath(relativePath: string): string {
 
 export function urlToFilePath(url: string): string | null {
   try {
-    const match = url.match(/\/uploads\/(.+)$/)
+    const match = url.match(/\/(?:uploads|api\/files)\/(.+)$/)
     if (!match) return null
     return getAbsolutePath(match[1])
   } catch {
@@ -23,7 +23,7 @@ export async function saveFile(relativePath: string, data: Buffer): Promise<stri
   const dir = fullPath.substring(0, fullPath.lastIndexOf('/'))
   await mkdir(dir, { recursive: true })
   await writeFile(fullPath, data)
-  return `/uploads/${relativePath}`
+  return `/api/files/${relativePath}`
 }
 
 export async function deleteFile(url: string): Promise<void> {
