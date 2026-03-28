@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { del, list } from '@vercel/blob';
+import { deleteFiles, deleteDirectory } from '@/lib/local-storage';
 import { getCurrentUserId, verifyGraphOwnership } from '@/lib/auth';
 
 // 使用 Node.js Runtime
@@ -214,37 +214,14 @@ async function deleteGraph(graphId: string, userId: string): Promise<GraphDelete
 
     console.log(`[BatchDeleteGraphs] 图谱 ${graphName} 已从数据库删除`);
 
-    // 删除 Blob 文件（失败不阻止数据库删除）
     let deletedFileCount = 0;
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      try {
-        // 尝试批量删除图谱文件夹
-        const blobs = await list({ prefix: `graphs/${graphId}/` });
-        if (blobs.blobs.length > 0) {
-          await Promise.all(blobs.blobs.map(blob => del(blob.url)));
-          deletedFileCount += blobs.blobs.length;
-        }
-
-        // 删除单独的文件
-        if (blobUrls.length > 0) {
-          const deleteResults = await Promise.allSettled(
-            blobUrls.map(url => del(url))
-          );
-          
-          deleteResults.forEach((result, index) => {
-            if (result.status === 'fulfilled') {
-              deletedFileCount++;
-            } else {
-              console.warn(`[BatchDeleteGraphs] Blob 删除失败: ${blobUrls[index]}`, result.reason);
-            }
-          });
-        }
-
-        console.log(`[BatchDeleteGraphs] 图谱 ${graphName} 已删除 ${deletedFileCount} 个 Blob 文件`);
-      } catch (error) {
-        console.warn(`[BatchDeleteGraphs] 图谱 ${graphName} Blob 删除时出错:`, error);
-        // 不阻止主流程，继续返回成功
+    try {
+      await deleteDirectory(`graphs/${graphId}`);
+      if (blobUrls.length > 0) {
+        deletedFileCount = await deleteFiles(blobUrls);
       }
+    } catch (error) {
+      console.warn(`[BatchDeleteGraphs] 图谱 ${graphName} 文件删除时出错:`, error);
     }
 
     return {

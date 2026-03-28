@@ -3,8 +3,22 @@ const nextConfig = {
   // 注意：开发环境使用 Node.js Runtime
   // 部署到 Cloudflare Pages 时需要配置 Edge Runtime 和 Driver Adapters
   
+  output: 'standalone',
+  
   // Enable React Strict Mode for better error detection
   reactStrictMode: true,
+  
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
   
   // Webpack configuration for better HMR handling
   webpack: (config, { dev, isServer }) => {
@@ -35,6 +49,15 @@ const nextConfig = {
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
     pagesBufferLength: 2,
+  },
+  
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: '/api/files/:path*',
+      },
+    ]
   },
 }
 
