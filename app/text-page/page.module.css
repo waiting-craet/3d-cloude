@@ -1,0 +1,169 @@
+/* 两栏布局容器 */
+.twoColumnLayout {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 30px 100px 30px;
+}
+
+/* 左栏 */
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 右栏 */
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 卡片基础样式 */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 28px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.slideDown {
+  animation: slideDown 0.3s ease;
+}
+
+/* Responsive Design Styles */
+
+/* Desktop devices (1024px+) */
+@media (min-width: 1024px) {
+  /* Ensure max-width constraints */
+  .desktopContainer {
+    max-width: 1400px !important;
+  }
+  
+  /* Optimal spacing for large screens */
+  .desktopCard {
+    padding: 28px !important;
+  }
+  
+  /* Two-column layout on desktop */
+  .twoColumnLayout {
+    grid-template-columns: 400px 1fr;
+  }
+}
+
+/* Tablet devices (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tabletContainer {
+    padding: 50px 24px 80px 24px !important;
+  }
+  
+  .tabletCard {
+    padding: 28px !important;
+  }
+  
+  /* Stack to single column on tablet */
+  .tabletGrid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  /* Stack two-column layout vertically on tablet */
+  .twoColumnLayout {
+    grid-template-columns: 1fr;
+    padding: 50px 24px 80px 24px;
+  }
+  
+  .card {
+    padding: 28px;
+  }
+}
+
+/* Mobile devices (320px - 767px) */
+@media (max-width: 767px) {
+  /* Adjust padding for smaller screens */
+  .mobileContainer {
+    padding: 40px 16px 60px 16px !important;
+  }
+  
+  .mobileNav {
+    padding: 16px 20px !important;
+  }
+  
+  .mobileCard {
+    padding: 24px !important;
+  }
+  
+  /* Stack grid layouts vertically on mobile */
+  .mobileGrid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Adjust font sizes for readability */
+  .mobileTitle {
+    font-size: 32px !important;
+  }
+  
+  .mobileSubtitle {
+    font-size: 16px !important;
+  }
+  
+  .mobileSectionTitle {
+    font-size: 18px !important;
+  }
+  
+  /* Ensure buttons are full width on mobile */
+  .mobileButton {
+    width: 100% !important;
+  }
+  
+  /* Adjust modal width */
+  .mobileModal {
+    width: 95% !important;
+    padding: 24px !important;
+  }
+  
+  /* Stack two-column layout vertically on mobile */
+  .twoColumnLayout {
+    grid-template-columns: 1fr;
+    padding: 40px 16px 60px 16px;
+  }
+  
+  .card {
+    padding: 24px;
+  }
+}

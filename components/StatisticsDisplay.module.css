@@ -1,0 +1,112 @@
+/**
+ * StatisticsDisplay Styles
+ * 
+ * Clean, horizontal layout with ink-wash aesthetic
+ * - Large numbers in ink-wash accent color
+ * - Smaller labels in medium gray
+ * - Subtle dividers between metrics
+ * - Responsive layout for mobile viewports
+ * 
+ * Requirements: 1.1, 1.2, 1.3, 8.1, 8.5
+ */
+
+.statistics {
+  width: 100%;
+  padding: 64px 24px;
+  background: transparent;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 48px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.statNumber {
+  font-size: 40px;
+  font-weight: 700;
+  color: #5a9a8f; /* ink-wash accent color */
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.statLabel {
+  font-size: 14px;
+  font-weight: 400;
+  color: #666666; /* medium gray */
+  line-height: 1.5;
+  text-align: center;
+}
+
+.divider {
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #e8e8e8 20%,
+    #e8e8e8 80%,
+    transparent 100%
+  );
+}
+
+/* Tablet and below */
+@media (max-width: 768px) {
+  .statistics {
+    padding: 48px 16px;
+  }
+  
+  .container {
+    gap: 32px;
+  }
+  
+  .statNumber {
+    font-size: 32px;
+  }
+  
+  .statLabel {
+    font-size: 13px;
+  }
+  
+  .divider {
+    height: 40px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .statistics {
+    padding: 32px 16px;
+  }
+  
+  .container {
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .divider {
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      #e8e8e8 20%,
+      #e8e8e8 80%,
+      transparent 100%
+    );
+  }
+  
+  .statItem {
+    width: 100%;
+  }
+}

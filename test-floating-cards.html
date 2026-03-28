@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>测试浮动卡片动画</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #FAFAF8;
+      min-height: 100vh;
+    }
+    
+    .floating-card {
+      position: fixed;
+      width: 120px;
+      height: 120px;
+      background: #fff;
+      border: 2px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    
+    .card-1 {
+      right: 10%;
+      top: 15%;
+      animation: float-vertical 25s ease-in-out infinite;
+    }
+    
+    .card-2 {
+      right: 8%;
+      top: 25%;
+      animation: float-horizontal 28s ease-in-out infinite;
+      animation-delay: 0.5s;
+    }
+    
+    @keyframes float-vertical {
+      0%, 100% {
+        transform: translateY(0) rotate(2deg);
+      }
+      50% {
+        transform: translateY(-20px) rotate(2deg);
+      }
+    }
+    
+    @keyframes float-horizontal {
+      0%, 100% {
+        transform: translateX(0) rotate(-2deg);
+      }
+      50% {
+        transform: translateX(20px) rotate(-2deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-card card-1">卡片1</div>
+  <div class="floating-card card-2">卡片2</div>
+  
+  <div style="padding: 100px 50px;">
+    <h1>测试浮动卡片动画</h1>
+    <p>右上角应该有两个缓慢浮动的卡片</p>
+  </div>
+</body>
+</html>

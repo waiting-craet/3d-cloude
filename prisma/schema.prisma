@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Edge {
+  id            String   @id @default(uuid())
+  fromNodeId    String
+  toNodeId      String
+  label         String   @db.VarChar(100)
+  weight        Float    @default(1)
+  properties    Json?
+  bidirectional Boolean  @default(false)
+  color         String?  @db.VarChar(50)
+  style         String?  @db.VarChar(50)
+  projectId     String?
+  graphId       String?
+  createdAt     DateTime @default(now())
+  fromNode      Node     @relation("EdgeFromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNode        Node     @relation("EdgeToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
+  graph         Graph?   @relation(fields: [graphId], references: [id], onDelete: Cascade)
+  project       Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([fromNodeId])
+  @@index([toNodeId])
+  @@index([label])
+  @@index([projectId])
+  @@index([graphId])
+}
+
+model Graph {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  description String?
+  settings    Json?
+  isPublic    Boolean  @default(false)
+  nodeCount   Int      @default(0)
+  edgeCount   Int      @default(0)
+  projectId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  edges       Edge[]
+  nodes       Node[]
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model Node {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  type        String   @db.VarChar(100)
+  description String?
+  content     String?
+  metadata    Json?
+  x           Float    @default(0)
+  y           Float    @default(0)
+  z           Float    @default(0)
+  color       String   @default("#3b82f6") @db.VarChar(50)
+  textColor   String   @default("#FFFFFF") @db.VarChar(50)
+  shape       String   @default("sphere") @db.VarChar(50)
+  size        Float    @default(1)
+  opacity     Float    @default(1)
+  isGlowing   Boolean  @default(false)
+  imageUrl    String?
+  videoUrl    String?
+  iconUrl     String?
+  image       String?
+  video       String?
+  documentId  String?
+  chunkIndex  Int?
+  coverUrl    String?
+  embedding   String?
+  tags        String[]
+  category    String?  @db.VarChar(100)
+  projectId   String?
+  graphId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  edgesFrom   Edge[]   @relation("EdgeFromNode")
+  edgesTo     Edge[]   @relation("EdgeToNode")
+  document    Node?    @relation("NodeChunks", fields: [documentId], references: [id], onDelete: Cascade)
+  chunks      Node[]   @relation("NodeChunks")
+  graph       Graph?   @relation(fields: [graphId], references: [id], onDelete: Cascade)
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([graphId])
+  @@index([type])
+  @@index([category])
+  @@index([documentId])
+  @@index([createdAt])
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  description String?
+  settings    Json?
+  nodeCount   Int      @default(0)
+  edgeCount   Int      @default(0)
+  userId      String   // 新增：项目所有者ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  edges       Edge[]
+  graphs      Graph[]
+  nodes       Node[]
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model SearchHistory {
+  id        String   @id @default(uuid())
+  query     String   @db.VarChar(500)
+  results   Json?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String?   @unique
+  password  String    @db.VarChar(255)
+  username  String    @unique
+  name      String?   @db.VarChar(255)
+  avatar    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+  projects  Project[] // 新增：用户的项目列表
+
+  @@index([email])
+  @@index([username])
+}

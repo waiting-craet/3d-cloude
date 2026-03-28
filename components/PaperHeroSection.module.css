@@ -1,0 +1,244 @@
+/* PaperHeroSection - Morandi green aesthetic hero section */
+
+.hero {
+  /* Subtle gradient background with Morandi green tones */
+  background: linear-gradient(180deg, rgba(232, 240, 237, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%);
+  
+  /* Generous vertical padding */
+  padding: 60px 24px;
+  
+  /* Centered layout */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  /* Minimum height for visual impact */
+  min-height: 380px;
+}
+
+.container {
+  max-width: 720px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.title {
+  /* Large font size for emphasis */
+  font-size: 42px;
+  font-weight: 600;
+  
+  /* Dark green color (黛绿色) */
+  color: #3d5a50;
+  
+  /* Tight line height for multi-line titles */
+  line-height: 1.3;
+  
+  /* Remove default margins */
+  margin: 0;
+  
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.subtitle {
+  /* Medium font size */
+  font-size: 16px;
+  font-weight: 400;
+  
+  /* Medium green-gray color */
+  color: #6b8578;
+  
+  /* Relaxed line height for readability */
+  line-height: 1.6;
+  
+  /* Remove default margins */
+  margin: 0;
+  
+  /* Max width for optimal reading length */
+  max-width: 560px;
+}
+
+.searchContainer {
+  /* Full width with max constraint */
+  width: 100%;
+  max-width: 480px;
+  
+  /* Position relative for icon positioning */
+  position: relative;
+  
+  /* Top margin for spacing */
+  margin-top: 12px;
+}
+
+.searchIcon {
+  /* Absolute positioning inside input */
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  /* Icon color - light green */
+  color: #8ba69a;
+  
+  /* Prevent pointer events */
+  pointer-events: none;
+  
+  /* Icon size */
+  width: 18px;
+  height: 18px;
+}
+
+.searchInput {
+  /* Full width */
+  width: 100%;
+  
+  /* Padding with space for icon and button */
+  padding: 12px 48px 12px 44px;
+  
+  /* Font styling */
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #3d5a50;
+  
+  /* Background and border with green tint */
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #b8cfc7;
+  
+  /* Rounded corners */
+  border-radius: 8px;
+  
+  /* Subtle shadow with green tint */
+  box-shadow: 0 1px 3px rgba(90, 122, 110, 0.1);
+  
+  /* Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Remove default outline */
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #a8bdb5;
+}
+
+.searchInput:focus {
+  /* Highlight border on focus */
+  border-color: #5a7a6e;
+  
+  /* Enhanced shadow on focus */
+  box-shadow: 0 2px 8px rgba(90, 122, 110, 0.2);
+}
+
+.searchInput:hover {
+  /* Subtle border color change on hover */
+  border-color: #8ba69a;
+}
+
+.searchButton {
+  /* Absolute positioning inside input */
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  /* Button styling */
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  
+  /* Remove default button styles */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  
+  /* Flexbox for centering icon */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Rounded corners */
+  border-radius: 6px;
+  
+  /* Icon color */
+  color: #6b8578;
+  
+  /* Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Remove default outline */
+  outline: none;
+}
+
+.searchButton:hover {
+  background: rgba(90, 122, 110, 0.1);
+  color: #3d5a50;
+  transform: translateY(-50%);
+}
+
+.searchButton:focus-visible {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+.searchButton:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Responsive adjustments for tablet */
+@media (max-width: 1199px) {
+  .hero {
+    padding: 50px 24px;
+    min-height: 340px;
+  }
+  
+  .title {
+    font-size: 36px;
+  }
+  
+  .subtitle {
+    font-size: 15px;
+  }
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+  .hero {
+    padding: 40px 16px;
+    min-height: 300px;
+  }
+  
+  .title {
+    font-size: 28px;
+  }
+  
+  .subtitle {
+    font-size: 14px;
+  }
+  
+  .searchInput {
+    font-size: 13px;
+    padding: 10px 44px 10px 40px;
+  }
+  
+  .searchIcon {
+    left: 14px;
+    width: 16px;
+    height: 16px;
+  }
+  
+  .searchButton {
+    width: 28px;
+    height: 28px;
+    right: 6px;
+  }
+  
+  .searchButton svg {
+    width: 16px;
+    height: 16px;
+  }
+}

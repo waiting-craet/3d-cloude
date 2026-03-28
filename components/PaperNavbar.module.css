@@ -1,0 +1,163 @@
+/* PaperNavbar - Morandi green aesthetic navigation bar */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  /* Fallback for browsers that don't support backdrop-filter */
+  background: rgba(255, 255, 255, 0.85);
+  /* Semi-transparent background with backdrop blur for modern browsers */
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid #b8cfc7;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fallback for browsers that don't support backdrop-filter */
+@supports not (backdrop-filter: blur(10px)) {
+  .navbar {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 1px 3px rgba(107, 142, 133, 0.15);
+  }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: #3d5a50;
+  letter-spacing: 0.5px;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.primaryButton {
+  padding: 8px 20px;
+  background: #5a7a6e;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.primaryButton:hover {
+  background: #6b8e85;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(90, 122, 110, 0.3);
+}
+
+.primaryButton:active {
+  transform: translateY(0);
+  background: #4a6359;
+}
+
+.primaryButton:focus {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+.primaryButton:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.primaryButton:focus-visible {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+.secondaryButton {
+  padding: 8px 20px;
+  background: transparent;
+  color: #6b8578;
+  border: 1px solid #b8cfc7;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.secondaryButton:hover {
+  border-color: #5a7a6e;
+  color: #3d5a50;
+  background: rgba(90, 122, 110, 0.08);
+}
+
+.secondaryButton:active {
+  transform: translateY(0);
+}
+
+.secondaryButton:focus {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+.secondaryButton:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.secondaryButton:focus-visible {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px 16px;
+  }
+
+  .logo {
+    font-size: 16px;
+  }
+
+  .buttonGroup {
+    gap: 8px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px 12px;
+  }
+
+  .logo {
+    font-size: 15px;
+  }
+
+  .buttonGroup {
+    gap: 6px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,131 @@
+/* PaperWorkCard - Morandi green aesthetic card with icon placeholder */
+
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #b8cfc7;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(90, 122, 110, 0.15);
+  border-color: #5a7a6e;
+}
+
+.card:focus {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+.card:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.card:focus-visible {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+/* Icon Container */
+.iconContainer {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e8f0ed 0%, #f0f5f3 100%);
+  border-bottom: 1px solid #d4e4df;
+}
+
+.icon {
+  width: 64px;
+  height: 64px;
+  opacity: 0.6;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover .icon {
+  opacity: 0.8;
+}
+
+/* Content Section */
+.content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #3d5a50;
+  margin: 0;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Metadata */
+.metadata {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.metadataItem {
+  font-size: 13px;
+  color: #8ba69a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+  .iconContainer {
+    height: 140px;
+  }
+
+  .icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .content {
+    padding: 14px;
+    gap: 6px;
+  }
+
+  .title {
+    font-size: 15px;
+  }
+
+  .metadataItem {
+    font-size: 12px;
+  }
+}
+
+/* Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .icon {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+}

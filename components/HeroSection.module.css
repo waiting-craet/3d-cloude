@@ -1,0 +1,183 @@
+/* HeroSection Styles - Ink-Wash Aesthetic */
+
+.hero {
+  /* Subtle gradient background from light gray to white */
+  background: linear-gradient(180deg, #f5f5f5 0%, #ffffff 100%);
+  
+  /* Generous vertical padding */
+  padding: 80px 24px;
+  
+  /* Centered layout */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  /* Minimum height for visual impact */
+  min-height: 400px;
+}
+
+.container {
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.title {
+  /* Large font size for emphasis */
+  font-size: 48px;
+  font-weight: 600;
+  
+  /* Dark gray color */
+  color: #2c2c2c;
+  
+  /* Tight line height for multi-line titles */
+  line-height: 1.2;
+  
+  /* Remove default margins */
+  margin: 0;
+  
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.subtitle {
+  /* Medium font size */
+  font-size: 18px;
+  font-weight: 400;
+  
+  /* Medium gray color */
+  color: #666666;
+  
+  /* Relaxed line height for readability */
+  line-height: 1.75;
+  
+  /* Remove default margins */
+  margin: 0;
+  
+  /* Max width for optimal reading length */
+  max-width: 600px;
+}
+
+.searchContainer {
+  /* Full width with max constraint */
+  width: 100%;
+  max-width: 500px;
+  
+  /* Position relative for icon positioning */
+  position: relative;
+  
+  /* Top margin for spacing */
+  margin-top: 16px;
+}
+
+.searchIcon {
+  /* Absolute positioning inside input */
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  /* Icon color */
+  color: #a3a3a3;
+  
+  /* Prevent pointer events */
+  pointer-events: none;
+  
+  /* Icon size */
+  width: 20px;
+  height: 20px;
+}
+
+.searchInput {
+  /* Full width */
+  width: 100%;
+  
+  /* Padding with space for icon */
+  padding: 14px 20px 14px 48px;
+  
+  /* Font styling */
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #2c2c2c;
+  
+  /* Background and border */
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  
+  /* Rounded corners */
+  border-radius: 12px;
+  
+  /* Subtle shadow */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  
+  /* Smooth transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Remove default outline */
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #a3a3a3;
+}
+
+.searchInput:focus {
+  /* Highlight border on focus */
+  border-color: #5a9a8f;
+  
+  /* Enhanced shadow on focus */
+  box-shadow: 0 4px 12px rgba(90, 154, 143, 0.15);
+}
+
+.searchInput:hover {
+  /* Subtle border color change on hover */
+  border-color: #d4d4d4;
+}
+
+/* Responsive adjustments for tablet */
+@media (max-width: 1199px) {
+  .hero {
+    padding: 64px 24px;
+    min-height: 350px;
+  }
+  
+  .title {
+    font-size: 40px;
+  }
+  
+  .subtitle {
+    font-size: 17px;
+  }
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+  .hero {
+    padding: 48px 16px;
+    min-height: 300px;
+  }
+  
+  .title {
+    font-size: 32px;
+  }
+  
+  .subtitle {
+    font-size: 16px;
+  }
+  
+  .searchInput {
+    font-size: 15px;
+    padding: 12px 16px 12px 44px;
+  }
+  
+  .searchIcon {
+    left: 14px;
+    width: 18px;
+    height: 18px;
+  }
+}

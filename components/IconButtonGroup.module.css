@@ -1,0 +1,98 @@
+/* IconButtonGroup - Fixed icon buttons on the right side */
+
+.container {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 50;
+}
+
+.iconButton {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1px solid #E8E8E6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 0;
+}
+
+.iconButton:hover {
+  background: #6b8e85;
+  border-color: #6b8e85;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(107, 142, 133, 0.3);
+}
+
+.iconButton:hover svg {
+  color: #FFFFFF;
+}
+
+.iconButton:active {
+  transform: scale(1.05);
+}
+
+.iconButton:focus {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+.iconButton:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid #6b8e85;
+  outline-offset: 2px;
+}
+
+.iconButton svg {
+  width: 20px;
+  height: 20px;
+  color: #666666;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+  .container {
+    right: 16px;
+    gap: 12px;
+  }
+
+  .iconButton {
+    width: 40px;
+    height: 40px;
+  }
+
+  .iconButton svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    right: 12px;
+    gap: 10px;
+  }
+
+  .iconButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .iconButton svg {
+    width: 16px;
+    height: 16px;
+  }
+}
