@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:16-alpine
@@ -15,14 +17,17 @@ services:
       retries: 5
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        - DATABASE_URL=postgresql://kguser:KGraph2026!@db:5432/knowledgegraph
     restart: always
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: "postgresql://kguser:KGraph2026!@db:5432/knowledgegraph"
-      COOKIE_SECURE: "false"
-      NODE_ENV: production
+      - DATABASE_URL=postgresql://kguser:KGraph2026!@db:5432/knowledgegraph
+      - COOKIE_SECURE=false
+      - NODE_ENV=production
     volumes:
       - ./uploads:/app/public/uploads
     depends_on:

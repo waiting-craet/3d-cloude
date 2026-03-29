@@ -2722,46 +2722,7 @@ function NodeEditor({
         </button>
       </div>
 
-      {/* Loading overlay (Task 2.3) */}
-      {isLoading && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.3)',
-          backdropFilter: 'blur(2px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10,
-          borderRadius: '12px'
-        }}>
-          <div style={{
-            padding: '16px 24px',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '8px',
-            color: 'white',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <div style={{
-              width: '16px',
-              height: '16px',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              borderTop: '2px solid white',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-            正在加载节点数据...
-          </div>
-        </div>
-      )}
-
+      {/* Loading overlay - Removed to prevent flickering */}
       {/* Form */}
       <div style={{ flex: 1, padding: '20px', overflow: 'auto' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -2983,13 +2944,13 @@ function EdgeEditor({
               fontWeight: '600', 
               marginBottom: '8px' 
             }}>
-              关系类型 *
+              边名称 *
             </label>
             <input
               type="text"
               value={editedEdge.label}
               onChange={(e) => handleFieldChange('label', e.target.value)}
-              placeholder="例如：属于、位于、创建等"
+              placeholder="输入边的名称（例如：属于、位于、包含等）"
               style={{
                 width: '100%',
                 padding: '12px 16px',

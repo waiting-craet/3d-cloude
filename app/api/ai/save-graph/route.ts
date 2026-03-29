@@ -15,6 +15,8 @@ import {
   NodeToCreate,
   NodeToUpdate 
 } from '@/lib/services/merge-resolution';
+import { LayoutEngine } from '@/lib/layout/LayoutEngine';
+import { LayoutStrategy, Node2D, Edge as LayoutEdge } from '@/lib/layout/types';
 
 /**
  * Request body interface
@@ -267,11 +269,56 @@ async function handleSaveGraph(request: NextRequest) {
         existingNodesMap
       );
 
-      // Step 3: Create new nodes
+      // Step 3: Create new nodes using LayoutEngine for 3D layout
+      // First, get all nodes (existing and new) to calculate proper layout
+      
+      // Prepare nodes for LayoutEngine
+      const allNodesForLayout: Node2D[] = mergeResult.nodesToCreate.map((n: NodeToCreate) => ({
+        id: n.tempId,
+        label: n.name,
+        x2d: Math.random() * 100, // LayoutEngine needs some initial 2D coords
+        y2d: Math.random() * 100
+      }));
+      
+      // Add existing nodes to layout calculation if any
+      graph.nodes.forEach(n => {
+        allNodesForLayout.push({
+          id: n.id,
+          label: n.name,
+          x2d: n.x || Math.random() * 100,
+          y2d: n.y || Math.random() * 100
+        });
+      });
+      
+      // Prepare edges for LayoutEngine
+      const layoutEdges: LayoutEdge[] = body.edges.map(e => ({
+        id: e.tempId || `edge-${e.fromNodeId}-${e.toNodeId}`,
+        source: e.fromNodeId,
+        target: e.toNodeId
+      }));
+
+      // Initialize and run LayoutEngine
+      console.log(`[AI Save] Running LayoutEngine for ${allNodesForLayout.length} nodes...`);
+      const layoutEngine = new LayoutEngine();
+      const { nodes: layoutNodes } = await layoutEngine.convert3D(
+        allNodesForLayout,
+        layoutEdges,
+        LayoutStrategy.FORCE_DIRECTED
+      );
+      
+      // Map layout results back to tempIds
+      const positions = new Map<string, {x: number, y: number, z: number}>();
+      layoutNodes.forEach(n => {
+        positions.set(n.id, { x: n.x3d, y: n.y3d, z: n.z3d });
+      });
+
       const createdNodes = await Promise.all(
-        mergeResult.nodesToCreate.map(async (nodeData: NodeToCreate) => {
+        mergeResult.nodesToCreate.map(async (nodeData: NodeToCreate, index: number) => {
           // Extract description from properties if it exists
           const description = nodeData.properties?.description || '';
+          
+          // Use calculated layout positions from LayoutEngine
+          const pos = positions.get(nodeData.tempId) || { x: 0, y: 0, z: 0 };
           
           return await tx.node.create({
             data: {
@@ -281,11 +328,11 @@ async function handleSaveGraph(request: NextRequest) {
               metadata: JSON.stringify(nodeData.properties || {}),
               projectId: body.projectId,
               graphId: graph.id,
-              x: 0,
-              y: 0,
-              z: 0,
-              color: '#3b82f6',
-              size: 2.0,
+              x: pos.x,
+              y: pos.y,
+              z: pos.z,
+              color: '#3b82f6', // 恢复默认蓝色
+              size: 2.0, // 恢复默认大小
               shape: 'sphere',
             },
           });

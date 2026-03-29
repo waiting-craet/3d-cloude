@@ -13,7 +13,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
 
-#    关键在这里！必须写在这一行！
+# 👇 👇 👇 关键在这里！必须写在这一行！
 RUN DATABASE_URL="postgresql://kguser:KGraph2026!@db:5432/knowledgegraph" npm run build
 
 FROM base AS runner

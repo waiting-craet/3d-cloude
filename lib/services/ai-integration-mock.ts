@@ -23,15 +23,25 @@ export class MockAIIntegrationService implements AIIntegrationService {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Simple entity extraction based on capitalized words
+    // Simple entity extraction based on capitalized words or long words for Chinese
     const entities: AIEntity[] = [];
     const entityNames = new Set<string>();
     
-    // Extract capitalized words as potential entities
-    const words = text.split(/\s+/);
+    // Extract words as potential entities (support Chinese and English)
+    // 对于中文，我们提取长度在2-6之间的词，或者是英文大写开头的词
+    const words = text.split(/[\s，。、！？；：（）《》【】]+/);
     for (const word of words) {
-      const cleaned = word.replace(/[.,!?;:()]/g, '');
-      if (cleaned.length > 2 && /^[A-Z]/.test(cleaned) && !entityNames.has(cleaned)) {
+      const cleaned = word.replace(/[.,!?;:()]/g, '').trim();
+      
+      // 判断是否是英文首字母大写，或者中文字符串长度适中
+      const isEnglishCapitalized = cleaned.length > 2 && /^[A-Z]/.test(cleaned);
+      const isChineseWord = /^[\u4e00-\u9fa5]{2,8}$/.test(cleaned);
+      
+      // 排除一些常见无意义词汇
+      const stopWords = ['我们', '他们', '这个', '那个', '但是', '因为', '所以', '如果', '或者'];
+      const isStopWord = stopWords.includes(cleaned);
+      
+      if ((isEnglishCapitalized || isChineseWord) && !isStopWord && !entityNames.has(cleaned)) {
         entityNames.add(cleaned);
         entities.push({
           name: cleaned,
@@ -41,6 +51,9 @@ export class MockAIIntegrationService implements AIIntegrationService {
             confidence: 0.7,
           },
         });
+        
+        // 为了避免生成过多无意义节点，限制最多生成20个节点
+        if (entities.length >= 20) break;
       }
     }
 
@@ -100,11 +113,14 @@ export class MockAIIntegrationService implements AIIntegrationService {
    */
   private guessRelationshipType(from: string, to: string): string {
     const types = [
-      'related_to',
-      'connected_to',
-      'associated_with',
-      'mentioned_with',
-      'linked_to',
+      '相关于',
+      '连接到',
+      '关联于',
+      '提及于',
+      '链接到',
+      '属于',
+      '包含',
+      '依赖于'
     ];
     
     // Simple hash-based selection for consistency

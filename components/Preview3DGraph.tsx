@@ -77,11 +77,18 @@ function Node3DPreview({ node, onClick, isHovered, isSelected }: {
   const glowRef = useRef<THREE.Mesh>(null)
   const textRef = useRef<any>(null)
   const [hovered, setHovered] = useState(false)
+  const [showText, setShowText] = useState(false)
+  const lastCameraPos = useRef(new THREE.Vector3())
 
   // 增大节点尺寸
   const baseSize = node.size * 2.5 // 增大2.5倍
   const targetScale = isSelected ? 1.4 : (isHovered || hovered ? 1.2 : 1)
   const targetEmissive = isSelected ? 0.6 : (isHovered || hovered ? 0.4 : 0.2)
+
+  // 初始检查距离
+  useEffect(() => {
+    // Note: useThree().camera is available via hook, but we update in useFrame instead to avoid missing camera ref.
+  }, [])
 
   // 平滑动画和文字朝向摄像机
   useFrame(({ camera }) => {
@@ -103,8 +110,20 @@ function Node3DPreview({ node, onClick, isHovered, isSelected }: {
       glowRef.current.rotation.x += 0.005
     }
     
+    // 更新文本可见性和朝向
+    if (lastCameraPos.current.distanceTo(camera.position) > 0.5) {
+      const nodePos = new THREE.Vector3(node.x, node.y, node.z)
+      const dist = camera.position.distanceTo(nodePos)
+      const shouldShow = dist < 400 || isSelected || isHovered || hovered
+      
+      if (showText !== shouldShow) {
+        setShowText(shouldShow)
+      }
+      lastCameraPos.current.copy(camera.position)
+    }
+    
     // 让文字始终面向摄像机（Billboard效果）
-    if (textRef.current) {
+    if (showText && textRef.current) {
       textRef.current.quaternion.copy(camera.quaternion)
     }
   })
@@ -166,21 +185,23 @@ function Node3DPreview({ node, onClick, isHovered, isSelected }: {
       )}
 
       {/* 节点标签 - 增大字体，始终面向摄像机 */}
-      <Text
-        ref={textRef}
-        position={[0, baseSize + 1.5, 0]}
-        fontSize={1.2} // 增大字体
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.15}
-        outlineColor="#000000"
-        outlineOpacity={0.9}
-        maxWidth={20}
-        textAlign="center"
-      >
-        {node.name}
-      </Text>
+      {showText && (
+        <Text
+          ref={textRef}
+          position={[0, baseSize + 1.5, 0]}
+          fontSize={1.2} // 增大字体
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.15}
+          outlineColor="#000000"
+          outlineOpacity={0.9}
+          maxWidth={20}
+          textAlign="center"
+        >
+          {node.name}
+        </Text>
+      )}
     </group>
   )
 }
@@ -191,6 +212,9 @@ function Edge3DPreview({ edge, nodes }: { edge: Edge3D; nodes: Node3D[] }) {
   const targetNode = nodes.find(n => n.id === edge.target)
   const edgeLabelRef = useRef<any>(null)
   const lineRef = useRef<THREE.Line>(null)
+  const [showLabel, setShowLabel] = useState(false)
+  const { camera } = useThree()
+  const lastCameraPos = useRef(new THREE.Vector3())
 
   // 使用 useMemo 优化性能
   const { start, end, midPoint, lineGeometry } = useMemo(() => {
@@ -206,9 +230,25 @@ function Edge3DPreview({ edge, nodes }: { edge: Edge3D; nodes: Node3D[] }) {
     return { start, end, midPoint, lineGeometry }
   }, [sourceNode, targetNode])
   
-  // 让边标签始终面向摄像机
+  // 初始检查距离
+  useEffect(() => {
+    if (midPoint && camera.position.distanceTo(midPoint) < 300) {
+      setShowLabel(true)
+    }
+  }, [camera, midPoint])
+
+  // 让边标签始终面向摄像机并控制可见性
   useFrame(({ camera }) => {
-    if (edgeLabelRef.current) {
+    if (midPoint && lastCameraPos.current.distanceTo(camera.position) > 0.5) {
+      const dist = camera.position.distanceTo(midPoint)
+      const shouldShow = dist < 300
+      if (showLabel !== shouldShow) {
+        setShowLabel(shouldShow)
+      }
+      lastCameraPos.current.copy(camera.position)
+    }
+
+    if (showLabel && edgeLabelRef.current) {
       edgeLabelRef.current.quaternion.copy(camera.quaternion)
     }
     
@@ -238,7 +278,7 @@ function Edge3DPreview({ edge, nodes }: { edge: Edge3D; nodes: Node3D[] }) {
       />
 
       {/* 边标签 - 增大字体，始终面向摄像机 */}
-      {edge.label && (
+      {edge.label && showLabel && (
         <Text
           ref={edgeLabelRef}
           position={[midPoint.x, midPoint.y, midPoint.z]}

@@ -388,6 +388,36 @@
   gap: 12px;
 }
 
+.renameButton {
+  height: 36px;
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #3d5a50;
+  border: 1.5px solid rgba(139, 166, 154, 0.35);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 4px rgba(90, 122, 110, 0.08);
+}
+
+.renameButton:hover:not(:disabled) {
+  border-color: #7fa99b;
+  box-shadow: 0 2px 8px rgba(127, 169, 155, 0.15);
+  transform: translateY(-1px);
+}
+
+.renameButton:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.renameButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* 下拉框 */
 .filterSelect {
   width: 140px;
@@ -852,6 +882,29 @@
   margin-bottom: 24px;
 }
 
+.dialogInput {
+  width: 100%;
+  height: 40px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid rgba(139, 166, 154, 0.35);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #3d5a50;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dialogInput:focus {
+  outline: none;
+  border-color: #7fa99b;
+  box-shadow: 0 0 0 3px rgba(127, 169, 155, 0.15);
+}
+
+.dialogInput:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .dialogText {
   font-size: 15px;
   color: #5a7a6e;
@@ -898,6 +951,35 @@
   background: rgba(255, 255, 255, 0.95);
   border-color: #7fa99b;
   color: #5a7a6e;
+}
+
+.dialogPrimaryButton {
+  height: 40px;
+  padding: 10px 20px;
+  background: #7fa99b;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(127, 169, 155, 0.25);
+}
+
+.dialogPrimaryButton:hover:not(:disabled) {
+  background: #5a7a6e;
+  box-shadow: 0 4px 12px rgba(90, 122, 110, 0.3);
+}
+
+.dialogPrimaryButton:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(127, 169, 155, 0.25);
+}
+
+.dialogPrimaryButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .dialogConfirmButton {
