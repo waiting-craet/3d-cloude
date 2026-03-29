@@ -780,6 +780,10 @@ export default function NodeDetailPanel() {
                       {isVideoUrl(editedImageUrl) ? (
                         <video
                           src={editedImageUrl}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
                           style={{
                             width: '100%',
                             height: '100%',
@@ -791,10 +795,12 @@ export default function NodeDetailPanel() {
                         <img
                           src={editedImageUrl}
                           alt="节点图片"
+                          loading="lazy"
                           style={{
                             width: '100%',
                             height: '100%',
-                            objectFit: 'cover',
+                            objectFit: 'contain',
+                            background: '#f3f4f6',
                           }}
                         />
                       )}
@@ -856,6 +862,10 @@ export default function NodeDetailPanel() {
                     >
                       <video
                         src={editedVideoUrl}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
                         style={{
                           width: '100%',
                           height: '100%',
