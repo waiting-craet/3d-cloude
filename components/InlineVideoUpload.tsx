@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface InlineVideoUploadProps {
   nodeId: string
@@ -21,6 +21,11 @@ export function InlineVideoUpload({
   const [videoUrl, setVideoUrl] = useState<string | null>(currentVideoUrl || null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 当外部传入的 currentVideoUrl 改变时，同步更新内部状态
+  useEffect(() => {
+    setVideoUrl(currentVideoUrl || null)
+  }, [currentVideoUrl])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
