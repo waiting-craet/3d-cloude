@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useFrame, ThreeEvent, useThree } from '@react-three/fiber'
@@ -255,6 +255,7 @@ function Node({ node, onClick, onDrag }: NodeProps) {
   const lastCameraPos = useRef(new THREE.Vector3())
   const [hovered, setHovered] = useState(false)
   const [isPressed, setIsPressed] = useState(false)
+  const [showText, setShowText] = useState(false) // 初始化为 false，通过距离判断是否显示
   const pressTimer = useRef<NodeJS.Timeout | null>(null)
   const dragStartPos = useRef<THREE.Vector3 | null>(null)
   const hasMoved = useRef(false)
@@ -272,6 +273,16 @@ function Node({ node, onClick, onDrag }: NodeProps) {
     [onDrag]
   )
 
+  // 初始检查文本是否应该显示
+  useEffect(() => {
+    const nodePos = new THREE.Vector3(node.x, node.y, node.z)
+    const dist = camera.position.distanceTo(nodePos)
+    // 距离小于 400 才显示文本（大幅提高阈值，仅隐藏超远距离的节点名称）
+    if (dist < 400) {
+      setShowText(true)
+    }
+  }, [camera, node.x, node.y, node.z])
+
   useFrame(() => {
     if (meshRef.current) {
       const targetScale = hovered ? 1.15 : isSelected ? 1.2 : 1
@@ -284,11 +295,19 @@ function Node({ node, onClick, onDrag }: NodeProps) {
     }
 
     if (shouldUpdateBillboard(lastCameraPos.current, camera.position)) {
-      updateTextRotation(
-        textRef,
-        camera,
-        new THREE.Vector3(node.x, node.y, node.z)
-      )
+      const nodePos = new THREE.Vector3(node.x, node.y, node.z)
+      
+      if (showText) {
+        updateTextRotation(textRef, camera, nodePos)
+      }
+      
+      // 动态更新文本可见性：选中、悬停、或者距离小于 400 时显示
+      const dist = camera.position.distanceTo(nodePos)
+      const shouldShow = dist < 400 || isSelected || hovered
+      if (showText !== shouldShow) {
+        setShowText(shouldShow)
+      }
+
       lastCameraPos.current.copy(camera.position)
     }
   })
@@ -446,22 +465,24 @@ function Node({ node, onClick, onDrag }: NodeProps) {
 
       {node.isGlowing && <GlowParticles color={node.color || '#6BB6FF'} size={size} />}
 
-      <Text
-        ref={textRef}
-        position={[0, getTextYPosition(shape, size), 0]}
-        fontSize={2.5}
-        color={node.textColor || '#FFFFFF'}
-        anchorX="center"
-        anchorY="bottom"
-        outlineWidth={0.3}
-        outlineColor="#000000"
-        outlineOpacity={1}
-        maxWidth={15}
-        textAlign="center"
-        depthOffset={-1}
-      >
-        {node.name || 'Unnamed'}
-      </Text>
+      {showText && (
+        <Text
+          ref={textRef}
+          position={[0, getTextYPosition(shape, size), 0]}
+          fontSize={2.5}
+          color={node.textColor || '#FFFFFF'}
+          anchorX="center"
+          anchorY="bottom"
+          outlineWidth={0.3}
+          outlineColor="#000000"
+          outlineOpacity={1}
+          maxWidth={15}
+          textAlign="center"
+          depthOffset={-1}
+        >
+          {node.name || 'Unnamed'}
+        </Text>
+      )}
 
       {isSelected && (
         <group rotation={[Math.PI / 2, 0, Date.now() * 0.001]}>

@@ -48,6 +48,19 @@ export default function NewCreationWorkflowPage() {
   const [selectedGraphIds, setSelectedGraphIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [renameDialog, setRenameDialog] = useState<{
+    isOpen: boolean;
+    type: 'project' | 'graph' | null;
+    id: string | null;
+    currentName: string;
+  }>({
+    isOpen: false,
+    type: null,
+    id: null,
+    currentName: '',
+  });
+  const [renameInput, setRenameInput] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
 
   // 加载项目和图谱列表
   useEffect(() => {
@@ -73,6 +86,17 @@ export default function NewCreationWorkflowPage() {
         }));
         
         setProjects(projectList);
+        if (selectedProject) {
+          const updatedProject = projectList.find(p => p.id === selectedProject.id);
+          if (updatedProject) {
+            setSelectedProject(updatedProject);
+          } else if (viewMode === 'graphs') {
+            setSelectedProject(null);
+            setViewMode('projects');
+            setSelectedGraphIds(new Set());
+            setIsBatchDeleteMode(false);
+          }
+        }
         
         // 注意: graphs 状态已移除,因为图谱数据已包含在 projects 中
       }
@@ -455,6 +479,114 @@ export default function NewCreationWorkflowPage() {
     }
   };
 
+  const handleOpenRenameDialog = () => {
+    if (!isLoggedIn) {
+      alert('请先登录后再进行修改名称操作');
+      return;
+    }
+
+    if (viewMode === 'graphs' && !isBatchDeleteMode && selectedProject) {
+      setRenameDialog({
+        isOpen: true,
+        type: 'project',
+        id: selectedProject.id,
+        currentName: selectedProject.name,
+      });
+      setRenameInput(selectedProject.name);
+      return;
+    }
+
+    const selectedCount = viewMode === 'projects' ? selectedProjectIds.size : selectedGraphIds.size;
+    if (!isBatchDeleteMode || selectedCount !== 1) {
+      alert(`请在选择模式下选中 1 个${viewMode === 'projects' ? '项目' : '图谱'}后再修改名称`);
+      return;
+    }
+
+    if (viewMode === 'projects') {
+      const projectId = Array.from(selectedProjectIds)[0];
+      const project = projects.find(p => p.id === projectId);
+      const currentName = project?.name || '';
+      setRenameDialog({
+        isOpen: true,
+        type: 'project',
+        id: projectId,
+        currentName,
+      });
+      setRenameInput(currentName);
+      return;
+    }
+
+    const graphId = Array.from(selectedGraphIds)[0];
+    const graph = selectedProject?.graphs?.find(g => g.id === graphId);
+    const currentName = graph?.name || '';
+    setRenameDialog({
+      isOpen: true,
+      type: 'graph',
+      id: graphId,
+      currentName,
+    });
+    setRenameInput(currentName);
+  };
+
+  const handleCloseRenameDialog = () => {
+    if (isRenaming) return;
+    setRenameDialog({
+      isOpen: false,
+      type: null,
+      id: null,
+      currentName: '',
+    });
+    setRenameInput('');
+  };
+
+  const handleConfirmRename = async () => {
+    if (!renameDialog.isOpen || !renameDialog.type || !renameDialog.id) return;
+
+    const newName = renameInput.trim();
+    if (!newName) {
+      alert('名称不能为空');
+      return;
+    }
+
+    setIsRenaming(true);
+    try {
+      const endpoint =
+        renameDialog.type === 'project'
+          ? `/api/projects/${renameDialog.id}`
+          : `/api/graphs/${renameDialog.id}`;
+
+      const response = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 401) {
+        alert('请先登录后再进行修改名称操作');
+        return;
+      }
+      if (response.status === 403) {
+        alert(data.error || '无权限操作');
+        return;
+      }
+      if (!response.ok) {
+        alert(data.error || '修改失败');
+        return;
+      }
+
+      await fetchProjectsWithGraphs();
+      handleCloseRenameDialog();
+      alert('名称已更新');
+    } catch (error) {
+      console.error('修改名称失败:', error);
+      alert('修改失败，请稍后重试');
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
   // 处理搜索
   const handleSearch = () => {
     setSearchQuery(searchInput);
@@ -466,6 +598,11 @@ export default function NewCreationWorkflowPage() {
       handleSearch();
     }
   };
+
+  const renameTargetText = (() => {
+    if (viewMode === 'graphs' && !isBatchDeleteMode) return '项目';
+    return viewMode === 'projects' ? '项目' : '图谱';
+  })();
 
   return (
     <div className={styles.pageContainer}>
@@ -553,6 +690,15 @@ export default function NewCreationWorkflowPage() {
 
           {/* 右侧：两个下拉筛选框 */}
           <div className={styles.filterControls}>
+            <button
+              className={styles.renameButton}
+              onClick={handleOpenRenameDialog}
+              disabled={isDeleting || isRenaming}
+              aria-label={`修改${renameTargetText}名称`}
+            >
+              {isRenaming ? '修改中...' : '修改名称'}
+            </button>
+
             {/* 批量删除控件 */}
             <BatchDeleteControls
               isBatchDeleteMode={isBatchDeleteMode}
@@ -621,7 +767,7 @@ export default function NewCreationWorkflowPage() {
                   background: '#fff',
                   borderRadius: '8px'
                 }}>
-                  暂无项目，点击"新建"按钮创建您的第一个项目
+                  暂无项目，点击“新建”按钮创建您的第一个项目
                 </div>
               ) : (() => {
                 const filteredProjects = projects
@@ -708,7 +854,7 @@ export default function NewCreationWorkflowPage() {
                   background: '#fff',
                   borderRadius: '8px'
                 }}>
-                  该项目暂无图谱，点击"新建"按钮创建图谱
+                  该项目暂无图谱，点击“新建”按钮创建图谱
                 </div>
               ) : (() => {
                 const filteredGraphs = selectedProject.graphs
@@ -829,6 +975,59 @@ export default function NewCreationWorkflowPage() {
         onConfirm={viewMode === 'projects' ? handleConfirmDelete : handleConfirmDeleteGraphs}
         onCancel={handleCancelBatchDelete}
       />
+
+      {renameDialog.isOpen && (
+        <>
+          <div
+            className={styles.dialogOverlay}
+            onClick={handleCloseRenameDialog}
+            aria-hidden="true"
+          />
+          <div
+            className={styles.dialogContainer}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rename-dialog-title"
+          >
+            <h3 id="rename-dialog-title" className={styles.dialogTitle}>
+              修改{renameDialog.type === 'graph' ? '图谱' : '项目'}名称
+            </h3>
+            <div className={styles.dialogContent}>
+              {renameDialog.currentName && (
+                <p className={styles.dialogText}>当前名称：{renameDialog.currentName}</p>
+              )}
+              <input
+                className={styles.dialogInput}
+                value={renameInput}
+                onChange={(e) => setRenameInput(e.target.value)}
+                placeholder={`请输入新的${renameDialog.type === 'graph' ? '图谱' : '项目'}名称`}
+                disabled={isRenaming}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isRenaming) {
+                    handleConfirmRename();
+                  }
+                }}
+              />
+            </div>
+            <div className={styles.dialogActions}>
+              <button
+                className={styles.dialogCancelButton}
+                onClick={handleCloseRenameDialog}
+                disabled={isRenaming}
+              >
+                取消
+              </button>
+              <button
+                className={styles.dialogPrimaryButton}
+                onClick={handleConfirmRename}
+                disabled={isRenaming}
+              >
+                {isRenaming ? '提交中...' : '确定'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* aria-live 区域用于通知选择模式变化 */}
       <div 
