@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/lib/store'
@@ -744,7 +744,7 @@ export default function NodeDetailPanel() {
                   </div>
                 </div>
 
-                {/* 只读模式下的图片/视频显示 */}
+                {/* 只读模式下的图片显示 */}
                 {editedImageUrl && (
                   <div style={{ marginBottom: '20px' }}>
                     <label style={{
@@ -815,6 +815,70 @@ export default function NodeDetailPanel() {
                       }}>
                         <span style={{ fontSize: '14px' }}>🔍</span>
                         点击预览
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 只读模式下的视频显示（如果有图片也有视频，也会显示视频） */}
+                {editedVideoUrl && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '8px',
+                    }}>
+                      节点视频
+                    </label>
+                    <div
+                      onClick={() => handleMediaClick(editedVideoUrl)}
+                      style={{
+                        width: '100%',
+                        height: '200px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: '2px solid #e5e7eb',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'all 0.2s',
+                        background: '#000',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.02)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 182, 255, 0.3)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = 'none'
+                      }}
+                    >
+                      <video
+                        src={editedVideoUrl}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(0, 0, 0, 0.6)',
+                        color: 'white',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        backdropFilter: 'blur(4px)',
+                      }}>
+                        <span style={{ fontSize: '14px' }}>▶️</span>
+                        点击播放
                       </div>
                     </div>
                   </div>

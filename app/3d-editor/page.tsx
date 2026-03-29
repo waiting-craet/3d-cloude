@@ -104,6 +104,17 @@ export default function ThreeDEditorPage() {
       }
       
       loadGraphData()
+
+      // 监听窗口焦点变化，自动刷新图谱数据（如从 workflow 回来）
+      const handleFocus = () => {
+        console.log('🔄 [3DEditorPage] Window focused, refreshing graph data...')
+        loadGraphData()
+      }
+      
+      window.addEventListener('focus', handleFocus)
+      return () => {
+        window.removeEventListener('focus', handleFocus)
+      }
     }
   }, [graphId, setCurrentGraph, setCurrentProject, setProjects])
 
