@@ -73,13 +73,8 @@ export default function GraphPage() {
         return
       }
 
-      // 如果当前已经加载了这个图谱，跳过
-      if (currentGraph?.id === graphId) {
-        setIsInitializing(false)
-        return
-      }
-
       try {
+        // 每次进入页面或重新获得焦点时，强制重新加载数据
         await loadGraphById(graphId)
         setError(null)
       } catch (err) {
@@ -91,7 +86,18 @@ export default function GraphPage() {
     }
 
     initializeGraph()
-  }, [graphId, loadGraphById, currentGraph])
+
+    // 添加窗口焦点监听器，实现从其他页面返回时的自动刷新
+    const handleFocus = () => {
+      console.log('🔄 [GraphPage] Window focused, refreshing graph data...')
+      initializeGraph()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [graphId, loadGraphById])
 
   // 如果正在初始化，显示加载状态
   if (isInitializing) {
