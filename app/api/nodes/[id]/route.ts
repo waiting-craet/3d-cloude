@@ -10,11 +10,11 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json()
-    const { name, description, color, textColor, shape, size, tags, imageUrl } = body
+    const { name, description, color, textColor, shape, size, tags, imageUrl, videoUrl } = body
     
     console.log('📝 更新节点请求:', {
       id: params.id,
-      body: { name, description, color, textColor, shape, size, tags, imageUrl }
+      body: { name, description, color, textColor, shape, size, tags, imageUrl, videoUrl }
     })
     
     const node = await prisma.node.update({
@@ -28,6 +28,7 @@ export async function PATCH(
         ...(size !== undefined && { size }),
         ...(tags && { tags }),
         ...(imageUrl !== undefined && { imageUrl }),
+        ...(videoUrl !== undefined && { videoUrl }),
       },
     })
     
