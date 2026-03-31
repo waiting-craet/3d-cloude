@@ -61,9 +61,9 @@ const PaperHeroSection = React.memo(function PaperHeroSection({
             type="text"
             value={searchQuery}
             onChange={handleSearchChange}
-            placeholder="搜索知识图谱 能够生成文档的工具"
+            placeholder="搜索智构红图 能够生成文档的工具"
             className={styles.searchInput}
-            aria-label="搜索知识图谱"
+            aria-label="搜索智构红图"
           />
           <button
             type="submit"

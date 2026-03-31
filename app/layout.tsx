@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: '3D 知识图谱',
+  title: '智构红图',
   description: '交互式 3D 知识图谱可视化平台',
   icons: {
     icon: '/favicon.ico'

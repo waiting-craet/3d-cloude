@@ -26,7 +26,7 @@ const PaperNavbar = React.memo(function PaperNavbar({
     <nav className={styles.navbar}>
       <div className={styles.container}>
         {/* Logo/Brand */}
-        <div className={styles.logo}>知识图谱</div>
+        <div className={styles.logo}>智构红图</div>
 
         {/* Button Group */}
         <div className={styles.buttonGroup}>

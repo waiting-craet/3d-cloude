@@ -306,8 +306,8 @@ export default function LandingPage() {
       }}>
         {/* Hero Section */}
         <PaperHeroSection
-          title="构建与发现知识的无尽脉络"
-          subtitle="在这里，编织零散的碎片，洞见事物背后的关联。用图谱的力量，重新组织你的知识宇宙。"
+          title="智构红图·科技赋能文化浸润"
+          subtitle="新疆红色文化三维知识图谱创新平台"
           onSearch={handleSearch}
         />
 
