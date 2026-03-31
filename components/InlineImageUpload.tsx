@@ -19,12 +19,8 @@ export function InlineImageUpload({
 }: InlineImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null)
+  const [imageKey, setImageKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // 监听外部 currentImageUrl 变化以同步内部状态，解决节点切换时图片未更新的问题
-  useEffect(() => {
-    setPreview(currentImageUrl || null)
-  }, [currentImageUrl, nodeId])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -113,6 +109,7 @@ export function InlineImageUpload({
           border: '2px solid #e5e7eb',
         }}>
           <img
+            key={imageKey}
             src={preview}
             alt="节点图片"
             onClick={() => onPreviewClick?.(preview)}

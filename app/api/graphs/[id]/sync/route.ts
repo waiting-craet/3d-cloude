@@ -67,7 +67,7 @@ export async function POST(
       description: node.description || undefined,
       tags: node.tags || undefined,
       imageUrl: node.imageUrl || undefined,
-      videoUrl: undefined, // videoUrl is not in the database schema
+      videoUrl: node.videoUrl || undefined,
     }))
 
     console.log('📊 数据库数据 - 节点:', dbNodes.length, '边:', dbEdges.length)
@@ -209,6 +209,7 @@ export async function POST(
                 color: '#3b82f6',
                 size: 2.0,
                 imageUrl: wNode.imageUrl,
+                videoUrl: wNode.videoUrl,
                 projectId: graph.projectId,
                 graphId: graphId,
               },

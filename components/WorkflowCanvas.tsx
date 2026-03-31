@@ -610,14 +610,26 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         throw new Error(errorMsg)
       }
 
-      // 更新节点 - NEW: Include media dimensions
-      updateNode(nodeId, {
+      // NEW: Include media dimensions and explicitly call updateNodeLocal
+      const updates = {
         imageUrl: data.mediaType === 'image' ? data.url : undefined,
         videoUrl: data.mediaType === 'video' ? data.url : undefined,
         mediaType: data.mediaType,
         mediaWidth,
         mediaHeight,
-      })
+      }
+      updateNode(nodeId, updates)
+      
+      // Also update the backend immediately to persist the change for 3d-editor
+      try {
+        await fetch(`/api/nodes/${nodeId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        })
+      } catch (e) {
+        console.error('Failed to sync media update to backend:', e)
+      }
       
       // NEW: Trigger dimension recalculation by clearing actual dimensions
       // This allows ResizeObserver to measure the new dimensions
