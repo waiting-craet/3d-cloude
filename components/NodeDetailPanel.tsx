@@ -580,11 +580,17 @@ export default function NodeDetailPanel() {
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
+          maxWidth: '80%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
         }}>
-          <span style={{ fontSize: '24px' }}>{isEditMode ? '✏️' : '📋'}</span>
-          {isEditMode ? '编辑节点' : '节点详情'}
+          <span style={{ fontSize: '24px', flexShrink: 0 }}>{isEditMode ? '✏️' : '📋'}</span>
+          <span title={selectedNode.name} style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {selectedNode.name}
+          </span>
           {isSaving && (
-            <span style={{ fontSize: '14px', fontWeight: '400', marginLeft: '8px' }}>
+            <span style={{ fontSize: '14px', fontWeight: '400', marginLeft: '8px', flexShrink: 0 }}>
               保存中...
             </span>
           )}
@@ -728,36 +734,43 @@ export default function NodeDetailPanel() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: '#374151',
-                    marginBottom: '8px',
-                  }}>
-                    描述
-                  </label>
-                  <div style={{
-                    padding: '12px',
-                    background: '#f9fafb',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    color: '#374151',
-                    minHeight: '100px',
-                    whiteSpace: 'pre-wrap',
-                  }}>
-                    {editedDescription || '无描述'}
+                {editedDescription && editedDescription.trim() !== '' && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '8px',
+                    }}>
+                      详情
+                    </label>
+                    <div 
+                      style={{
+                        padding: '12px',
+                        background: '#f9fafb',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        color: '#374151',
+                        minHeight: '100px',
+                        whiteSpace: 'pre-wrap',
+                        lineHeight: '1.6',
+                      }}
+                      dangerouslySetInnerHTML={{ 
+                        __html: editedDescription
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;')
+                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                          .replace(/\n/g, '<br/>')
+                      }}
+                    />
                   </div>
-                </div>
+                )}
 
                 {/* 只读模式下的图片显示 */}
-<<<<<<< HEAD
                 {editedImageUrl && !isVideoUrl(editedImageUrl) && (
-=======
-                {editedImageUrl && (
->>>>>>> 61da2097ead5160baa7128d67a5c62192088357c
                   <div style={{ marginBottom: '20px' }}>
                     <label style={{
                       display: 'block',
@@ -789,8 +802,8 @@ export default function NodeDetailPanel() {
                         e.currentTarget.style.boxShadow = 'none'
                       }}
                     >
-<<<<<<< HEAD
                       <img
+                        key={editedImageUrl}
                         src={editedImageUrl}
                         alt="节点图片"
                         style={{
@@ -854,6 +867,7 @@ export default function NodeDetailPanel() {
                       }}
                     >
                       <video
+                        key={editedVideoUrl}
                         src={editedVideoUrl}
                         style={{
                           width: '100%',
@@ -965,39 +979,6 @@ export default function NodeDetailPanel() {
                       }}>
                         ▶
                       </div>
-=======
-                      {isVideoUrl(editedImageUrl) ? (
-                        <video
-                          key={`readonly-image-${selectedNode?.id}-${editedImageUrl}`}
-                          src={editedImageUrl}
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                          controls
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            pointerEvents: 'none',
-                          }}
-                        />
-                      ) : (
-                        <img
-                          key={`readonly-image-${selectedNode?.id}-${editedImageUrl}`}
-                          src={editedImageUrl}
-                          alt="节点图片"
-                          loading="lazy"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain',
-                            background: '#f3f4f6',
-                          }}
-                        />
-                      )}
-                      {/* 放大图标提示 */}
->>>>>>> 61da2097ead5160baa7128d67a5c62192088357c
                       <div style={{
                         position: 'absolute',
                         top: '8px',
@@ -1014,76 +995,6 @@ export default function NodeDetailPanel() {
                       }}>
                         <span style={{ fontSize: '14px' }}>🔍</span>
                         点击预览
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 只读模式下的视频显示（如果有图片也有视频，也会显示视频） */}
-                {editedVideoUrl && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      color: '#374151',
-                      marginBottom: '8px',
-                    }}>
-                      节点视频
-                    </label>
-                    <div
-                      onClick={() => handleMediaClick(editedVideoUrl)}
-                      style={{
-                        width: '100%',
-                        height: '200px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        border: '2px solid #e5e7eb',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        transition: 'all 0.2s',
-                        background: '#000',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)'
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 182, 255, 0.3)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = 'none'
-                      }}
-                    >
-                      <video
-                        key={`readonly-video-${selectedNode?.id}-${editedVideoUrl}`}
-                        src={editedVideoUrl}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        controls
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        color: 'white',
-                        padding: '6px 10px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backdropFilter: 'blur(4px)',
-                      }}>
-                        <span style={{ fontSize: '14px' }}>▶️</span>
-                        点击播放
                       </div>
                     </div>
                   </div>

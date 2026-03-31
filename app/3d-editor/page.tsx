@@ -99,6 +99,16 @@ export default function ThreeDEditorPage() {
                   graphs: [graph],
                 })
                 
+                // 同时更新 projects 列表，确保 TopNavbar 的 switchGraph 能找到项目
+                setProjects([{
+                  id: project.id,
+                  name: project.name,
+                  description: project.description,
+                  graphs: [graph],
+                  createdAt: project.createdAt,
+                  updatedAt: project.updatedAt,
+                }])
+                
                 // 保存到 localStorage 以便 TopNavbar 使用
                 localStorage.setItem('currentProjectId', project.id)
                 localStorage.setItem('currentGraphId', graph.id)

@@ -946,6 +946,9 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       
       console.log('✅ 同步成功:', result)
       console.log('📊 统计:', result.stats)
+
+      // 注意：已移除调用完整的 3D 转换算法以避免覆盖用户手动摆放的二维坐标。
+      // 因为 convert-to-3d 会重新计算 x/y/z 坐标，导致工作流中卡片位置丢失和错乱。
       
       // 4. 等待刷新项目列表完成
       setSavingStatus('保存成功！正在刷新数据...')

@@ -291,7 +291,47 @@ export async function POST(
         }
       }
 
-      // 4.7 Update graph counts
+      // 4.7 Update graph settings with correct node IDs for workflowPositions
+      // Read current graph settings
+      const currentGraph = await tx.graph.findUnique({
+        where: { id: graphId },
+        select: { settings: true }
+      })
+
+      let currentSettings: any = {}
+      if (currentGraph?.settings) {
+        try {
+          currentSettings = typeof currentGraph.settings === 'string' 
+            ? JSON.parse(currentGraph.settings) 
+            : currentGraph.settings
+        } catch (error) {
+          console.warn('Failed to parse graph settings in sync API')
+        }
+      }
+
+      // If there are workflowPositions, update the node IDs
+      if (currentSettings.workflowPositions?.nodes) {
+        currentSettings.workflowPositions.nodes = currentSettings.workflowPositions.nodes.map((n: any) => {
+          // If the node ID has a mapping to a real DB ID, use it
+          if (nodeIdMap.has(n.id)) {
+            return { ...n, id: nodeIdMap.get(n.id) }
+          }
+          return n
+        })
+      } else {
+        // If savePositions hasn't run or wasn't included, we can reconstruct it from the incoming nodes
+        currentSettings.workflowPositions = {
+          ...currentSettings.workflowPositions,
+          nodes: workflowNodes.map(n => ({
+            id: nodeIdMap.get(n.tempId || n.id || '') || n.id,
+            x: n.x,
+            y: n.y
+          })),
+          lastSaved: new Date().toISOString()
+        }
+      }
+
+      // 4.8 Update graph counts and settings
       const finalNodeCount = await tx.node.count({ where: { graphId } })
       const finalEdgeCount = await tx.edge.count({ where: { graphId } })
 
@@ -300,6 +340,7 @@ export async function POST(
         data: {
           nodeCount: finalNodeCount,
           edgeCount: finalEdgeCount,
+          settings: JSON.stringify(currentSettings),
         },
       })
 

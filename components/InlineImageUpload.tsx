@@ -22,6 +22,14 @@ export function InlineImageUpload({
   const [imageKey, setImageKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // 监听外部 currentImageUrl 变化以同步内部状态，解决节点切换时图片未更新的问题
+  useEffect(() => {
+    console.log('🖼️ [InlineImageUpload] 节点切换，更新图片:', { nodeId, currentImageUrl })
+    setPreview(currentImageUrl || null)
+    // 强制重新渲染图片元素
+    setImageKey(prev => prev + 1)
+  }, [currentImageUrl, nodeId])
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return

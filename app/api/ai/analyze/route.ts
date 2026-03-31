@@ -54,6 +54,73 @@ interface PreviewEdge {
   isRedundant?: boolean;
 }
 
+// 简单的 XSS 过滤函数
+function sanitizeText(text: string): string {
+  if (!text) return '';
+  // 替换常见的 HTML 标签
+  return text
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+=/gi, '');
+}
+
+// 文本解析函数，提取节点详情映射表
+function extractNodeDetails(text: string): Map<string, string> {
+  const nodeDetailMap = new Map<string, string>();
+  if (!text) return nodeDetailMap;
+
+  try {
+    // 按行或句子进行粗略分割
+    const lines = text.split(/\n+/);
+    
+    for (let i = 0; i < lines.length; i++) {
+      const trimmedLine = lines[i].trim();
+      if (!trimmedLine) continue;
+      
+      // 匹配 "节点: 详情" 或 "节点：详情" 或 "节点 - 详情" 模式
+      const matchColon = trimmedLine.match(/^([^:：\-]{1,50})[:：\-]\s*(.+)$/);
+      if (matchColon) {
+        const nodeName = matchColon[1].trim();
+        const detail = matchColon[2].trim();
+        if (nodeName && detail) {
+          nodeDetailMap.set(nodeName.toLowerCase(), detail);
+          continue;
+        }
+      }
+      
+      // 匹配 "节点是/是指 详情" 模式
+      const matchIs = trimmedLine.match(/^([^，。；\n]{1,50}?)(?:是|是指)\s*([^，。；\n]+.*)$/);
+      if (matchIs) {
+        const nodeName = matchIs[1].trim();
+        const detail = matchIs[2].trim();
+        if (nodeName && detail) {
+          nodeDetailMap.set(nodeName.toLowerCase(), detail);
+          continue;
+        }
+      }
+
+      // 匹配 "节点\n详情段落" 模式 (节点通常较短，下一行是长文本)
+      if (trimmedLine.length <= 50 && !trimmedLine.includes('。') && i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        if (nextLine && nextLine.length > 10) {
+          // 清理可能的序号如 "1. " 或 "- "
+          const cleanNodeName = trimmedLine.replace(/^[\d\.\-\*\s]+/, '').trim();
+          if (cleanNodeName && !nodeDetailMap.has(cleanNodeName.toLowerCase())) {
+            nodeDetailMap.set(cleanNodeName.toLowerCase(), nextLine);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[AI Analysis] Text parsing failed:', error);
+  }
+
+  return nodeDetailMap;
+}
+
 /**
  * POST /api/ai/analyze
  * 
@@ -93,6 +160,10 @@ export async function POST(request: NextRequest) {
       visualizationType: body.visualizationType,
     });
 
+    // Requirement 1: 文本解析阶段
+    // 在调用 AI 生成节点前，先对原始文本进行语义分析，提取节点-详情映射
+    const nodeDetailMap = extractNodeDetails(body.documentText);
+
     // Check environment variables
     console.log('[AI Analysis] Environment check:', {
       hasApiKey: !!process.env.AI_API_KEY,
@@ -127,13 +198,24 @@ export async function POST(request: NextRequest) {
     const nodeNameToTempId = new Map<string, string>();
     const previewNodes: PreviewNode[] = aiResult.entities.map(entity => {
       const tempId = uuidv4();
-      nodeNameToTempId.set(entity.name.toLowerCase().trim(), tempId);
+      const nodeNameLower = entity.name.toLowerCase().trim();
+      nodeNameToTempId.set(nodeNameLower, tempId);
       
-      return {
+      const node: PreviewNode = {
         id: tempId,
         name: entity.name,
-        description: entity.description,  // Use description instead of type/properties
       };
+
+      // 仅当“节点–详情”映射表中该节点的详情字段非空时，才写入详情字段
+      let detail = nodeDetailMap.get(nodeNameLower);
+
+      if (detail) {
+        // XSS 过滤及最大长度截断（建议 ≤ 8 KB）
+        const truncatedDetail = detail.length > 8000 ? detail.substring(0, 8000) + '...' : detail;
+        node.description = sanitizeText(truncatedDetail);
+      }
+
+      return node;
     });
 
     // Step 3: Create preview edges with temporary node references

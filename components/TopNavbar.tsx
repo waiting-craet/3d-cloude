@@ -89,6 +89,50 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
     // 从数据库加载项目数据（使用优化的 API）
     const loadProjects = async () => {
       try {
+        // 先检查 URL 查询参数（优先级最高）
+        const urlParams = new URLSearchParams(window.location.search)
+        const projectIdFromUrl = urlParams.get('projectId')
+        const graphIdFromUrl = urlParams.get('graphId')
+        
+        // 如果 URL 中有 projectId 和 graphId，直接使用它们
+        if (projectIdFromUrl && graphIdFromUrl) {
+          console.log('🔍 [TopNavbar] URL 中有 projectId 和 graphId:', projectIdFromUrl, graphIdFromUrl)
+          
+          // 加载项目列表
+          const res = await fetch('/api/projects/with-graphs')
+          if (res.ok) {
+            const data = await res.json()
+            const projects = data.projects || []
+            setProjects(projects)
+            
+            // 查找项目和图谱
+            const project = projects.find((p: any) => p.id === projectIdFromUrl)
+            const graph = project?.graphs.find((g: any) => g.id === graphIdFromUrl)
+            
+            if (project && graph) {
+              console.log('✅ [TopNavbar] 从 URL 参数设置项目和图谱:', project.name, '/', graph.name)
+              switchGraph(projectIdFromUrl, graphIdFromUrl)
+              return
+            }
+          }
+        }
+        
+        // 检查是否已经有 currentProject 设置好了（例如从 3d-editor 页面设置的）
+        const state = useGraphStore.getState()
+        if (state.currentProject && state.currentGraph) {
+          console.log('✅ [TopNavbar] 已有 currentProject 和 currentGraph，跳过初始化')
+          console.log('   当前项目:', state.currentProject.name)
+          console.log('   当前图谱:', state.currentGraph.name)
+          // 仍然需要加载项目列表，但不要覆盖 currentProject
+          const res = await fetch('/api/projects/with-graphs')
+          if (res.ok) {
+            const data = await res.json()
+            const projects = data.projects || []
+            setProjects(projects)
+          }
+          return
+        }
+        
         const res = await fetch('/api/projects/with-graphs')
         if (res.ok) {
           const data = await res.json()
@@ -96,14 +140,9 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
           
           setProjects(projects)
           
-          // 检查 URL 查询参数（优先级最高）
-          const urlParams = new URLSearchParams(window.location.search)
-          const projectIdFromUrl = urlParams.get('projectId')
-          const graphIdFromUrl = urlParams.get('graphId')
-          
-          // 优先级: URL 参数 > localStorage > 无
-          let projectId = projectIdFromUrl || localStorage.getItem('currentProjectId')
-          let graphId = graphIdFromUrl || localStorage.getItem('currentGraphId')
+          // 从 localStorage 获取项目 ID 和图谱 ID
+          let projectId = localStorage.getItem('currentProjectId')
+          let graphId = localStorage.getItem('currentGraphId')
           
           // 验证ID是否是真实的数据库ID（cuid格式）
           const isValidId = (id: string | null) => id && id.startsWith('cmk')
@@ -129,11 +168,6 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
             if (project && graph) {
               console.log('🔄 [TopNavbar] 切换到图谱:', project.name, '/', graph.name)
               switchGraph(projectId!, graphId!)
-              
-              // 如果是从 URL 参数恢复的，清理 URL（避免刷新时重复处理）
-              if (projectIdFromUrl || graphIdFromUrl) {
-                window.history.replaceState({}, '', window.location.pathname)
-              }
             } else {
               console.log('⚠️ [TopNavbar] 项目或图谱不存在，清理缓存')
               localStorage.removeItem('currentProjectId')

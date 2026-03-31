@@ -89,6 +89,12 @@ export function detectNodeChanges(
         if (wNode.videoUrl !== dbNode.videoUrl) {
           updates.videoUrl = wNode.videoUrl
         }
+        if (wNode.x !== dbNode.x) {
+          updates.x = wNode.x
+        }
+        if (wNode.y !== dbNode.y) {
+          updates.y = wNode.y
+        }
         
         // If any property changed, add to update list
         if (Object.keys(updates).length > 0) {
