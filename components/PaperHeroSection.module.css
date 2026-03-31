@@ -189,6 +189,128 @@
   transform: translateY(-50%) scale(0.95);
 }
 
+.suggestionsDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #b8cfc7;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(90, 122, 110, 0.15);
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.suggestionLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #6b8578;
+  font-size: 14px;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #b8cfc7;
+  border-top-color: #6b8578;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid #e8f0ed;
+}
+
+.suggestionItem:last-child {
+  border-bottom: none;
+}
+
+.suggestionItem:hover,
+.suggestionItemActive {
+  background: rgba(107, 142, 133, 0.08);
+}
+
+.suggestionIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.suggestionContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #3d5a50;
+  margin-bottom: 2px;
+}
+
+.suggestionType {
+  font-size: 11px;
+  font-weight: 400;
+  color: #8ba69a;
+  background: rgba(139, 166, 154, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.suggestionProject {
+  font-size: 12px;
+  color: #6b8578;
+  margin-bottom: 2px;
+}
+
+.suggestionDescription {
+  font-size: 12px;
+  color: #8ba69a;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.suggestionStats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #a8bdb5;
+}
+
+.statsSeparator {
+  color: #c8d8d2;
+}
+
+.highlight {
+  background: rgba(107, 142, 133, 0.25);
+  color: #3d5a50;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
 /* Responsive adjustments for tablet */
 @media (max-width: 1199px) {
   .hero {

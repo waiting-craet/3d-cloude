@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './creation-workflow.module.css';
 import CreateProjectModal from '@/components/CreateProjectModal';
-import BatchDeleteControls from './BatchDeleteControls';
-import ProjectCardCheckbox from './ProjectCardCheckbox';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import { useUserStore } from '@/lib/userStore';
 
@@ -43,7 +41,6 @@ export default function NewCreationWorkflowPage() {
   const [viewMode, setViewMode] = useState<'projects' | 'graphs'>('projects');
   
   // 批量删除状态
-  const [isBatchDeleteMode, setIsBatchDeleteMode] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
   const [selectedGraphIds, setSelectedGraphIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -94,7 +91,6 @@ export default function NewCreationWorkflowPage() {
             setSelectedProject(null);
             setViewMode('projects');
             setSelectedGraphIds(new Set());
-            setIsBatchDeleteMode(false);
           }
         }
         
@@ -213,10 +209,6 @@ export default function NewCreationWorkflowPage() {
 
   // 处理项目卡片点击 - 进入项目的图谱列表
   const handleProjectCardClick = (project: Project) => {
-    // 在批量删除模式下，阻止导航
-    if (isBatchDeleteMode) {
-      return;
-    }
     setSelectedProject(project);
     setViewMode('graphs');
   };
@@ -241,65 +233,23 @@ export default function NewCreationWorkflowPage() {
     router.push(`/graph?graphId=${graph.id}`);
   };
 
-  // 批量删除事件处理函数
-  const handleEnterBatchDeleteMode = () => {
-    // 检查用户是否登录
-    if (!isLoggedIn) {
-      alert('请先登录后再进行批量删除操作');
-      return;
-    }
-    setIsBatchDeleteMode(true);
-    setSelectedProjectIds(new Set());
-  };
-
-  const handleToggleProjectSelection = (projectId: string) => {
-    setSelectedProjectIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(projectId)) {
-        newSet.delete(projectId);
-      } else {
-        newSet.add(projectId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleToggleGraphSelection = (graphId: string) => {
-    setSelectedGraphIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(graphId)) {
-        newSet.delete(graphId);
-      } else {
-        newSet.add(graphId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleSelectAllGraphs = () => {
-    if (selectedProject && selectedProject.graphs) {
-      const allGraphIds = selectedProject.graphs.map(graph => graph.id);
-      setSelectedGraphIds(new Set(allGraphIds));
-    }
-  };
-
-  const handleDeselectAllGraphs = () => {
-    setSelectedGraphIds(new Set());
-  };
-
   const handleCancelBatchDelete = () => {
-    setIsBatchDeleteMode(false);
     setSelectedProjectIds(new Set());
     setSelectedGraphIds(new Set());
     setShowDeleteConfirm(false);
   };
 
-  const handleShowConfirm = () => {
-    if (viewMode === 'projects' && selectedProjectIds.size > 0) {
-      setShowDeleteConfirm(true);
-    } else if (viewMode === 'graphs' && selectedGraphIds.size > 0) {
-      setShowDeleteConfirm(true);
+  const handleDeleteSingle = (id: string, type: 'project' | 'graph') => {
+    if (!isLoggedIn) {
+      alert('请先登录后再进行删除操作');
+      return;
     }
+    if (type === 'project') {
+      setSelectedProjectIds(new Set([id]));
+    } else {
+      setSelectedGraphIds(new Set([id]));
+    }
+    setShowDeleteConfirm(true);
   };
 
   const handleConfirmDelete = async () => {
@@ -457,7 +407,6 @@ export default function NewCreationWorkflowPage() {
       
       // 清除选择状态
       setSelectedGraphIds(new Set());
-      setIsBatchDeleteMode(false);
       
     } catch (error) {
       console.error('批量删除图谱失败:', error);
@@ -479,50 +428,11 @@ export default function NewCreationWorkflowPage() {
     }
   };
 
-  const handleOpenRenameDialog = () => {
-    if (!isLoggedIn) {
-      alert('请先登录后再进行修改名称操作');
-      return;
-    }
-
-    if (viewMode === 'graphs' && !isBatchDeleteMode && selectedProject) {
-      setRenameDialog({
-        isOpen: true,
-        type: 'project',
-        id: selectedProject.id,
-        currentName: selectedProject.name,
-      });
-      setRenameInput(selectedProject.name);
-      return;
-    }
-
-    const selectedCount = viewMode === 'projects' ? selectedProjectIds.size : selectedGraphIds.size;
-    if (!isBatchDeleteMode || selectedCount !== 1) {
-      alert(`请在选择模式下选中 1 个${viewMode === 'projects' ? '项目' : '图谱'}后再修改名称`);
-      return;
-    }
-
-    if (viewMode === 'projects') {
-      const projectId = Array.from(selectedProjectIds)[0];
-      const project = projects.find(p => p.id === projectId);
-      const currentName = project?.name || '';
-      setRenameDialog({
-        isOpen: true,
-        type: 'project',
-        id: projectId,
-        currentName,
-      });
-      setRenameInput(currentName);
-      return;
-    }
-
-    const graphId = Array.from(selectedGraphIds)[0];
-    const graph = selectedProject?.graphs?.find(g => g.id === graphId);
-    const currentName = graph?.name || '';
+  const handleOpenRenameDialog = (id: string, currentName: string, type: 'project' | 'graph') => {
     setRenameDialog({
       isOpen: true,
-      type: 'graph',
-      id: graphId,
+      type,
+      id,
       currentName,
     });
     setRenameInput(currentName);
@@ -598,11 +508,6 @@ export default function NewCreationWorkflowPage() {
       handleSearch();
     }
   };
-
-  const renameTargetText = (() => {
-    if (viewMode === 'graphs' && !isBatchDeleteMode) return '项目';
-    return viewMode === 'projects' ? '项目' : '图谱';
-  })();
 
   return (
     <div className={styles.pageContainer}>
@@ -690,26 +595,6 @@ export default function NewCreationWorkflowPage() {
 
           {/* 右侧：两个下拉筛选框 */}
           <div className={styles.filterControls}>
-            <button
-              className={styles.renameButton}
-              onClick={handleOpenRenameDialog}
-              disabled={isDeleting || isRenaming}
-              aria-label={`修改${renameTargetText}名称`}
-            >
-              {isRenaming ? '修改中...' : '修改名称'}
-            </button>
-
-            {/* 批量删除控件 */}
-            <BatchDeleteControls
-              isBatchDeleteMode={isBatchDeleteMode}
-              selectedCount={viewMode === 'projects' ? selectedProjectIds.size : selectedGraphIds.size}
-              isDeleting={isDeleting}
-              isProjectView={viewMode === 'projects'}
-              onEnterBatchMode={handleEnterBatchDeleteMode}
-              onConfirm={handleShowConfirm}
-              onCancel={handleCancelBatchDelete}
-            />
-
             {/* 排序方式下拉框 */}
             <select
               className={styles.filterSelect}
@@ -810,15 +695,6 @@ export default function NewCreationWorkflowPage() {
                       className={styles.projectCard}
                       onClick={() => handleProjectCardClick(project)}
                     >
-                      {/* 批量删除复选框 */}
-                      {isBatchDeleteMode && (
-                        <ProjectCardCheckbox
-                          projectId={project.id}
-                          projectName={project.name}
-                          isSelected={selectedProjectIds.has(project.id)}
-                          onToggle={handleToggleProjectSelection}
-                        />
-                      )}
                       
                       <div className={styles.projectCardContent}>
                         <h3 className={styles.projectCardTitle}>项目：{project.name}</h3>
@@ -835,6 +711,37 @@ export default function NewCreationWorkflowPage() {
                             </span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* 卡片左侧悬浮操作按钮 */}
+                      <div className={styles.cardHoverActions}>
+                        <button
+                          className={styles.cardActionButton}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenRenameDialog(project.id, project.name, 'project');
+                          }}
+                          aria-label="修改名称"
+                          title="修改名称"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          className={`${styles.cardActionButton} ${styles.cardActionDelete}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSingle(project.id, 'project');
+                          }}
+                          aria-label="删除"
+                          title="删除"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   ))
@@ -893,33 +800,9 @@ export default function NewCreationWorkflowPage() {
                   filteredGraphs?.map((graph) => (
                     <div
                       key={graph.id}
-                      className={`${styles.projectCard} ${
-                        isBatchDeleteMode && selectedGraphIds.has(graph.id) ? styles.selected : ''
-                      }`}
-                      onClick={() => {
-                        if (!isBatchDeleteMode) {
-                          handleGraphCardClick(graph);
-                        }
-                      }}
+                      className={styles.projectCard}
+                      onClick={() => handleGraphCardClick(graph)}
                     >
-                      {/* 批量删除复选框 */}
-                      {isBatchDeleteMode && (
-                        <div
-                          className={styles.checkboxContainer}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleGraphSelection(graph.id);
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            className={styles.projectCheckbox}
-                            checked={selectedGraphIds.has(graph.id)}
-                            onChange={() => handleToggleGraphSelection(graph.id)}
-                            aria-label={`选择图谱 ${graph.name}`}
-                          />
-                        </div>
-                      )}
                       
                       <div className={styles.projectCardContent}>
                         <h3 className={styles.projectCardTitle}>图谱：{graph.name}</h3>
@@ -948,6 +831,37 @@ export default function NewCreationWorkflowPage() {
                             </div>
                           )}
                         </div>
+                      </div>
+
+                      {/* 卡片左侧悬浮操作按钮 */}
+                      <div className={styles.cardHoverActions}>
+                        <button
+                          className={styles.cardActionButton}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenRenameDialog(graph.id, graph.name, 'graph');
+                          }}
+                          aria-label="修改名称"
+                          title="修改名称"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          className={`${styles.cardActionButton} ${styles.cardActionDelete}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSingle(graph.id, 'graph');
+                          }}
+                          aria-label="删除"
+                          title="删除"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   ))
@@ -1028,22 +942,6 @@ export default function NewCreationWorkflowPage() {
           </div>
         </>
       )}
-
-      {/* aria-live 区域用于通知选择模式变化 */}
-      <div 
-        role="status" 
-        aria-live="polite" 
-        aria-atomic="true"
-        style={{ 
-          position: 'absolute', 
-          left: '-10000px', 
-          width: '1px', 
-          height: '1px', 
-          overflow: 'hidden' 
-        }}
-      >
-        {isBatchDeleteMode ? '已进入批量删除模式，请选择要删除的项目' : ''}
-      </div>
     </div>
   );
 }

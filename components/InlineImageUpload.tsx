@@ -22,21 +22,6 @@ export function InlineImageUpload({
   const [imageKey, setImageKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    console.log('📷 [InlineImageUpload] currentImageUrl changed:', currentImageUrl)
-    const newUrl = currentImageUrl || null
-    if (newUrl !== preview) {
-      setPreview(newUrl)
-      setImageKey(prev => prev + 1)
-    }
-  }, [currentImageUrl])
-
-  useEffect(() => {
-    console.log('📷 [InlineImageUpload] Initial imageUrl:', currentImageUrl)
-    setPreview(currentImageUrl || null)
-    setImageKey(prev => prev + 1)
-  }, [nodeId])
-
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return

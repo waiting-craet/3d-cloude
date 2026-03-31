@@ -43,6 +43,18 @@ interface Graph {
   updatedAt: string
 }
 
+// Search suggestion type
+interface SearchSuggestion {
+  id: string
+  type: 'project' | 'graph'
+  name: string
+  description?: string | null
+  projectName?: string
+  projectId?: string
+  nodeCount: number
+  edgeCount: number
+}
+
 // API response type
 interface ProjectsResponse {
   projects: Project[]
@@ -201,8 +213,33 @@ export default function LandingPage() {
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
-    setCurrentPage(1) // Reset to first page when searching
+    setCurrentPage(1)
   }, [])
+
+  const handleSuggestionSelect = useCallback((suggestion: SearchSuggestion) => {
+    setSearchQuery(suggestion.name)
+    setCurrentPage(1)
+    
+    if (suggestion.type === 'project' && suggestion.id) {
+      const project = projects.find(p => p.id === suggestion.id)
+      if (project) {
+        handleProjectClick(suggestion.id)
+      }
+    } else if (suggestion.type === 'graph' && suggestion.id) {
+      if (suggestion.projectId) {
+        const project = projects.find(p => p.id === suggestion.projectId)
+        if (project) {
+          setSelectedProject(project)
+          setViewMode('projectGraphs')
+          setCurrentPage(1)
+          fetchProjectGraphs(suggestion.projectId)
+        }
+      }
+      setTimeout(() => {
+        router.push(`/graph?graphId=${suggestion.id}&from=homepage`)
+      }, 100)
+    }
+  }, [projects, handleProjectClick, fetchProjectGraphs, router])
 
   // Retry loading projects
   const handleRetry = useCallback(() => {
@@ -213,13 +250,20 @@ export default function LandingPage() {
   const displayProjects = useCallback(() => {
     let filtered = projects
     
-    // Apply search filter
+    // Apply search filter with fuzzy matching
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(project => 
-        project.name.toLowerCase().includes(query) ||
-        (project.description && project.description.toLowerCase().includes(query))
-      )
+      const query = searchQuery.toLowerCase().trim()
+      const searchTerms = query.split(/\s+/) // 分词以支持多关键词匹配
+
+      filtered = filtered.filter(project => {
+        const name = project.name.toLowerCase()
+        const description = (project.description || '').toLowerCase()
+        
+        // 模糊匹配逻辑：所有搜索词都需要在名称或描述中匹配到
+        return searchTerms.every(term => 
+          name.includes(term) || description.includes(term)
+        )
+      })
     }
     
     // Calculate pagination
@@ -233,17 +277,24 @@ export default function LandingPage() {
     }
   }, [projects, searchQuery, currentPage])()
 
-  // Filter graphs based on search query
+  // Filter graphs based on search query with fuzzy matching
   const displayGraphs = useCallback(() => {
     let filtered = graphs
     
-    // Apply search filter
+    // Apply search filter with fuzzy matching
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(graph => 
-        graph.name.toLowerCase().includes(query) ||
-        (graph.description && graph.description.toLowerCase().includes(query))
-      )
+      const query = searchQuery.toLowerCase().trim()
+      const searchTerms = query.split(/\s+/) // 分词以支持多关键词匹配
+
+      filtered = filtered.filter(graph => {
+        const name = graph.name.toLowerCase()
+        const description = (graph.description || '').toLowerCase()
+        
+        // 模糊匹配逻辑：所有搜索词都需要在名称或描述中匹配到
+        return searchTerms.every(term => 
+          name.includes(term) || description.includes(term)
+        )
+      })
     }
     
     // Calculate pagination
@@ -309,6 +360,7 @@ export default function LandingPage() {
           title="智构红图·科技赋能文化浸润"
           subtitle="新疆红色文化三维知识图谱创新平台"
           onSearch={handleSearch}
+          onSuggestionSelect={handleSuggestionSelect}
         />
 
         {/* Gallery Section */}
@@ -327,7 +379,7 @@ export default function LandingPage() {
               alignItems: 'center'
             }}>
               <span style={{ color: '#6b8e85', fontSize: '14px' }}>
-                搜索 "{searchQuery}" 找到 {viewMode === 'gallery' ? displayProjects.totalItems : displayGraphs.totalItems} 个结果
+                搜索 &quot;{searchQuery}&quot; 找到 {viewMode === 'gallery' ? displayProjects.totalItems : displayGraphs.totalItems} 个结果
               </span>
               <button
                 onClick={() => setSearchQuery('')}
