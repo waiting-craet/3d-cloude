@@ -753,11 +753,7 @@ export default function NodeDetailPanel() {
                 </div>
 
                 {/* 只读模式下的图片显示 */}
-<<<<<<< HEAD
-                {editedImageUrl && !isVideoUrl(editedImageUrl) && (
-=======
                 {editedImageUrl && (
->>>>>>> 61da2097ead5160baa7128d67a5c62192088357c
                   <div style={{ marginBottom: '20px' }}>
                     <label style={{
                       display: 'block',
@@ -789,183 +785,6 @@ export default function NodeDetailPanel() {
                         e.currentTarget.style.boxShadow = 'none'
                       }}
                     >
-<<<<<<< HEAD
-                      <img
-                        src={editedImageUrl}
-                        alt="节点图片"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        color: 'white',
-                        padding: '6px 10px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backdropFilter: 'blur(4px)',
-                      }}>
-                        <span style={{ fontSize: '14px' }}>🔍</span>
-                        点击预览
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 只读模式下的视频显示 */}
-                {editedVideoUrl && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      color: '#374151',
-                      marginBottom: '8px',
-                    }}>
-                      节点视频
-                    </label>
-                    <div
-                      onClick={() => handleMediaClick(editedVideoUrl)}
-                      style={{
-                        width: '100%',
-                        height: '200px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        border: '2px solid #e5e7eb',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)'
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 182, 255, 0.3)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = 'none'
-                      }}
-                    >
-                      <video
-                        src={editedVideoUrl}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          pointerEvents: 'none',
-                        }}
-                        muted
-                        playsInline
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        color: 'white',
-                        width: '50px',
-                        height: '50px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '24px',
-                        backdropFilter: 'blur(4px)',
-                      }}>
-                        ▶
-                      </div>
-                      <div style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        color: 'white',
-                        padding: '6px 10px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backdropFilter: 'blur(4px)',
-                      }}>
-                        <span style={{ fontSize: '14px' }}>🔍</span>
-                        点击预览
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 如果 imageUrl 是视频链接，也显示为视频 */}
-                {editedImageUrl && isVideoUrl(editedImageUrl) && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      color: '#374151',
-                      marginBottom: '8px',
-                    }}>
-                      节点视频
-                    </label>
-                    <div
-                      onClick={() => handleMediaClick(editedImageUrl)}
-                      style={{
-                        width: '100%',
-                        height: '200px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        border: '2px solid #e5e7eb',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)'
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 182, 255, 0.3)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = 'none'
-                      }}
-                    >
-                      <video
-                        src={editedImageUrl}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          pointerEvents: 'none',
-                        }}
-                        muted
-                        playsInline
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        color: 'white',
-                        width: '50px',
-                        height: '50px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '24px',
-                        backdropFilter: 'blur(4px)',
-                      }}>
-                        ▶
-                      </div>
-=======
                       {isVideoUrl(editedImageUrl) ? (
                         <video
                           key={`readonly-image-${selectedNode?.id}-${editedImageUrl}`}
@@ -997,7 +816,6 @@ export default function NodeDetailPanel() {
                         />
                       )}
                       {/* 放大图标提示 */}
->>>>>>> 61da2097ead5160baa7128d67a5c62192088357c
                       <div style={{
                         position: 'absolute',
                         top: '8px',
