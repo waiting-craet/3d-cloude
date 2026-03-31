@@ -9,8 +9,8 @@ import styles from './PaperFooter.module.css'
  * Site information constants
  */
 const SITE_INFO = {
-  name: '知识图谱平台',
-  description: '构建与发现知识的无尽脉络'
+  name: '智构红图',
+  description: '科技赋能文化浸润：新疆红色文化三维知识图谱创新平台'
 } as const
 
 /**
@@ -19,7 +19,7 @@ const SITE_INFO = {
 const COPYRIGHT_INFO = {
   symbol: '©',
   year: new Date().getFullYear(),
-  owner: '知识图谱平台'
+  owner: '智构红图'
 } as const
 
 

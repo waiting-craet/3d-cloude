@@ -23,6 +23,7 @@ export function InlineVideoUpload({
   const [videoKey, setVideoKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+<<<<<<< HEAD
 // 监听外部 currentVideoUrl 变化以同步内部状态，解决节点切换时视频未更新的问题
   useEffect(() => {
     console.log('🎬 [InlineVideoUpload] 节点切换，更新视频:', { nodeId, currentVideoUrl })
@@ -30,6 +31,23 @@ export function InlineVideoUpload({
     // 强制重新渲染视频元素
     setVideoKey(prev => prev + 1)
   }, [currentVideoUrl, nodeId])
+=======
+  useEffect(() => {
+    console.log('🎬 [InlineVideoUpload] currentVideoUrl changed:', currentVideoUrl)
+    const newUrl = currentVideoUrl || null
+    if (newUrl !== videoUrl) {
+      setVideoUrl(newUrl)
+      setError(null)
+      setVideoKey(prev => prev + 1)
+    }
+  }, [currentVideoUrl])
+
+  useEffect(() => {
+    console.log('🎬 [InlineVideoUpload] Initial videoUrl:', currentVideoUrl)
+    setVideoUrl(currentVideoUrl || null)
+    setVideoKey(prev => prev + 1)
+  }, [nodeId])
+>>>>>>> d8d452cd31317cefd64a2a1fd7c8c0f650cbea60
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
