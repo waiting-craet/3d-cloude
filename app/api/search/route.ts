@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { searchNodes } from '@/lib/db-helpers'
 import { prisma } from '@/lib/db'
 
-// 使用 Node.js Runtime（开发环境）
 export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q')
-    const type = searchParams.get('type') // 'nodes' | 'projects' | 'all'
+    const type = searchParams.get('type')
+    const fuzzy = searchParams.get('fuzzy') === 'true'
     
     if (!query) {
       return NextResponse.json(
@@ -18,35 +18,34 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 如果是搜索项目和图谱
     if (type === 'projects' || !type) {
-      const results = await searchProjectsAndGraphs(query)
+      const results = await searchProjectsAndGraphs(query, fuzzy)
       
-      // 保存搜索历史
-      await prisma.searchHistory.create({
-        data: {
-          query,
-          results: JSON.stringify(results.map(r => ({ type: r.type, id: r.projectId }))),
-        },
-      })
+      if (results.length > 0) {
+        await prisma.searchHistory.create({
+          data: {
+            query,
+            results: JSON.stringify(results.slice(0, 10).map(r => ({ type: r.type, id: r.projectId }))),
+          },
+        }).catch(() => {})
+      }
       
       return NextResponse.json({
         query,
         count: results.length,
         results,
+        fuzzy,
       })
     }
     
-    // 原有的节点搜索逻辑
     const results = await searchNodes(query)
     
-    // 保存搜索历史
     await prisma.searchHistory.create({
       data: {
         query,
         results: JSON.stringify(results.map(r => r.id)),
       },
-    })
+    }).catch(() => {})
     
     return NextResponse.json({
       query,
@@ -62,19 +61,35 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 搜索项目和图谱的函数
-async function searchProjectsAndGraphs(query: string) {
-  const searchTerm = `%${query}%`
+function generateFuzzyPatterns(query: string): string[] {
+  const patterns: string[] = []
+  const chars = query.split('')
   
+  patterns.push(query)
+  
+  for (let i = 0; i < chars.length; i++) {
+    patterns.push(query.slice(0, i) + query.slice(i + 1))
+  }
+  
+  if (chars.length > 2) {
+    for (let i = 0; i < chars.length - 1; i++) {
+      patterns.push(query.slice(0, i) + chars[i + 1] + chars[i] + query.slice(i + 2))
+    }
+  }
+  
+  return [...new Set(patterns)]
+}
+
+async function searchProjectsAndGraphs(query: string, fuzzy: boolean = false) {
   try {
-    // 搜索项目
+    const searchTerms = fuzzy ? generateFuzzyPatterns(query) : [query]
+    const whereConditions = searchTerms.flatMap(term => [
+      { name: { contains: term, mode: 'insensitive' as const } },
+      { description: { contains: term, mode: 'insensitive' as const } },
+    ])
+
     const projects = await prisma.project.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-        ],
-      },
+      where: { OR: whereConditions },
       select: {
         id: true,
         name: true,
@@ -85,16 +100,11 @@ async function searchProjectsAndGraphs(query: string) {
         updatedAt: true,
       },
       orderBy: { updatedAt: 'desc' },
+      take: 20,
     })
 
-    // 搜索图谱
     const graphs = await prisma.graph.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-        ],
-      },
+      where: { OR: whereConditions },
       select: {
         id: true,
         name: true,
@@ -114,32 +124,43 @@ async function searchProjectsAndGraphs(query: string) {
         },
       },
       orderBy: { updatedAt: 'desc' },
+      take: 20,
     })
 
-    const results = []
+    const results: Array<{
+      type: 'project' | 'graph'
+      projectId: string
+      projectName: string
+      graphId?: string
+      graphName?: string
+      matchedText: string
+      nodeCount?: number
+      edgeCount?: number
+    }> = []
 
-    // 添加匹配的项目
     for (const project of projects) {
       results.push({
-        type: 'project' as const,
+        type: 'project',
         projectId: project.id,
         projectName: project.name,
         matchedText: project.name,
+        nodeCount: project.nodeCount,
+        edgeCount: project.edgeCount,
       })
     }
 
-    // 添加匹配的图谱（显示为对应的项目）
     for (const graph of graphs) {
-      // 检查该项目是否已经在结果中（避免重复）
       const existingProject = results.find(r => r.projectId === graph.projectId)
       if (!existingProject) {
         results.push({
-          type: 'graph' as const,
-          projectId: graph.projectId,
-          projectName: graph.project.name,
+          type: 'graph',
+          projectId: graph.projectId || '',
+          projectName: graph.project?.name || '',
           graphId: graph.id,
           graphName: graph.name,
-          matchedText: `${graph.project.name} > ${graph.name}`,
+          matchedText: `${graph.project?.name || ''} > ${graph.name}`,
+          nodeCount: graph.nodeCount,
+          edgeCount: graph.edgeCount,
         })
       }
     }

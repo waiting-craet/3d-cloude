@@ -45,6 +45,7 @@ function determineNavigationMode(referrer: string | undefined): NavigationMode {
 export default function ThreeDEditorPage() {
   const searchParams = useSearchParams()
   const graphId = searchParams.get('graphId')
+  const projectId = searchParams.get('projectId')
   const { setCurrentGraph, setCurrentProject, setProjects } = useGraphStore()
   const [navigationMode, setNavigationMode] = useState<NavigationMode>('full')
 
@@ -64,6 +65,9 @@ export default function ThreeDEditorPage() {
       // Load graph data from database
       const loadGraphData = async () => {
         try {
+          // 如果 URL 中有 projectId，优先使用它
+          const effectiveProjectId = projectId
+          
           // Fetch the graph details from the API
           const response = await fetch(`/api/graphs/${graphId}`)
           if (response.ok) {
@@ -80,9 +84,10 @@ export default function ThreeDEditorPage() {
               createdAt: graph.createdAt,
             })
             
-            // Also load the project information
-            if (graph.projectId) {
-              const projectResponse = await fetch(`/api/projects/${graph.projectId}`)
+            // Load the project information - prefer URL projectId, then graph.projectId
+            const projectToLoad = effectiveProjectId || graph.projectId
+            if (projectToLoad) {
+              const projectResponse = await fetch(`/api/projects/${projectToLoad}`)
               if (projectResponse.ok) {
                 const projectData = await projectResponse.json()
                 const project = projectData.project
@@ -93,6 +98,10 @@ export default function ThreeDEditorPage() {
                   name: project.name,
                   graphs: [graph],
                 })
+                
+                // 保存到 localStorage 以便 TopNavbar 使用
+                localStorage.setItem('currentProjectId', project.id)
+                localStorage.setItem('currentGraphId', graph.id)
               }
             }
           } else {
@@ -105,7 +114,7 @@ export default function ThreeDEditorPage() {
       
       loadGraphData()
     }
-  }, [graphId, setCurrentGraph, setCurrentProject, setProjects])
+  }, [graphId, projectId, setCurrentGraph, setCurrentProject, setProjects])
 
   return (
     <div style={{

@@ -946,12 +946,12 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         // 即使刷新失败，也继续跳转，因为数据已经保存到数据库
       }
       
-      // 5. 显示成功并跳转到3D编辑器
+      // 5. 显示成功并跳转到3D编辑器页面
       setSavingStatus('即将跳转到3D视图...')
       setConversionSuccess(true)
       
-      // 跳转到3D编辑器页面
-      const redirectUrl = `/3d-editor?graphId=${currentGraph.id}`
+      // 跳转到3D编辑器页面，同时传递 projectId 和 graphId
+      const redirectUrl = `/3d-editor?projectId=${currentProject.id}&graphId=${currentGraph.id}`
       console.log('🔄 准备跳转到:', redirectUrl)
       
       setTimeout(() => {
