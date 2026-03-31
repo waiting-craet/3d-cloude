@@ -97,7 +97,9 @@ export default function NodeDetailPanel() {
         color: originalColor,
         textColor: originalTextColor,
         shape: originalShape,
-        size: originalSize
+        size: originalSize,
+        imageUrl: selectedNode.imageUrl,
+        videoUrl: selectedNode.videoUrl
       })
       
       // 设置编辑值
@@ -125,7 +127,7 @@ export default function NodeDetailPanel() {
       setColorMode('node')
       setIsEditMode(false)
     }
-  }, [selectedNode?.id])
+  }, [selectedNode?.id, selectedNode?.imageUrl, selectedNode?.videoUrl, selectedNode?.name, selectedNode?.description])
 
   useEffect(() => {
     const savedIsAdmin = localStorage.getItem('isAdmin')
@@ -779,11 +781,13 @@ export default function NodeDetailPanel() {
                     >
                       {isVideoUrl(editedImageUrl) ? (
                         <video
+                          key={`readonly-image-${selectedNode?.id}-${editedImageUrl}`}
                           src={editedImageUrl}
                           autoPlay
                           muted
                           loop
                           playsInline
+                          controls
                           style={{
                             width: '100%',
                             height: '100%',
@@ -793,6 +797,7 @@ export default function NodeDetailPanel() {
                         />
                       ) : (
                         <img
+                          key={`readonly-image-${selectedNode?.id}-${editedImageUrl}`}
                           src={editedImageUrl}
                           alt="节点图片"
                           loading="lazy"
@@ -861,11 +866,13 @@ export default function NodeDetailPanel() {
                       }}
                     >
                       <video
+                        key={`readonly-video-${selectedNode?.id}-${editedVideoUrl}`}
                         src={editedVideoUrl}
                         autoPlay
                         muted
                         loop
                         playsInline
+                        controls
                         style={{
                           width: '100%',
                           height: '100%',

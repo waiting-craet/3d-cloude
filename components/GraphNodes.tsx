@@ -508,7 +508,7 @@ export default function GraphNodes() {
     return null
   }
 
-  const handleNodeClick = (node: any, event: ThreeEvent<MouseEvent>) => {
+  const handleNodeClick = async (node: any, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation()
 
     if (!validateNodeData(node)) {
@@ -527,7 +527,27 @@ export default function GraphNodes() {
       }
       setConnectingFromNode(null)
     } else {
-      setSelectedNode(node)
+      try {
+        console.log('🔄 [GraphNodes] 获取节点最新数据:', node.id)
+        const response = await fetch(`/api/nodes/${node.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          const latestNode = data.node || data
+          console.log('✅ [GraphNodes] 节点数据获取成功:', {
+            id: latestNode.id,
+            name: latestNode.name,
+            imageUrl: latestNode.imageUrl,
+            videoUrl: latestNode.videoUrl
+          })
+          setSelectedNode(latestNode)
+        } else {
+          console.warn('⚠️ [GraphNodes] 获取节点数据失败，使用本地数据')
+          setSelectedNode(node)
+        }
+      } catch (error) {
+        console.error('❌ [GraphNodes] 获取节点数据出错:', error)
+        setSelectedNode(node)
+      }
     }
   }
 
