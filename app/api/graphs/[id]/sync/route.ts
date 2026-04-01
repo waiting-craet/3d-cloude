@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { convertTo3DCoordinates, enforceMinimumDistance, type Node2D } from '@/lib/coordinate-converter'
-import { applyForceLayout, centerLayout, type Node3DPosition, type Edge } from '@/lib/force-layout'
 import { detectChanges, type WorkflowNode, type WorkflowConnection } from '@/lib/graph-sync'
 
 interface SyncRequest {
@@ -138,74 +136,19 @@ export async function POST(
         console.log(`✏️ 更新了 ${stats.nodesUpdated} 个节点`)
       }
 
-      // 4.3 Add new nodes (batch create with force-directed layout)
+      // 4.3 Add new nodes (preserve 2D canvas layout directly mapped to 3D)
       if (changes.nodesToAdd.length > 0) {
-        // 首先转换所有节点坐标
-        const nodesToConvert = changes.nodesToAdd.map(wNode => ({
-          id: wNode.tempId || wNode.id || `temp-${Date.now()}`,
-          label: wNode.label,
-          description: wNode.description || '',
-          x: wNode.x,
-          y: wNode.y,
-        }))
-        
-        // 批量转换坐标
-        const convertedCoords = nodesToConvert.map(node2d => 
-          convertTo3DCoordinates(node2d, nodesToConvert, {
-            heightVariation: 8,
-            minNodeDistance: 18,
-          })
-        )
-        
-        // 应用最小距离强制
-        const enforcedCoords = enforceMinimumDistance(convertedCoords, 18, 50)
-        
-        // 准备节点位置和边数据用于力导向布局
-        const nodePositions: Node3DPosition[] = enforcedCoords.map((coord, index) => ({
-          id: nodesToConvert[index].id,
-          x: coord.x3d,
-          y: coord.y3d,
-          z: coord.z3d,
-        }))
-        
-        const layoutEdges: Edge[] = workflowConnections
-          .filter(conn => {
-            const fromId = conn.from
-            const toId = conn.to
-            return nodesToConvert.some(n => n.id === fromId) && 
-                   nodesToConvert.some(n => n.id === toId)
-          })
-          .map(conn => ({
-            from: conn.from,
-            to: conn.to,
-          }))
-        
-        // 应用力导向布局
-        const layoutedPositions = applyForceLayout(nodePositions, layoutEdges, {
-          iterations: 80,
-          springLength: 18,
-          springStrength: 0.08,
-          repulsionStrength: 900,
-          damping: 0.85,
-          minDistance: 18,
-        })
-        
-        // 居中布局
-        const centeredPositions = centerLayout(layoutedPositions)
-        
-        // 使用 Promise.all 并行创建节点
+        // 直接使用传入的 3D 坐标（前端已经根据 2D 画布做了等比例映射计算，无需再做强制力导向打乱）
         const createdNodes = await Promise.all(
           changes.nodesToAdd.map(async (wNode, index) => {
-            const pos = centeredPositions[index]
-            
             const createdNode = await tx.node.create({
               data: {
                 name: wNode.label,
                 type: 'concept',
                 description: wNode.description || '',
-                x: pos.x,
-                y: pos.y,
-                z: pos.z,
+                x: wNode.x,
+                y: wNode.y,
+                z: wNode.z || 0,
                 color: '#3b82f6',
                 size: 2.0,
                 imageUrl: wNode.imageUrl,
@@ -216,7 +159,7 @@ export async function POST(
             })
 
             // Map the temporary/workflow ID to the new database ID
-            const workflowId = wNode.tempId || wNode.id || nodesToConvert[index].id
+            const workflowId = wNode.tempId || wNode.id || `temp-${Date.now()}-${index}`
             return { workflowId, dbId: createdNode.id }
           })
         )
@@ -227,7 +170,7 @@ export async function POST(
         })
 
         stats.nodesAdded = createdNodes.length
-        console.log(`➕ 添加了 ${stats.nodesAdded} 个节点（使用力导向布局）`)
+        console.log(`➕ 添加了 ${stats.nodesAdded} 个节点（保留二维画布布局）`)
       }
 
       // 4.4 Delete edges
@@ -324,8 +267,8 @@ export async function POST(
           ...currentSettings.workflowPositions,
           nodes: workflowNodes.map(n => ({
             id: nodeIdMap.get(n.tempId || n.id || '') || n.id,
-            x: n.x,
-            y: n.y
+            x: n.x * 15 + 300,
+            y: (n.z || 0) * 15 + 300
           })),
           lastSaved: new Date().toISOString()
         }

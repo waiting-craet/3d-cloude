@@ -903,15 +903,23 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
 
       // 2. 准备数据
       const payload = {
-        nodes: validNodes.map(n => ({
-          id: n.id,  // 保留数据库ID（如果存在）
-          label: n.label,
-          description: n.description,
-          x: n.x,
-          y: n.y,
-          imageUrl: n.imageUrl,
-          videoUrl: n.videoUrl,
-        })),
+        nodes: validNodes.map(n => {
+          // 查找原有的3D节点，以保留其高度（y3d）
+          const storeNode = storeNodes.find(sn => sn.id === n.id)
+          return {
+            id: n.id,  // 保留数据库ID（如果存在）
+            label: n.label,
+            description: n.description,
+            // 2D_x = 3D_x * 15 + 300  =>  3D_x = (2D_x - 300) / 15
+            x: (n.x - 300) / 15,
+            // 2D_y = 3D_z * 15 + 300  =>  3D_z = (2D_y - 300) / 15
+            z: (n.y - 300) / 15,
+            // 如果存在原节点，保留其高度，否则稍微错落分布
+            y: storeNode && storeNode.y !== undefined ? storeNode.y : (Math.random() * 20 - 10),
+            imageUrl: n.imageUrl,
+            videoUrl: n.videoUrl,
+          }
+        }),
         connections: connections.filter(c => 
           validNodes.some(n => n.id === c.from) &&
           validNodes.some(n => n.id === c.to)
