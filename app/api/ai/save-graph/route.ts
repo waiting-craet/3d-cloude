@@ -18,6 +18,17 @@ import {
 import { LayoutEngine } from '@/lib/layout/LayoutEngine';
 import { LayoutStrategy, Node2D, Edge as LayoutEdge } from '@/lib/layout/types';
 
+function buildSeededPosition(index: number, total: number, radiusBase = 220): { x: number; y: number } {
+  if (total <= 0) return { x: 0, y: 0 };
+  const angle = (index / total) * Math.PI * 2;
+  const layer = Math.floor(index / 24);
+  const radius = radiusBase + layer * 110;
+  return {
+    x: Math.cos(angle) * radius + (Math.random() - 0.5) * 25,
+    y: Math.sin(angle) * radius + (Math.random() - 0.5) * 25,
+  };
+}
+
 /**
  * Request body interface
  */
@@ -273,44 +284,58 @@ async function handleSaveGraph(request: NextRequest) {
       // First, get all nodes (existing and new) to calculate proper layout
       
       // Prepare nodes for LayoutEngine
-      const allNodesForLayout: Node2D[] = mergeResult.nodesToCreate.map((n: NodeToCreate) => ({
-        id: n.tempId,
-        label: n.name,
-        x2d: Math.random() * 600 - 300, // 初始位置分散，避免力导向聚集在一点无法推开
-        y2d: Math.random() * 600 - 300
-      }));
+      const allNodesForLayout: Node2D[] = mergeResult.nodesToCreate.map((n: NodeToCreate, index: number) => {
+        const seeded = buildSeededPosition(index, mergeResult.nodesToCreate.length || 1, 240);
+        return {
+          id: n.tempId,
+          label: n.name,
+          x2d: seeded.x,
+          y2d: seeded.y,
+        };
+      });
       
       // Add existing nodes to layout calculation if any
       graph.nodes.forEach(n => {
+        const fallbackSeed = buildSeededPosition(allNodesForLayout.length, Math.max(1, graph.nodes.length + mergeResult.nodesToCreate.length), 260);
         allNodesForLayout.push({
           id: n.id,
           label: n.name,
-          x2d: n.x || Math.random() * 600 - 300,
-          y2d: n.y || Math.random() * 600 - 300
+          x2d: typeof n.x === 'number' ? n.x : fallbackSeed.x,
+          y2d: typeof n.y === 'number' ? n.y : fallbackSeed.y
         });
       });
       
       // Prepare edges for LayoutEngine
-      const layoutEdges: LayoutEdge[] = body.edges.map(e => ({
+      const layoutEdges: LayoutEdge[] = body.edges.map((e) => ({
         id: e.tempId || `edge-${e.fromNodeId}-${e.toNodeId}`,
         source: e.fromNodeId,
         target: e.toNodeId
       }));
 
+      const density = allNodesForLayout.length > 1
+        ? layoutEdges.length / allNodesForLayout.length
+        : 0;
+      const selectedStrategy =
+        density <= 0.7 ? LayoutStrategy.RADIAL : LayoutStrategy.FORCE_DIRECTED;
+
       // Initialize and run LayoutEngine
-      console.log(`[AI Save] Running LayoutEngine for ${allNodesForLayout.length} nodes...`);
+      console.log(`[AI Save] Running LayoutEngine for ${allNodesForLayout.length} nodes...`, {
+        edges: layoutEdges.length,
+        density: Number(density.toFixed(2)),
+        strategy: selectedStrategy,
+      });
       const layoutEngine = new LayoutEngine({
-        iterations: 200,           // 继续增加迭代次数保证充足的模拟时间
-        springLength: 80,          // 大幅增加弹簧长度（节点自然距离），推开距离
-        repulsionStrength: 6000,   // 继续增加排斥力，让节点间有更强的分离感
-        minNodeDistance: 50,       // 增加最小间距
-        heightVariation: 80,       // 进一步增加 Z 轴的高低错落，使其立体化
-        damping: 0.85              // 保持合理的阻尼，防止震荡
+        iterations: allNodesForLayout.length > 90 ? 180 : 220,
+        springLength: density <= 0.7 ? 95 : 75,
+        repulsionStrength: allNodesForLayout.length > 100 ? 6800 : 5600,
+        minNodeDistance: allNodesForLayout.length > 100 ? 42 : 50,
+        heightVariation: allNodesForLayout.length > 100 ? 60 : 75,
+        damping: 0.88
       });
       const { nodes: layoutNodes } = await layoutEngine.convert3D(
         allNodesForLayout,
         layoutEdges,
-        LayoutStrategy.FORCE_DIRECTED // AI生成的图谱强制使用力导向布局，这是最通用的发散布局
+        selectedStrategy
       );
       
       // Map layout results back to tempIds

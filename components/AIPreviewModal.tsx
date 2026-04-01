@@ -15,6 +15,17 @@ import { MergeDecision } from '@/lib/services/merge-resolution'
 import { NavigationService, EnhancedNavigationResult, NavigationErrorType, ErrorRecoveryStrategy } from '@/lib/services/navigation-service' // Import enhanced NavigationService (Task 5.1)
 import { removeEmojis } from '@/lib/emoji-filter' // Import emoji filter utility
 
+const modalTheme = {
+  overlay: 'linear-gradient(140deg, rgba(48, 68, 62, 0.68), rgba(140, 174, 176, 0.42))',
+  panelBg: 'linear-gradient(150deg, #1f2f2b 0%, #273a35 55%, #324b45 100%)',
+  border: 'rgba(189, 214, 207, 0.26)',
+  textStrong: '#e9f3f0',
+  textPrimary: '#d2e5df',
+  textSecondary: 'rgba(210, 229, 223, 0.78)',
+  tianqing: '#8caeb0',
+  daiGreen: '#5d766c',
+}
+
 // Add CSS animations for loading states (Task 2.3)
 const styles = `
   @keyframes spin {
@@ -33,6 +44,49 @@ if (typeof document !== 'undefined') {
   const styleSheet = document.createElement('style')
   styleSheet.textContent = styles
   document.head.appendChild(styleSheet)
+}
+
+function TinyIcon({ name, size = 16, color = 'currentColor' }: { name: string; size?: number; color?: string }) {
+  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': true as const }
+  switch (name) {
+    case 'nodes':
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="6" r="2.5" stroke={color} strokeWidth="1.8" />
+          <circle cx="18" cy="6" r="2.5" stroke={color} strokeWidth="1.8" />
+          <circle cx="12" cy="18" r="2.5" stroke={color} strokeWidth="1.8" />
+          <path d="M8 7.5l2.7 7M16 7.5l-2.7 7M8.5 6h7" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      )
+    case 'edges':
+      return (
+        <svg {...common}>
+          <path d="M4 12h12" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M13 8l4 4-4 4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="4" cy="12" r="2.2" fill={color} />
+        </svg>
+      )
+    case 'check':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+          <path d="M8 12.5l2.5 2.5L16 9.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+    case 'progress':
+      return (
+        <svg {...common}>
+          <path d="M4 16a8 8 0 1116 0" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M12 12l4-3" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      )
+    default:
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+        </svg>
+      )
+  }
 }
 
 /**
@@ -591,7 +645,7 @@ export default function AIPreviewModal({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(0, 0, 0, 0.8)',
+        background: modalTheme.overlay,
         backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
@@ -603,15 +657,15 @@ export default function AIPreviewModal({
     >
       <div
         style={{
-          background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+          background: modalTheme.panelBg,
           borderRadius: '24px',
           maxWidth: '1400px',
           width: '100%',
           height: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+          border: `1px solid ${modalTheme.border}`,
+          boxShadow: '0 24px 64px rgba(20, 34, 30, 0.48)',
           overflow: 'hidden',
           position: 'relative',
         }}
@@ -620,7 +674,7 @@ export default function AIPreviewModal({
         <div
           style={{
             padding: '24px 32px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            borderBottom: `1px solid ${modalTheme.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -629,7 +683,7 @@ export default function AIPreviewModal({
           <div>
             <h2
               style={{
-                color: 'white',
+                color: modalTheme.textStrong,
                 fontSize: '28px',
                 fontWeight: '700',
                 margin: 0,
@@ -640,7 +694,7 @@ export default function AIPreviewModal({
             </h2>
             <p
               style={{
-                color: 'rgba(255, 255, 255, 0.6)',
+                color: modalTheme.textSecondary,
                 fontSize: '14px',
                 margin: 0,
               }}
@@ -654,9 +708,9 @@ export default function AIPreviewModal({
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: 'rgba(255, 255, 255, 0.7)',
+              background: 'rgba(140, 174, 176, 0.12)',
+              border: `1px solid ${modalTheme.border}`,
+              color: modalTheme.textPrimary,
               fontSize: '20px',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
@@ -665,15 +719,17 @@ export default function AIPreviewModal({
               justifyContent: 'center',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
-              e.currentTarget.style.color = 'rgba(248, 113, 113, 1)'
+              e.currentTarget.style.background = 'rgba(140, 174, 176, 0.22)'
+              e.currentTarget.style.color = '#ffffff'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)'
+              e.currentTarget.style.background = 'rgba(140, 174, 176, 0.12)'
+              e.currentTarget.style.color = modalTheme.textPrimary
             }}
           >
-            关闭
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
 
@@ -681,7 +737,7 @@ export default function AIPreviewModal({
         <div
           style={{
             padding: '0 32px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            borderBottom: `1px solid ${modalTheme.border}`,
             display: 'flex',
             gap: '8px',
           }}
@@ -696,10 +752,10 @@ export default function AIPreviewModal({
               onClick={() => setActiveTab(tab.id as any)}
               style={{
                 padding: '16px 24px',
-                background: activeTab === tab.id ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
+                background: activeTab === tab.id ? 'rgba(140, 174, 176, 0.18)' : 'transparent',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid rgba(99, 102, 241, 1)' : '2px solid transparent',
-                color: activeTab === tab.id ? 'rgba(167, 139, 250, 1)' : 'rgba(255, 255, 255, 0.6)',
+                borderBottom: activeTab === tab.id ? `2px solid ${modalTheme.tianqing}` : '2px solid transparent',
+                color: activeTab === tab.id ? modalTheme.textStrong : modalTheme.textSecondary,
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -708,12 +764,12 @@ export default function AIPreviewModal({
               }}
               onMouseEnter={(e) => {
                 if (activeTab !== tab.id) {
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)'
+                  e.currentTarget.style.color = modalTheme.textPrimary
                 }
               }}
               onMouseLeave={(e) => {
                 if (activeTab !== tab.id) {
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
+                  e.currentTarget.style.color = modalTheme.textSecondary
                 }
               }}
             >
@@ -724,7 +780,7 @@ export default function AIPreviewModal({
                     position: 'absolute',
                     top: '8px',
                     right: '8px',
-                    background: 'rgba(239, 68, 68, 1)',
+                    background: modalTheme.daiGreen,
                     color: 'white',
                     fontSize: '10px',
                     fontWeight: '700',
@@ -799,7 +855,7 @@ export default function AIPreviewModal({
         <div
           style={{
             padding: '24px 32px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            borderTop: `1px solid ${modalTheme.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -859,19 +915,19 @@ export default function AIPreviewModal({
                   style={{
                     marginTop: '8px',
                     padding: '8px 16px',
-                    background: 'rgba(99, 102, 241, 0.2)',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    background: 'rgba(140, 174, 176, 0.16)',
+                    border: `1px solid ${modalTheme.border}`,
                     borderRadius: '8px',
-                    color: 'rgba(99, 102, 241, 1)',
+                    color: modalTheme.textPrimary,
                     fontSize: '12px',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.3)'
+                    e.currentTarget.style.background = 'rgba(140, 174, 176, 0.24)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'
+                    e.currentTarget.style.background = 'rgba(140, 174, 176, 0.16)'
                   }}
                 >
                   手动打开图谱
@@ -917,18 +973,18 @@ export default function AIPreviewModal({
               style={{
                 flex: 1,
                 padding: '12px 16px',
-                background: loadingPhase === 'saving' ? 'rgba(99, 102, 241, 0.1)' :
+                background: loadingPhase === 'saving' ? 'rgba(140, 174, 176, 0.14)' :
                            loadingPhase === 'success' ? 'rgba(16, 185, 129, 0.1)' :
-                           loadingPhase === 'navigating' ? 'rgba(168, 85, 247, 0.1)' :
+                           loadingPhase === 'navigating' ? 'rgba(127, 160, 154, 0.14)' :
                            'rgba(16, 185, 129, 0.1)',
-                border: loadingPhase === 'saving' ? '1px solid rgba(99, 102, 241, 0.3)' :
+                border: loadingPhase === 'saving' ? `1px solid ${modalTheme.border}` :
                         loadingPhase === 'success' ? '1px solid rgba(16, 185, 129, 0.3)' :
-                        loadingPhase === 'navigating' ? '1px solid rgba(168, 85, 247, 0.3)' :
+                        loadingPhase === 'navigating' ? `1px solid ${modalTheme.border}` :
                         '1px solid rgba(16, 185, 129, 0.3)',
                 borderRadius: '10px',
-                color: loadingPhase === 'saving' ? 'rgba(99, 102, 241, 1)' :
+                color: loadingPhase === 'saving' ? modalTheme.textPrimary :
                        loadingPhase === 'success' ? 'rgba(16, 185, 129, 1)' :
-                       loadingPhase === 'navigating' ? 'rgba(168, 85, 247, 1)' :
+                       loadingPhase === 'navigating' ? modalTheme.textPrimary :
                        'rgba(16, 185, 129, 1)',
                 fontSize: '14px',
                 display: 'flex',
@@ -963,7 +1019,7 @@ export default function AIPreviewModal({
                   <div style={{
                     width: `${loadingProgress}%`,
                     height: '100%',
-                    background: 'linear-gradient(90deg, rgba(99, 102, 241, 0.8) 0%, rgba(99, 102, 241, 1) 100%)',
+                    background: `linear-gradient(90deg, ${modalTheme.tianqing} 0%, ${modalTheme.daiGreen} 100%)`,
                     borderRadius: '2px',
                     transition: 'width 0.3s ease',
                   }} />
@@ -1028,10 +1084,10 @@ export default function AIPreviewModal({
               style={{
                 flex: 1,
                 padding: '12px 16px',
-                background: 'rgba(99, 102, 241, 0.1)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                background: 'rgba(140, 174, 176, 0.14)',
+                border: `1px solid ${modalTheme.border}`,
                 borderRadius: '10px',
-                color: 'rgba(99, 102, 241, 1)',
+                color: modalTheme.textPrimary,
                 fontSize: '14px',
                 display: 'flex',
                 alignItems: 'center',
@@ -1069,10 +1125,10 @@ export default function AIPreviewModal({
               disabled={isSaving || isNavigating || showSuccessMessage || loadingPhase !== 'idle'}
               style={{
                 padding: '14px 28px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(140, 174, 176, 0.12)',
+                border: `1px solid ${modalTheme.border}`,
                 borderRadius: '12px',
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: modalTheme.textPrimary,
                 fontSize: '15px',
                 fontWeight: '600',
                 cursor: isSaving || isNavigating || showSuccessMessage || loadingPhase !== 'idle' ? 'not-allowed' : 'pointer',
@@ -1081,12 +1137,12 @@ export default function AIPreviewModal({
               }}
               onMouseEnter={(e) => {
                 if (!isSaving && !isNavigating && !showSuccessMessage && loadingPhase === 'idle') {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                  e.currentTarget.style.background = 'rgba(140, 174, 176, 0.2)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSaving && !isNavigating && !showSuccessMessage && loadingPhase === 'idle') {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                  e.currentTarget.style.background = 'rgba(140, 174, 176, 0.12)'
                 }
               }}
             >
@@ -1099,7 +1155,7 @@ export default function AIPreviewModal({
                 padding: '14px 28px',
                 background: isSaving || isNavigating || showSuccessMessage || loadingPhase !== 'idle' || !allConflictsResolved()
                   ? 'rgba(255, 255, 255, 0.05)'
-                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  : `linear-gradient(135deg, ${modalTheme.daiGreen} 0%, ${modalTheme.tianqing} 100%)`,
                 border: 'none',
                 borderRadius: '12px',
                 color: 'white',
@@ -1110,18 +1166,18 @@ export default function AIPreviewModal({
                 opacity: isSaving || isNavigating || showSuccessMessage || loadingPhase !== 'idle' || !allConflictsResolved() ? 0.5 : 1,
                 boxShadow: isSaving || isNavigating || showSuccessMessage || loadingPhase !== 'idle' || !allConflictsResolved()
                   ? 'none'
-                  : '0 4px 12px rgba(102, 126, 234, 0.4)',
+                  : '0 4px 14px rgba(93, 118, 108, 0.45)',
               }}
               onMouseEnter={(e) => {
                 if (!isSaving && !isNavigating && !showSuccessMessage && loadingPhase === 'idle' && allConflictsResolved()) {
                   e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)'
+                  e.currentTarget.style.boxShadow = '0 6px 18px rgba(93, 118, 108, 0.55)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSaving && !isNavigating && !showSuccessMessage && loadingPhase === 'idle' && allConflictsResolved()) {
                   e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)'
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(93, 118, 108, 0.45)'
                 }
               }}
             >
@@ -1147,7 +1203,7 @@ export default function AIPreviewModal({
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
+              background: 'rgba(32, 49, 44, 0.66)',
               backdropFilter: 'blur(4px)',
               display: 'flex',
               alignItems: 'center',
@@ -1158,13 +1214,13 @@ export default function AIPreviewModal({
           >
             <div
               style={{
-                background: 'linear-gradient(135deg, #2a2a3e 0%, #1e1e2e 100%)',
+                background: 'linear-gradient(150deg, #29403a 0%, #22352f 100%)',
                 borderRadius: '16px',
                 padding: '32px',
                 maxWidth: '400px',
                 width: '90%',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+                border: `1px solid ${modalTheme.border}`,
+                boxShadow: '0 20px 60px rgba(22, 36, 32, 0.5)',
               }}
             >
               {/* Icon */}
@@ -1173,22 +1229,22 @@ export default function AIPreviewModal({
                   width: '64px',
                   height: '64px',
                   borderRadius: '50%',
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '2px solid rgba(239, 68, 68, 0.3)',
+                  background: 'rgba(140, 174, 176, 0.12)',
+                  border: `2px solid ${modalTheme.border}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '32px',
+                  color: modalTheme.textPrimary,
                   margin: '0 auto 20px',
                 }}
               >
-                !
+                <TinyIcon name="progress" size={28} color={modalTheme.textPrimary} />
               </div>
 
               {/* Title */}
               <h3
                 style={{
-                  color: 'white',
+                  color: modalTheme.textStrong,
                   fontSize: '20px',
                   fontWeight: '700',
                   margin: '0 0 12px 0',
@@ -1201,7 +1257,7 @@ export default function AIPreviewModal({
               {/* Message */}
               <p
                 style={{
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: modalTheme.textSecondary,
                   fontSize: '14px',
                   margin: '0 0 24px 0',
                   textAlign: 'center',
@@ -1218,20 +1274,20 @@ export default function AIPreviewModal({
                   style={{
                     flex: 1,
                     padding: '12px 24px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'rgba(140, 174, 176, 0.12)',
+                    border: `1px solid ${modalTheme.border}`,
                     borderRadius: '10px',
-                    color: 'rgba(255, 255, 255, 0.9)',
+                    color: modalTheme.textPrimary,
                     fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                    e.currentTarget.style.background = 'rgba(140, 174, 176, 0.2)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                    e.currentTarget.style.background = 'rgba(140, 174, 176, 0.12)'
                   }}
                 >
                   继续编辑
@@ -1241,7 +1297,7 @@ export default function AIPreviewModal({
                   style={{
                     flex: 1,
                     padding: '12px 24px',
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    background: `linear-gradient(135deg, ${modalTheme.daiGreen} 0%, ${modalTheme.tianqing} 100%)`,
                     border: 'none',
                     borderRadius: '10px',
                     color: 'white',
@@ -1249,15 +1305,15 @@ export default function AIPreviewModal({
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
+                    boxShadow: '0 4px 12px rgba(93, 118, 108, 0.45)',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.5)'
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(93, 118, 108, 0.58)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.4)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 118, 108, 0.45)'
                   }}
                 >
                   确定放弃
@@ -1347,7 +1403,7 @@ function StatsSection({
       {/* Basic Statistics */}
       <div>
         <h3 style={{ 
-          color: 'white', 
+          color: modalTheme.textStrong, 
           fontSize: '18px', 
           fontWeight: '600', 
           margin: '0 0 16px 0',
@@ -1359,19 +1415,19 @@ function StatsSection({
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
           <StatCard
-            icon="图表"
+            icon="nodes"
             label="总节点数"
             value={stats.totalNodes}
             color="rgba(99, 102, 241, 1)"
           />
           <StatCard
-            icon="链接"
+            icon="edges"
             label="总边数"
             value={stats.totalEdges}
             color="rgba(59, 130, 246, 1)"
           />
           <StatCard
-            icon={visualizationType === '2d' ? '二维' : '三维'}
+            icon="progress"
             label="目标类型"
             value={visualizationType === '2d' ? '二维图谱' : '三维图谱'}
             color="rgba(16, 185, 129, 1)"
@@ -1382,7 +1438,7 @@ function StatsSection({
       {/* Conflict Statistics */}
       <div>
         <h3 style={{ 
-          color: 'white', 
+          color: modalTheme.textStrong, 
           fontSize: '18px', 
           fontWeight: '600', 
           margin: '0 0 16px 0',
@@ -1394,25 +1450,25 @@ function StatsSection({
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
           <StatCard
-            icon="搜索"
+            icon="search"
             label="检测到的冲突"
             value={conflictStats.totalConflicts}
             color="rgba(239, 68, 68, 1)"
           />
           <StatCard
-            icon="完成"
+            icon="check"
             label="已解决冲突"
             value={conflictStats.resolvedConflicts}
             color="rgba(16, 185, 129, 1)"
           />
           <StatCard
-            icon="等待"
+            icon="progress"
             label="待解决冲突"
             value={conflictStats.unresolvedConflicts}
             color="rgba(251, 191, 36, 1)"
           />
           <StatCard
-            icon="进度"
+            icon="progress"
             label="解决进度"
             value={`${Math.round(conflictStats.resolutionProgress)}%`}
             color="rgba(168, 85, 247, 1)"
@@ -1424,7 +1480,7 @@ function StatsSection({
       {conflictStats.totalConflicts > 0 && (
         <div>
           <h3 style={{ 
-            color: 'white', 
+            color: modalTheme.textStrong, 
             fontSize: '18px', 
             fontWeight: '600', 
             margin: '0 0 16px 0',
@@ -1517,8 +1573,8 @@ function StatCard({
     <div
       style={{
         padding: isSmall ? '16px' : '24px',
-        background: 'rgba(255, 255, 255, 0.03)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'rgba(140, 174, 176, 0.08)',
+        border: `1px solid ${modalTheme.border}`,
         borderRadius: isSmall ? '12px' : '16px',
         transition: 'all 0.2s ease',
       }}
@@ -1531,14 +1587,11 @@ function StatCard({
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      <div style={{ 
-        fontSize: isSmall ? '24px' : '32px', 
-        marginBottom: isSmall ? '8px' : '12px' 
-      }}>
-        {icon}
+      <div style={{ marginBottom: isSmall ? '8px' : '12px', color }}>
+        <TinyIcon name={icon} size={isSmall ? 20 : 26} color={color} />
       </div>
       <div style={{ 
-        color: 'rgba(255, 255, 255, 0.6)', 
+        color: modalTheme.textSecondary, 
         fontSize: isSmall ? '12px' : '13px', 
         marginBottom: isSmall ? '6px' : '8px' 
       }}>
@@ -1571,8 +1624,10 @@ function ConflictsSection({
 
   if (duplicateNodes.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255, 255, 255, 0.6)' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>OK</div>
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: modalTheme.textSecondary }}>
+        <div style={{ marginBottom: '16px', color: modalTheme.tianqing, display: 'flex', justifyContent: 'center' }}>
+          <TinyIcon name="check" size={42} color={modalTheme.tianqing} />
+        </div>
         <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>没有冲突</div>
         <div style={{ fontSize: '14px' }}>所有节点都是唯一的，可以直接保存</div>
       </div>
@@ -1798,8 +1853,8 @@ function ConflictItem({
                 gap: '12px'
               }}>
                 {node.description && <span>{node.description}</span>}
-                {node.duplicateOf && <span>• 与现有节点冲突</span>}
-                {node.conflicts && <span>• {node.conflicts.length} 个属性冲突</span>}
+                {node.duplicateOf && <span>｜与现有节点冲突</span>}
+                {node.conflicts && <span>｜{node.conflicts.length} 个属性冲突</span>}
               </div>
             </div>
           </div>
@@ -1846,7 +1901,9 @@ function ConflictItem({
               transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 0.2s ease'
             }}>
-              ▼
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
           </div>
         </div>
@@ -2552,9 +2609,9 @@ function NodeList({
             gap: '8px'
           }}>
             {node.description && <span>{node.description.substring(0, 50)}{node.description.length > 50 ? '...' : ''}</span>}
-            {node.isDuplicate && <span>• 重复</span>}
+            {node.isDuplicate && <span>｜重复</span>}
             {node.conflicts && node.conflicts.length > 0 && (
-              <span>• {node.conflicts.length} 冲突</span>
+              <span>｜{node.conflicts.length} 冲突</span>
             )}
           </div>
         </div>
@@ -2629,7 +2686,7 @@ function EdgeList({
             <span>{getNodeName(edge.fromNodeId)}</span>
             <span>→</span>
             <span>{getNodeName(edge.toNodeId)}</span>
-            {edge.isRedundant && <span style={{ color: 'rgba(239, 68, 68, 1)' }}>• 冗余</span>}
+            {edge.isRedundant && <span style={{ color: 'rgba(239, 68, 68, 1)' }}>｜冗余</span>}
           </div>
         </div>
       ))}
@@ -2821,7 +2878,7 @@ function NodeEditor({
             onClick={handleSave}
             style={{
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: `linear-gradient(135deg, ${modalTheme.daiGreen} 0%, ${modalTheme.tianqing} 100%)`,
               border: 'none',
               borderRadius: '6px',
               color: 'white',
@@ -2993,7 +3050,7 @@ function EdgeEditor({
             onClick={handleSave}
             style={{
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: `linear-gradient(135deg, ${modalTheme.daiGreen} 0%, ${modalTheme.tianqing} 100%)`,
               border: 'none',
               borderRadius: '6px',
               color: 'white',

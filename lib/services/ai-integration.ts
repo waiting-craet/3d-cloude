@@ -58,6 +58,9 @@ interface AIServiceConfig {
   timeout?: number;
 }
 
+const MAX_ENTITY_COUNT = 120;
+const MAX_RELATIONSHIP_COUNT = 320;
+
 /**
  * Implementation of AI Integration Service
  */
@@ -157,20 +160,28 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
    * This uses DeepSeek's chat completion format
    */
   private buildRequestPayload(text: string, customPrompt?: string): any {
+    const textLength = text.trim().length;
+    const targetEntityCount =
+      textLength < 1200 ? 30 :
+      textLength < 3000 ? 45 :
+      textLength < 6000 ? 65 : 85;
+
+    const targetRelationCount = Math.max(40, Math.floor(targetEntityCount * 1.6));
+
     // Build system message - use custom prompt if provided, otherwise use default
-    const systemContent = customPrompt || `你是知识图谱构建专家，擅长从文本中提取实体和关系。请仔细分析文本，提取核心信息。
+    const systemContent = customPrompt || `你是知识图谱构建专家，擅长从文本中提取实体和关系。请仔细分析文本，提取高质量、可用于3D知识图谱可视化的结构化数据。
 
 ## 提取规则
 
 ### 1. 实体提取（节点）
-识别文本中的关键实体，包括人物、组织、地点、概念、事件、产品等。
+识别文本中的关键实体，包括人物、组织、地点、概念、事件、产品、技术、制度、时间节点等。
 
 每个实体包含：
 - name: 实体名称（使用原文中的准确名称）
 - description: 实体的简短描述（可选，用于补充说明）
 
 ### 2. 关系提取（边）
-识别实体间的语义关系，常见关系类型：
+识别实体间的语义关系，常见关系类型（可扩展）：
 - **属于**: A属于B、A是B的一部分
 - **位于**: A位于B、A在B
 - **工作于**: A在B工作、A任职于B
@@ -186,6 +197,15 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
 - from: 源实体名称（必须与entities中的name完全匹配）
 - to: 目标实体名称（必须与entities中的name完全匹配）
 - type: 关系类型（使用简洁的中文描述，如"属于"、"位于"、"创建"等）
+
+### 3. 质量约束（非常重要）
+1. 优先输出具体、可视化价值高的实体，不要输出“问题/方面/内容/情况/方式/结果”等空泛词。
+2. 关系尽量语义明确，避免大量“相关/关联”等弱关系。
+3. 不要输出自环关系（from===to），避免重复关系。
+4. 实体名称尽量去重（同义词保留一个主名称）。
+5. 为提高3D图谱可读性，请尽量形成多中心连接结构，避免大量孤立点。
+6. 目标实体数量约为 ${targetEntityCount}（允许上下浮动），目标关系数量约为 ${targetRelationCount}。
+7. 若原文信息充足，请不要只输出少量节点。
 
 ## 输出格式
 严格按照以下JSON格式返回：
@@ -225,9 +245,36 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
           content: text
         }
       ],
-      temperature: 0.3,
+      temperature: 0.2,
+      max_tokens: 8192,
       response_format: { type: 'json_object' }
     };
+  }
+
+  private normalizeEntityName(name: string): string {
+    return name
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/[，。；：、,.!?！？]+$/g, '');
+  }
+
+  private isLowValueEntity(name: string): boolean {
+    const normalized = name.toLowerCase();
+    const lowValueWords = [
+      '内容', '情况', '方面', '方式', '问题', '结果', '过程', '数据', '信息', '系统',
+      'thing', 'things', 'something', 'someone', 'it', 'this', 'that', 'these', 'those'
+    ];
+
+    if (normalized.length <= 1) return true;
+    if (normalized.length > 64) return true;
+    return lowValueWords.includes(normalized);
+  }
+
+  private normalizeRelationshipType(type?: string): string {
+    if (!type || typeof type !== 'string' || type.trim().length === 0) {
+      return '关联';
+    }
+    return type.trim().replace(/\s+/g, '');
   }
 
   /**
@@ -257,8 +304,8 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
         throw new Error('Invalid AI API response: not an object');
       }
 
-      // Extract entities
-      const entities: AIEntity[] = [];
+      // Extract entities (with de-duplication and quality filtering)
+      const entityMap = new Map<string, AIEntity>();
       if (Array.isArray(data.entities)) {
         for (const entity of data.entities) {
           if (!entity.name || typeof entity.name !== 'string') {
@@ -266,26 +313,46 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
             continue;
           }
           
-          const trimmedName = entity.name.trim();
+          const trimmedName = this.normalizeEntityName(entity.name);
           if (trimmedName.length === 0) {
             console.warn('[AI Service] Skipping entity with empty name after trimming:', entity);
             continue;
           }
-          
-          entities.push({
+
+          if (this.isLowValueEntity(trimmedName)) {
+            continue;
+          }
+
+          const entityKey = trimmedName.toLowerCase();
+          const candidate: AIEntity = {
             name: trimmedName,
             description: entity.description || undefined,
-            type: entity.type || undefined,  // Optional
-            properties: entity.properties || undefined,  // Optional
-          });
+            type: entity.type || undefined,
+            properties: entity.properties || undefined,
+          };
+
+          const existing = entityMap.get(entityKey);
+          if (!existing) {
+            entityMap.set(entityKey, candidate);
+            continue;
+          }
+
+          // Prefer richer description when merging duplicate entity names
+          const existingDescLength = (existing.description || '').length;
+          const candidateDescLength = (candidate.description || '').length;
+          if (candidateDescLength > existingDescLength) {
+            entityMap.set(entityKey, { ...existing, ...candidate });
+          }
         }
       }
+      const entities = Array.from(entityMap.values()).slice(0, MAX_ENTITY_COUNT);
 
       // Extract relationships
       const relationships: AIRelationship[] = [];
       if (Array.isArray(data.relationships)) {
         // Create a set of valid entity names for validation
         const entityNames = new Set(entities.map(e => e.name.toLowerCase()));
+        const relDedupe = new Set<string>();
         
         for (const rel of data.relationships) {
           if (!rel.from || !rel.to || typeof rel.from !== 'string' || typeof rel.to !== 'string') {
@@ -293,8 +360,8 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
             continue;
           }
           
-          const fromName = rel.from.trim();
-          const toName = rel.to.trim();
+          const fromName = this.normalizeEntityName(rel.from);
+          const toName = this.normalizeEntityName(rel.to);
           
           // Skip relationships with empty names after trimming
           if (fromName.length === 0 || toName.length === 0) {
@@ -313,12 +380,27 @@ export class AIIntegrationServiceImpl implements AIIntegrationService {
             continue;
           }
           
+          if (fromName.toLowerCase() === toName.toLowerCase()) {
+            continue;
+          }
+
+          const relationshipType = this.normalizeRelationshipType(rel.type);
+          const dedupeKey = `${fromName.toLowerCase()}|${toName.toLowerCase()}|${relationshipType.toLowerCase()}`;
+          if (relDedupe.has(dedupeKey)) {
+            continue;
+          }
+          relDedupe.add(dedupeKey);
+
           relationships.push({
             from: fromName,
             to: toName,
-            type: rel.type || '关联',
+            type: relationshipType,
             properties: rel.properties || undefined,  // Optional
           });
+
+          if (relationships.length >= MAX_RELATIONSHIP_COUNT) {
+            break;
+          }
         }
       }
 

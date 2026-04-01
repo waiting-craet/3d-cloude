@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useFrame, ThreeEvent, useThree } from '@react-three/fiber'
-import { Text } from '@react-three/drei'
+import { Html } from '@react-three/drei'
 import { useGraphStore } from '@/lib/store'
 import * as THREE from 'three'
 
@@ -55,31 +55,6 @@ function shouldUpdateBillboard(
   threshold: number = DEFAULT_BILLBOARD_CONFIG.updateThreshold
 ): boolean {
   return lastCameraPosition.distanceTo(currentCameraPosition) > threshold
-}
-
-function updateTextRotation(
-  textRef: React.RefObject<any>,
-  camera: THREE.Camera,
-  nodePosition: THREE.Vector3
-): void {
-  if (!textRef.current) return
-
-  try {
-    if (!isFinite(nodePosition.x) || !isFinite(nodePosition.y) || !isFinite(nodePosition.z)) {
-      console.error('Invalid node position for billboard update')
-      return
-    }
-
-    const direction = new THREE.Vector3()
-    direction.subVectors(camera.position, nodePosition)
-    direction.y = 0
-    direction.normalize()
-
-    const angle = Math.atan2(direction.x, direction.z)
-    textRef.current.rotation.y = angle
-  } catch (error) {
-    console.error('Billboard update failed:', error)
-  }
 }
 
 function validateNodeData(node: any): boolean {
@@ -251,7 +226,6 @@ function GlowParticles({ color, size }: { color: string; size: number }) {
 function Node({ node, onClick, onDrag }: NodeProps) {
   const groupRef = useRef<THREE.Group>(null)
   const meshRef = useRef<THREE.Mesh>(null)
-  const textRef = useRef<any>(null)
   const lastCameraPos = useRef(new THREE.Vector3())
   const [hovered, setHovered] = useState(false)
   const [isPressed, setIsPressed] = useState(false)
@@ -296,10 +270,6 @@ function Node({ node, onClick, onDrag }: NodeProps) {
 
     if (shouldUpdateBillboard(lastCameraPos.current, camera.position)) {
       const nodePos = new THREE.Vector3(node.x, node.y, node.z)
-      
-      if (showText) {
-        updateTextRotation(textRef, camera, nodePos)
-      }
       
       // 动态更新文本可见性：选中、悬停、或者距离小于 400 时显示
       const dist = camera.position.distanceTo(nodePos)
@@ -466,22 +436,26 @@ function Node({ node, onClick, onDrag }: NodeProps) {
       {node.isGlowing && <GlowParticles color={node.color || '#6BB6FF'} size={size} />}
 
       {showText && (
-        <Text
-          ref={textRef}
+        <Html
           position={[0, getTextYPosition(shape, size), 0]}
-          fontSize={2.5}
-          color={node.textColor || '#FFFFFF'}
-          anchorX="center"
-          anchorY="bottom"
-          outlineWidth={0.3}
-          outlineColor="#000000"
-          outlineOpacity={1}
-          maxWidth={15}
-          textAlign="center"
-          depthOffset={-1}
+          center
+          transform
+          sprite
+          distanceFactor={28}
+          style={{
+            color: node.textColor || '#FFFFFF',
+            fontSize: '40px',
+            fontWeight: 800,
+            lineHeight: 1.15,
+            whiteSpace: 'nowrap',
+            userSelect: 'none',
+            pointerEvents: 'none',
+            textShadow:
+              '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 2px 0 #000',
+          }}
         >
           {node.name || 'Unnamed'}
-        </Text>
+        </Html>
       )}
 
       {isSelected && (

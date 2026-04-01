@@ -54,6 +54,97 @@ interface PreviewEdge {
   isRedundant?: boolean;
 }
 
+function normalizeName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').replace(/[，。；：、,.!?！？]+$/g, '');
+}
+
+function calculateTargetNodeCount(textLength: number): number {
+  if (textLength < 1200) return 28;
+  if (textLength < 3000) return 40;
+  if (textLength < 6000) return 58;
+  return 76;
+}
+
+function extractSupplementaryEntities(text: string, existingNames: Set<string>, maxAdditions: number): string[] {
+  if (maxAdditions <= 0) return [];
+
+  const candidates = new Set<string>();
+
+  // 1) 提取中文引号/书名号中的概念
+  const quotedMatches = text.match(/[“"《【]([^”"》】]{2,30})[”"》】]/g) || [];
+  for (const raw of quotedMatches) {
+    const value = normalizeName(raw.replace(/[“"《【”"》】]/g, ''));
+    if (value.length >= 2 && value.length <= 30) {
+      candidates.add(value);
+    }
+  }
+
+  // 2) 提取包含关键动词的短语左侧实体
+  const relationLikeLines = text.split(/[。\n；;]+/).slice(0, 800);
+  const leftEntityRegex = /^([\u4e00-\u9fa5A-Za-z0-9\-_]{2,30})(?:是|属于|位于|包括|包含|由|使用|依赖|连接|导致|影响|提出|创建)/;
+  for (const line of relationLikeLines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const match = trimmed.match(leftEntityRegex);
+    if (match?.[1]) {
+      candidates.add(normalizeName(match[1]));
+    }
+  }
+
+  // 3) 英文专有名词（首字母大写短语）
+  const enProperNouns = text.match(/\b[A-Z][a-zA-Z0-9-]{2,}(?:\s+[A-Z][a-zA-Z0-9-]{2,}){0,3}\b/g) || [];
+  for (const noun of enProperNouns) {
+    const normalized = normalizeName(noun);
+    if (normalized.length <= 45) {
+      candidates.add(normalized);
+    }
+  }
+
+  const lowValue = new Set(['内容', '情况', '问题', '方式', '方面', '结果', '系统', '数据', '信息']);
+  const additions: string[] = [];
+  for (const candidate of candidates) {
+    const key = candidate.toLowerCase();
+    if (existingNames.has(key)) continue;
+    if (lowValue.has(candidate)) continue;
+    if (candidate.length < 2 || candidate.length > 50) continue;
+    additions.push(candidate);
+    if (additions.length >= maxAdditions) break;
+  }
+
+  return additions;
+}
+
+function buildCooccurrenceRelationships(
+  text: string,
+  entityNames: string[],
+  existingRelSet: Set<string>,
+  maxNewRels: number
+): Array<{ from: string; to: string; type: string }> {
+  if (maxNewRels <= 0 || entityNames.length < 2) return [];
+
+  const result: Array<{ from: string; to: string; type: string }> = [];
+  const sentences = text.split(/[。\n！？!?；;]+/).map(s => s.trim()).filter(Boolean).slice(0, 1200);
+
+  for (const sentence of sentences) {
+    const mentions = entityNames.filter(name => name.length >= 2 && sentence.includes(name)).slice(0, 8);
+    if (mentions.length < 2) continue;
+
+    for (let i = 0; i < mentions.length; i++) {
+      for (let j = i + 1; j < mentions.length; j++) {
+        const a = mentions[i];
+        const b = mentions[j];
+        const relKey = `${a.toLowerCase()}|${b.toLowerCase()}|共现`;
+        if (existingRelSet.has(relKey)) continue;
+        existingRelSet.add(relKey);
+        result.push({ from: a, to: b, type: '共现' });
+        if (result.length >= maxNewRels) return result;
+      }
+    }
+  }
+
+  return result;
+}
+
 // 简单的 XSS 过滤函数
 function sanitizeText(text: string): string {
   if (!text) return '';
@@ -194,16 +285,61 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Step 1.5: 结果增强 - 解决节点过少和关系稀疏问题
+    const targetNodeCount = calculateTargetNodeCount(body.documentText.length);
+    const existingEntityNames = new Set(aiResult.entities.map(entity => normalizeName(entity.name).toLowerCase()));
+    const neededEntities = Math.max(0, targetNodeCount - aiResult.entities.length);
+    const supplementaryEntityNames = extractSupplementaryEntities(body.documentText, existingEntityNames, Math.min(neededEntities, 35));
+
+    if (supplementaryEntityNames.length > 0) {
+      aiResult.entities.push(
+        ...supplementaryEntityNames.map(name => ({
+          name,
+          description: nodeDetailMap.get(name.toLowerCase()) || undefined,
+        }))
+      );
+    }
+
+    // 对关系进行去重后，补充句内共现关系以提升连通度
+    const relationshipSet = new Set<string>();
+    const normalizedRelationships = aiResult.relationships.filter(rel => {
+      const from = normalizeName(rel.from);
+      const to = normalizeName(rel.to);
+      const type = normalizeName(rel.type || '关联');
+      if (!from || !to || from.toLowerCase() === to.toLowerCase()) return false;
+      const key = `${from.toLowerCase()}|${to.toLowerCase()}|${type.toLowerCase()}`;
+      if (relationshipSet.has(key)) return false;
+      relationshipSet.add(key);
+      rel.from = from;
+      rel.to = to;
+      rel.type = type;
+      return true;
+    });
+    aiResult.relationships = normalizedRelationships;
+
+    const maxRelationshipCount = Math.max(120, Math.floor(aiResult.entities.length * 2.4));
+    const missingRelationships = Math.max(0, Math.min(120, maxRelationshipCount - aiResult.relationships.length));
+    if (missingRelationships > 0) {
+      const cooccurrenceRels = buildCooccurrenceRelationships(
+        body.documentText,
+        aiResult.entities.map(entity => entity.name),
+        relationshipSet,
+        missingRelationships
+      );
+      aiResult.relationships.push(...cooccurrenceRels);
+    }
+
     // Step 2: Create preview nodes with temporary IDs
     const nodeNameToTempId = new Map<string, string>();
-    const previewNodes: PreviewNode[] = aiResult.entities.map(entity => {
+    const previewNodes: PreviewNode[] = aiResult.entities.slice(0, 120).map(entity => {
       const tempId = uuidv4();
-      const nodeNameLower = entity.name.toLowerCase().trim();
+      const normalizedEntityName = normalizeName(entity.name);
+      const nodeNameLower = normalizedEntityName.toLowerCase();
       nodeNameToTempId.set(nodeNameLower, tempId);
       
       const node: PreviewNode = {
         id: tempId,
-        name: entity.name,
+        name: normalizedEntityName,
       };
 
       // 仅当“节点–详情”映射表中该节点的详情字段非空时，才写入详情字段
@@ -219,12 +355,15 @@ export async function POST(request: NextRequest) {
     });
 
     // Step 3: Create preview edges with temporary node references
-    const previewEdges: PreviewEdge[] = aiResult.relationships.map(rel => ({
+    const previewEdges: PreviewEdge[] = aiResult.relationships
+      .slice(0, 360)
+      .map(rel => ({
       id: uuidv4(),
       fromNodeId: nodeNameToTempId.get(rel.from.toLowerCase().trim()) || '',
       toNodeId: nodeNameToTempId.get(rel.to.toLowerCase().trim()) || '',
       label: rel.type,
-    }));
+    }))
+      .filter(edge => edge.fromNodeId && edge.toNodeId && edge.fromNodeId !== edge.toNodeId);
 
     // Step 4: Perform duplicate detection if graphId is provided
     let duplicateNodes = 0;

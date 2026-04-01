@@ -80,13 +80,15 @@ function EdgeWithLabel({ edge, fromNode, toNode }: { edge: any, fromNode: any, t
           lockZ={false}
         >
           <Text
-            fontSize={0.8}
+            fontSize={1.8}
+            fontWeight={700}
             color="#FFFFFF"
             anchorX="center"
             anchorY="middle"
-            outlineWidth={0.05}
+            outlineWidth={0.08}
             outlineColor="#000000"
             outlineOpacity={0.9}
+            sdfGlyphSize={128}
             maxWidth={10}
             depthTest={false} // 禁用深度测试，让文字始终显示在最上层
             renderOrder={1} // 提高渲染层级
