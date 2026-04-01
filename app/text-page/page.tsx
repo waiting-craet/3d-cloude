@@ -68,6 +68,17 @@ export default function TextPage() {
   const [customPrompt, setCustomPrompt] = useState('')
   const [showCustomPrompt, setShowCustomPrompt] = useState(false)
 
+  // text-page 弹窗统一使用莫兰迪绿系（天青 + 黛绿）
+  const modalPalette = {
+    tianqing: '#8caeb0',
+    tianqingSoft: '#dce9e8',
+    daiGreen: '#5d766c',
+    daiGreenDeep: '#4f655d',
+    border: '#c8d8d4',
+    text: '#2f4a42',
+    textSoft: '#5f726b',
+  }
+
   // 修复页面滚动问题
   useEffect(() => {
     // 保存原始样式
@@ -1626,8 +1637,8 @@ export default function TextPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
+          background: 'linear-gradient(140deg, rgba(93, 118, 108, 0.36), rgba(140, 174, 176, 0.42))',
+          backdropFilter: 'blur(6px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1635,21 +1646,37 @@ export default function TextPage() {
         }}
         onClick={() => setShowNewProjectModal(false)}>
           <div className={styles.mobileModal} style={{
-            background: inkWashTokens.colors.neutral.white,
+            background: `linear-gradient(160deg, #ffffff 0%, ${modalPalette.tianqingSoft} 100%)`,
             borderRadius: inkWashTokens.borderRadius.xl,
             padding: '32px',
             maxWidth: '500px',
             width: '90%',
-            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
-            boxShadow: inkWashTokens.shadows.xl,
+            border: `1px solid ${modalPalette.border}`,
+            boxShadow: '0 20px 50px rgba(79, 101, 93, 0.22)',
           }}
           onClick={(e) => e.stopPropagation()}>
             <h3 style={{
-              color: inkWashTokens.colors.neutral.gray800,
-              fontSize: '24px',
+              color: modalPalette.text,
+              fontSize: '23px',
               fontWeight: '700',
               marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
             }}>
+              <span style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '10px',
+                background: `linear-gradient(135deg, ${modalPalette.tianqing} 0%, ${modalPalette.daiGreen} 100%)`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+                </svg>
+              </span>
               创建新项目
             </h3>
             <input
@@ -1660,21 +1687,21 @@ export default function TextPage() {
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                background: inkWashTokens.colors.neutral.white,
-                border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                background: 'rgba(255, 255, 255, 0.92)',
+                border: `1px solid ${modalPalette.border}`,
                 borderRadius: inkWashTokens.borderRadius.lg,
-                color: inkWashTokens.colors.neutral.gray800,
+                color: modalPalette.text,
                 fontSize: '15px',
                 marginBottom: '24px',
                 outline: 'none',
                 transition: 'all 0.2s ease',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 154, 143, 0.1)'
+                e.currentTarget.style.borderColor = modalPalette.tianqing
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(140, 174, 176, 0.18)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                e.currentTarget.style.borderColor = modalPalette.border
                 e.currentTarget.style.boxShadow = 'none'
               }}
               onKeyPress={(e) => {
@@ -1693,20 +1720,20 @@ export default function TextPage() {
                 }}
                 style={{
                   padding: '12px 24px',
-                  background: inkWashTokens.colors.neutral.white,
-                  border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                  background: 'rgba(255, 255, 255, 0.85)',
+                  border: `1px solid ${modalPalette.border}`,
                   borderRadius: inkWashTokens.borderRadius.md,
-                  color: inkWashTokens.colors.neutral.gray600,
+                  color: modalPalette.textSoft,
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = inkWashTokens.colors.neutral.gray100
+                  e.currentTarget.style.background = 'rgba(140, 174, 176, 0.14)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = inkWashTokens.colors.neutral.white
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.85)'
                 }}>
                 取消
               </button>
@@ -1716,8 +1743,8 @@ export default function TextPage() {
                 style={{
                   padding: '12px 24px',
                   background: (newProjectName.trim() && !isCreatingProject)
-                    ? inkWashTokens.colors.primary.main
-                    : inkWashTokens.colors.neutral.gray300,
+                    ? `linear-gradient(135deg, ${modalPalette.daiGreen} 0%, ${modalPalette.tianqing} 100%)`
+                    : '#bfc9c6',
                   border: 'none',
                   borderRadius: inkWashTokens.borderRadius.md,
                   color: inkWashTokens.colors.neutral.white,
@@ -1732,12 +1759,12 @@ export default function TextPage() {
                 }}
                 onMouseEnter={(e) => {
                   if (newProjectName.trim() && !isCreatingProject) {
-                    e.currentTarget.style.background = inkWashTokens.colors.primary.light
+                    e.currentTarget.style.background = modalPalette.daiGreenDeep
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (newProjectName.trim() && !isCreatingProject) {
-                    e.currentTarget.style.background = inkWashTokens.colors.primary.main
+                    e.currentTarget.style.background = `linear-gradient(135deg, ${modalPalette.daiGreen} 0%, ${modalPalette.tianqing} 100%)`
                   }
                 }}>
                 {isCreatingProject && (
@@ -1758,8 +1785,8 @@ export default function TextPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
+          background: 'linear-gradient(140deg, rgba(93, 118, 108, 0.36), rgba(140, 174, 176, 0.42))',
+          backdropFilter: 'blur(6px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1767,21 +1794,38 @@ export default function TextPage() {
         }}
         onClick={() => setShowNewGraphModal(false)}>
           <div className={styles.mobileModal} style={{
-            background: inkWashTokens.colors.neutral.white,
+            background: `linear-gradient(160deg, #ffffff 0%, ${modalPalette.tianqingSoft} 100%)`,
             borderRadius: inkWashTokens.borderRadius.xl,
             padding: '32px',
             maxWidth: '500px',
             width: '90%',
-            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
-            boxShadow: inkWashTokens.shadows.xl,
+            border: `1px solid ${modalPalette.border}`,
+            boxShadow: '0 20px 50px rgba(79, 101, 93, 0.22)',
           }}
           onClick={(e) => e.stopPropagation()}>
             <h3 style={{
-              color: inkWashTokens.colors.neutral.gray800,
-              fontSize: '24px',
+              color: modalPalette.text,
+              fontSize: '23px',
               fontWeight: '700',
               marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
             }}>
+              <span style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '10px',
+                background: `linear-gradient(135deg, ${modalPalette.tianqing} 0%, ${modalPalette.daiGreen} 100%)`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="3.5" stroke="#fff" strokeWidth="2" />
+                  <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </span>
               创建新图谱
             </h3>
             <input
@@ -1792,21 +1836,21 @@ export default function TextPage() {
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                background: inkWashTokens.colors.neutral.white,
-                border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                background: 'rgba(255, 255, 255, 0.92)',
+                border: `1px solid ${modalPalette.border}`,
                 borderRadius: inkWashTokens.borderRadius.lg,
-                color: inkWashTokens.colors.neutral.gray800,
+                color: modalPalette.text,
                 fontSize: '15px',
                 marginBottom: '24px',
                 outline: 'none',
                 transition: 'all 0.2s ease',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(90, 154, 143, 0.1)'
+                e.currentTarget.style.borderColor = modalPalette.tianqing
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(140, 174, 176, 0.18)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = inkWashTokens.colors.neutral.gray200
+                e.currentTarget.style.borderColor = modalPalette.border
                 e.currentTarget.style.boxShadow = 'none'
               }}
               onKeyPress={(e) => {
@@ -1825,20 +1869,20 @@ export default function TextPage() {
                 }}
                 style={{
                   padding: '12px 24px',
-                  background: inkWashTokens.colors.neutral.white,
-                  border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
+                  background: 'rgba(255, 255, 255, 0.85)',
+                  border: `1px solid ${modalPalette.border}`,
                   borderRadius: inkWashTokens.borderRadius.md,
-                  color: inkWashTokens.colors.neutral.gray600,
+                  color: modalPalette.textSoft,
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = inkWashTokens.colors.neutral.gray100
+                  e.currentTarget.style.background = 'rgba(140, 174, 176, 0.14)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = inkWashTokens.colors.neutral.white
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.85)'
                 }}>
                 取消
               </button>
@@ -1848,8 +1892,8 @@ export default function TextPage() {
                 style={{
                   padding: '12px 24px',
                   background: (newGraphName.trim() && !isCreatingGraph)
-                    ? inkWashTokens.colors.primary.main
-                    : inkWashTokens.colors.neutral.gray300,
+                    ? `linear-gradient(135deg, ${modalPalette.daiGreen} 0%, ${modalPalette.tianqing} 100%)`
+                    : '#bfc9c6',
                   border: 'none',
                   borderRadius: inkWashTokens.borderRadius.md,
                   color: inkWashTokens.colors.neutral.white,
@@ -1864,12 +1908,12 @@ export default function TextPage() {
                 }}
                 onMouseEnter={(e) => {
                   if (newGraphName.trim() && !isCreatingGraph) {
-                    e.currentTarget.style.background = inkWashTokens.colors.primary.light
+                    e.currentTarget.style.background = modalPalette.daiGreenDeep
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (newGraphName.trim() && !isCreatingGraph) {
-                    e.currentTarget.style.background = inkWashTokens.colors.primary.main
+                    e.currentTarget.style.background = `linear-gradient(135deg, ${modalPalette.daiGreen} 0%, ${modalPalette.tianqing} 100%)`
                   }
                 }}>
                 {isCreatingGraph && (
@@ -1890,7 +1934,7 @@ export default function TextPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
+          background: 'linear-gradient(145deg, rgba(93, 118, 108, 0.35), rgba(140, 174, 176, 0.45))',
           backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
@@ -1898,13 +1942,13 @@ export default function TextPage() {
           zIndex: 9999,
         }}>
           <div style={{
-            background: inkWashTokens.colors.neutral.white,
+            background: `linear-gradient(160deg, #ffffff 0%, ${modalPalette.tianqingSoft} 100%)`,
             borderRadius: inkWashTokens.borderRadius.xl,
             padding: '48px',
             maxWidth: '480px',
             width: '90%',
-            border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
-            boxShadow: inkWashTokens.shadows.xl,
+            border: `1px solid ${modalPalette.border}`,
+            boxShadow: '0 24px 56px rgba(79, 101, 93, 0.24)',
             textAlign: 'center',
           }}>
             {/* 加载动画 - 水墨风格 */}
@@ -1917,8 +1961,8 @@ export default function TextPage() {
               <div style={{
                 width: '100%',
                 height: '100%',
-                border: `4px solid rgba(90, 154, 143, 0.2)`,
-                borderTop: `4px solid ${inkWashTokens.colors.primary.main}`,
+                border: `4px solid rgba(140, 174, 176, 0.35)`,
+                borderTop: `4px solid ${modalPalette.daiGreen}`,
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }} />
@@ -1932,18 +1976,25 @@ export default function TextPage() {
 
             {/* 标题 */}
             <h3 style={{
-              color: inkWashTokens.colors.neutral.gray800,
+              color: modalPalette.text,
               fontSize: '24px',
               fontWeight: '700',
               marginBottom: '16px',
               letterSpacing: '0.5px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
             }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" stroke={modalPalette.daiGreen} strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
               AI正在生成中
             </h3>
 
             {/* 描述 */}
             <p style={{
-              color: inkWashTokens.colors.neutral.gray600,
+              color: modalPalette.textSoft,
               fontSize: '15px',
               lineHeight: '1.6',
               marginBottom: '32px',
@@ -1958,21 +2009,27 @@ export default function TextPage() {
               onClick={handleCancelAIAnalysis}
               style={{
                 padding: '14px 32px',
-                background: 'rgba(193, 123, 123, 0.1)',
-                border: `1px solid rgba(193, 123, 123, 0.3)`,
+                background: 'rgba(93, 118, 108, 0.10)',
+                border: `1px solid rgba(93, 118, 108, 0.30)`,
                 borderRadius: inkWashTokens.borderRadius.lg,
-                color: inkWashTokens.colors.semantic.error,
+                color: modalPalette.daiGreenDeep,
                 fontSize: '15px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(193, 123, 123, 0.15)'
+                e.currentTarget.style.background = 'rgba(93, 118, 108, 0.18)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(193, 123, 123, 0.1)'
+                e.currentTarget.style.background = 'rgba(93, 118, 108, 0.10)'
               }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
               取消生成
             </button>
           </div>
