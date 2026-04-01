@@ -13,6 +13,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation' // Add Next.js router for navigation (Task 2.2)
 import { MergeDecision } from '@/lib/services/merge-resolution'
 import { NavigationService, EnhancedNavigationResult, NavigationErrorType, ErrorRecoveryStrategy } from '@/lib/services/navigation-service' // Import enhanced NavigationService (Task 5.1)
+import { removeEmojis } from '@/lib/emoji-filter' // Import emoji filter utility
 
 // Add CSS animations for loading states (Task 2.3)
 const styles = `
@@ -635,7 +636,7 @@ export default function AIPreviewModal({
                 marginBottom: '8px',
               }}
             >
-              🤖 AI 图谱预览
+              AI 图谱预览
             </h2>
             <p
               style={{
@@ -672,7 +673,7 @@ export default function AIPreviewModal({
               e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)'
             }}
           >
-            ✕
+            关闭
           </button>
         </div>
 
@@ -686,9 +687,9 @@ export default function AIPreviewModal({
           }}
         >
           {[
-            { id: 'stats', label: '📊 统计', badge: null },
-            { id: 'conflicts', label: '⚠️ 冲突', badge: unresolvedConflicts.length > 0 ? unresolvedConflicts.length : null },
-            { id: 'editing', label: '✏️ 编辑', badge: null },
+            { id: 'stats', label: '统计', badge: null },
+            { id: 'conflicts', label: '冲突', badge: unresolvedConflicts.length > 0 ? unresolvedConflicts.length : null },
+            { id: 'editing', label: '编辑', badge: null },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -821,7 +822,6 @@ export default function AIPreviewModal({
                 gap: '8px',
               }}
             >
-              <span>⚠️</span>
               <span>{saveError}</span>
             </div>
           )}
@@ -844,7 +844,6 @@ export default function AIPreviewModal({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                <span>⚠️</span>
                 <span>{navigationError}</span>
               </div>
               
@@ -875,7 +874,7 @@ export default function AIPreviewModal({
                     e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'
                   }}
                 >
-                  🔗 手动打开图谱
+                  手动打开图谱
                 </button>
               )}
               
@@ -906,7 +905,7 @@ export default function AIPreviewModal({
                     e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'
                   }}
                 >
-                  🔄 重试导航
+                  重试导航
                 </button>
               )}
             </div>
@@ -939,10 +938,10 @@ export default function AIPreviewModal({
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span>
-                  {loadingPhase === 'saving' ? '💾' :
-                   loadingPhase === 'success' ? '✅' :
-                   loadingPhase === 'navigating' ? '🚀' :
-                   '✨'}
+                  {loadingPhase === 'saving' ? '保存中...' :
+                   loadingPhase === 'success' ? '保存成功' :
+                   loadingPhase === 'navigating' ? '跳转中...' :
+                   '加载中'}
                 </span>
                 <span>
                   {loadingPhase === 'saving' ? '正在保存图谱数据...' :
@@ -1019,7 +1018,6 @@ export default function AIPreviewModal({
                 gap: '8px',
               }}
             >
-              <span>✅</span>
               <span>图谱保存成功！正在跳转到3D可视化页面...</span>
             </div>
           )}
@@ -1040,7 +1038,6 @@ export default function AIPreviewModal({
                 gap: '8px',
               }}
             >
-              <span>🚀</span>
               <span>正在跳转到图谱页面...</span>
             </div>
           )}
@@ -1061,7 +1058,6 @@ export default function AIPreviewModal({
                 gap: '8px',
               }}
             >
-              <span>⚠️</span>
               <span>还有 {unresolvedConflicts.length} 个冲突未解决</span>
             </div>
           )}
@@ -1130,14 +1126,14 @@ export default function AIPreviewModal({
               }}
             >
               {/* Enhanced button text based on loading phase (Task 5.2) */}
-              {loadingPhase === 'saving' ? '💾 保存中...' :
-               loadingPhase === 'success' ? '✅ 保存成功' :
-               loadingPhase === 'navigating' ? '🚀 跳转中...' :
-               loadingPhase === 'complete' ? '✨ 完成' :
+              {loadingPhase === 'saving' ? '保存中...' :
+               loadingPhase === 'success' ? '保存成功' :
+               loadingPhase === 'navigating' ? '跳转中...' :
+               loadingPhase === 'complete' ? '完成' :
                isSaving ? '保存中...' : 
-               showSuccessMessage ? '✅ 保存成功' :
-               isNavigating ? '🚀 跳转中...' : 
-               '💾 保存图谱'}
+               showSuccessMessage ? '保存成功' : 
+               isNavigating ? '跳转中...' : 
+               '保存图谱'}
             </button>
           </div>
         </div>
@@ -1186,7 +1182,7 @@ export default function AIPreviewModal({
                   margin: '0 auto 20px',
                 }}
               >
-                ⚠️
+                !
               </div>
 
               {/* Title */}
@@ -1342,7 +1338,7 @@ function StatsSection({
       isValid,
       hasUnresolvedConflicts,
       hasInvalidNodes,
-      status: isValid ? '✅ 准备保存' : hasUnresolvedConflicts ? '⚠️ 有未解决冲突' : '❌ 数据不完整'
+      status: isValid ? '准备保存' : hasUnresolvedConflicts ? '有未解决冲突' : '数据不完整'
     }
   })()
 
@@ -1359,23 +1355,23 @@ function StatsSection({
           alignItems: 'center',
           gap: '8px'
         }}>
-          📊 基础统计
+          基础统计
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
           <StatCard
-            icon="📊"
+            icon="图表"
             label="总节点数"
             value={stats.totalNodes}
             color="rgba(99, 102, 241, 1)"
           />
           <StatCard
-            icon="🔗"
+            icon="链接"
             label="总边数"
             value={stats.totalEdges}
             color="rgba(59, 130, 246, 1)"
           />
           <StatCard
-            icon={visualizationType === '2d' ? '📐' : '🌐'}
+            icon={visualizationType === '2d' ? '二维' : '三维'}
             label="目标类型"
             value={visualizationType === '2d' ? '二维图谱' : '三维图谱'}
             color="rgba(16, 185, 129, 1)"
@@ -1394,29 +1390,29 @@ function StatsSection({
           alignItems: 'center',
           gap: '8px'
         }}>
-          ⚠️ 冲突分析
+          冲突分析
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
           <StatCard
-            icon="🔍"
+            icon="搜索"
             label="检测到的冲突"
             value={conflictStats.totalConflicts}
             color="rgba(239, 68, 68, 1)"
           />
           <StatCard
-            icon="✅"
+            icon="完成"
             label="已解决冲突"
             value={conflictStats.resolvedConflicts}
             color="rgba(16, 185, 129, 1)"
           />
           <StatCard
-            icon="⏳"
+            icon="等待"
             label="待解决冲突"
             value={conflictStats.unresolvedConflicts}
             color="rgba(251, 191, 36, 1)"
           />
           <StatCard
-            icon="📈"
+            icon="进度"
             label="解决进度"
             value={`${Math.round(conflictStats.resolutionProgress)}%`}
             color="rgba(168, 85, 247, 1)"
@@ -1436,12 +1432,12 @@ function StatsSection({
             alignItems: 'center',
             gap: '8px'
           }}>
-            🔍 冲突类型分布
+            冲突类型分布
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
             {conflictStats.conflictsByType.duplicate_nodes > 0 && (
               <StatCard
-                icon="👥"
+                icon="重复"
                 label="重复节点"
                 value={conflictStats.conflictsByType.duplicate_nodes}
                 color="rgba(251, 191, 36, 1)"
@@ -1450,7 +1446,7 @@ function StatsSection({
             )}
             {conflictStats.conflictsByType.conflicting_edges > 0 && (
               <StatCard
-                icon="🔗"
+                icon="边"
                 label="冲突边"
                 value={conflictStats.conflictsByType.conflicting_edges}
                 color="rgba(239, 68, 68, 1)"
@@ -1459,7 +1455,7 @@ function StatsSection({
             )}
             {conflictStats.conflictsByType.missing_references > 0 && (
               <StatCard
-                icon="🔍"
+                icon="搜索"
                 label="缺失引用"
                 value={conflictStats.conflictsByType.missing_references}
                 color="rgba(168, 85, 247, 1)"
@@ -1468,7 +1464,7 @@ function StatsSection({
             )}
             {conflictStats.conflictsByType.content_conflicts > 0 && (
               <StatCard
-                icon="📝"
+                icon="文档"
                 label="内容冲突"
                 value={conflictStats.conflictsByType.content_conflicts}
                 color="rgba(59, 130, 246, 1)"
@@ -1477,7 +1473,7 @@ function StatsSection({
             )}
             {conflictStats.conflictsByType.property_mismatches > 0 && (
               <StatCard
-                icon="⚙️"
+                icon="设置"
                 label="属性不匹配"
                 value={conflictStats.conflictsByType.property_mismatches}
                 color="rgba(99, 102, 241, 1)"
@@ -1486,7 +1482,7 @@ function StatsSection({
             )}
             {conflictStats.conflictsByType.type_inconsistencies > 0 && (
               <StatCard
-                icon="🏷️"
+                icon="分类"
                 label="类型不一致"
                 value={conflictStats.conflictsByType.type_inconsistencies}
                 color="rgba(16, 185, 129, 1)"
@@ -1576,7 +1572,7 @@ function ConflictsSection({
   if (duplicateNodes.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255, 255, 255, 0.6)' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>OK</div>
         <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>没有冲突</div>
         <div style={{ fontSize: '14px' }}>所有节点都是唯一的，可以直接保存</div>
       </div>
@@ -1630,7 +1626,7 @@ function ConflictsSection({
         borderRadius: '12px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ fontSize: '24px' }}>⚠️</div>
+          <div style={{ fontSize: '24px' }}>!</div>
           <div>
             <div style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>
               发现 {duplicateNodes.length} 个冲突需要解决
@@ -1656,25 +1652,25 @@ function ConflictsSection({
         const typeInfo = (() => {
           const typeMap = {
             duplicate_nodes: {
-              icon: '👥',
+              icon: '重复',
               title: '重复节点',
               description: '检测到与现有节点相似的新节点',
               color: 'rgba(251, 191, 36, 1)'
             },
             content_conflicts: {
-              icon: '📝',
+              icon: '文档',
               title: '内容冲突',
               description: '节点名称或标题存在差异',
               color: 'rgba(59, 130, 246, 1)'
             },
             property_mismatches: {
-              icon: '⚙️',
+              icon: '设置',
               title: '属性不匹配',
               description: '节点属性值存在差异',
               color: 'rgba(99, 102, 241, 1)'
             },
             type_inconsistencies: {
-              icon: '🏷️',
+              icon: '分类',
               title: '类型不一致',
               description: '节点类型定义存在冲突',
               color: 'rgba(16, 185, 129, 1)'
@@ -1839,7 +1835,7 @@ function ConflictItem({
                 fontWeight: '600',
                 color: 'rgba(16, 185, 129, 1)'
               }}>
-                ✓ 已处理
+                已处理
               </div>
             )}
 
@@ -2178,7 +2174,7 @@ function EditingSection({
               transition: 'all 0.2s ease'
             }}
           >
-            📊 节点编辑 ({nodes.length})
+            节点编辑 ({nodes.length})
           </button>
           <button
             onClick={() => setActiveEditor('edges')}
@@ -2194,7 +2190,7 @@ function EditingSection({
               transition: 'all 0.2s ease'
             }}
           >
-            🔗 边编辑 ({edges.length})
+            边编辑 ({edges.length})
           </button>
         </div>
       </div>
@@ -2235,7 +2231,7 @@ function EditingSection({
             fontSize: '16px',
             color: 'rgba(255, 255, 255, 0.5)'
           }}>
-            🔍
+            搜索
           </div>
         </div>
 
@@ -2359,7 +2355,7 @@ function EditingSection({
                 justifyContent: 'center',
                 fontSize: '24px'
               }}>
-                ⚠️
+                !
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
@@ -2389,7 +2385,7 @@ function EditingSection({
                       e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
                     }}
                   >
-                    🔄 重试 {panelState.retryCount > 0 && `(${panelState.retryCount})`}
+                    重试 {panelState.retryCount > 0 && `(${panelState.retryCount})`}
                   </button>
                 )}
               </div>
@@ -2426,7 +2422,7 @@ function EditingSection({
                   justifyContent: 'center',
                   fontSize: '24px'
                 }}>
-                  📝
+                  编辑
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
@@ -2469,7 +2465,7 @@ function EditingSection({
                   justifyContent: 'center',
                   fontSize: '24px'
                 }}>
-                  🔗
+                  链接
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
@@ -2718,7 +2714,7 @@ function NodeEditor({
             justifyContent: 'center'
           }}
         >
-          ✕
+          关闭
         </button>
       </div>
 
@@ -2900,7 +2896,7 @@ function EdgeEditor({
             justifyContent: 'center'
           }}
         >
-          ✕
+          关闭
         </button>
       </div>
 

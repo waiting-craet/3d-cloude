@@ -5,6 +5,7 @@ import Image from 'next/image'
 import AIPreviewModal, { PreviewData } from '@/components/AIPreviewModal'
 import { MergeDecision } from '@/lib/services/merge-resolution'
 import { inkWashTokens } from '@/lib/design-tokens'
+import { removeEmojisFromAllStrings } from '@/lib/emoji-filter'
 import styles from './page.module.css'
 
 interface Project {
@@ -317,7 +318,7 @@ export default function TextPage() {
       if (result.success) {
         // 设置AI生成的数据并显示预览模态框 - only if mounted
         if (isMountedRef.current) {
-          setAiGeneratedData(result.data)
+          setAiGeneratedData(removeEmojisFromAllStrings(result.data))
           setShowAIPreview(true)
           setLastAnalysisParams(null) // 清除保存的参数
         }
@@ -404,7 +405,7 @@ export default function TextPage() {
 
       if (result.success) {
         if (isMountedRef.current) {
-          setAiGeneratedData(result.data)
+          setAiGeneratedData(removeEmojisFromAllStrings(result.data))
           setShowAIPreview(true)
           setLastAnalysisParams(null)
         }
