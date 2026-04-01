@@ -129,17 +129,17 @@ export class LayoutEngine {
       validated.minNodeDistance = DEFAULT_LAYOUT_CONFIG.minNodeDistance;
     }
 
-    if (validated.iterations < 50 || validated.iterations > 200) {
+    if (validated.iterations < 50 || validated.iterations > 300) {
       console.warn(`Invalid iterations: ${validated.iterations}, using default: ${DEFAULT_LAYOUT_CONFIG.iterations}`);
       validated.iterations = DEFAULT_LAYOUT_CONFIG.iterations;
     }
 
-    if (validated.springLength < 5 || validated.springLength > 100) {
+    if (validated.springLength < 5 || validated.springLength > 200) {
       console.warn(`Invalid springLength: ${validated.springLength}, using default: ${DEFAULT_LAYOUT_CONFIG.springLength}`);
       validated.springLength = DEFAULT_LAYOUT_CONFIG.springLength;
     }
 
-    if (validated.repulsionStrength < 100 || validated.repulsionStrength > 5000) {
+    if (validated.repulsionStrength < 100 || validated.repulsionStrength > 10000) {
       console.warn(`Invalid repulsionStrength: ${validated.repulsionStrength}, using default: ${DEFAULT_LAYOUT_CONFIG.repulsionStrength}`);
       validated.repulsionStrength = DEFAULT_LAYOUT_CONFIG.repulsionStrength;
     }
@@ -381,8 +381,8 @@ export class LayoutEngine {
     const adaptiveConfig = { ...config };
 
     // 1. 减少迭代次数（避免过长的计算时间）
-    // 大规模图谱：最多60次迭代
-    adaptiveConfig.iterations = Math.min(config.iterations, 60);
+    // 大规模图谱：最多150次迭代，太少会导致无法收敛展开
+    adaptiveConfig.iterations = Math.min(config.iterations, 150);
 
     // 2. 增加批处理大小（提高数据库操作效率）
     // 大规模图谱：每批25个节点
@@ -390,12 +390,12 @@ export class LayoutEngine {
 
     // 3. 调整排斥力强度（大规模图谱需要更强的排斥力）
     if (nodeCount > 200) {
-      adaptiveConfig.repulsionStrength = config.repulsionStrength * 1.2;
+      adaptiveConfig.repulsionStrength = config.repulsionStrength * 1.5; // 从 1.2 增强至 1.5
     }
 
     // 4. 增加最小节点间距（避免过度拥挤）
     if (nodeCount > 150) {
-      adaptiveConfig.minNodeDistance = config.minNodeDistance * 1.2;
+      adaptiveConfig.minNodeDistance = config.minNodeDistance * 1.5; // 从 1.2 增强至 1.5
     }
 
     console.log(`Adaptive parameters applied for ${nodeCount} nodes:`, {

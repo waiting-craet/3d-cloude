@@ -52,17 +52,17 @@ export class ForceSimulator {
    * 需求 9.7: 无效配置使用默认值并记录警告
    */
   private validateConfig(): void {
-    if (this.config.iterations < 50 || this.config.iterations > 200) {
+    if (this.config.iterations < 50 || this.config.iterations > 300) {
       console.warn(`Invalid iterations: ${this.config.iterations}, using default: ${DEFAULT_LAYOUT_CONFIG.iterations}`);
       this.config.iterations = DEFAULT_LAYOUT_CONFIG.iterations;
     }
 
-    if (this.config.springLength < 5 || this.config.springLength > 100) {
+    if (this.config.springLength < 5 || this.config.springLength > 200) {
       console.warn(`Invalid springLength: ${this.config.springLength}, using default: ${DEFAULT_LAYOUT_CONFIG.springLength}`);
       this.config.springLength = DEFAULT_LAYOUT_CONFIG.springLength;
     }
 
-    if (this.config.repulsionStrength < 100 || this.config.repulsionStrength > 5000) {
+    if (this.config.repulsionStrength < 100 || this.config.repulsionStrength > 10000) {
       console.warn(`Invalid repulsionStrength: ${this.config.repulsionStrength}, using default: ${DEFAULT_LAYOUT_CONFIG.repulsionStrength}`);
       this.config.repulsionStrength = DEFAULT_LAYOUT_CONFIG.repulsionStrength;
     }
@@ -192,6 +192,26 @@ export class ForceSimulator {
       }
     }
 
+    // 添加中心引力 (Gravity force) - 防止图谱过于分散成一条直线或散开到无穷远
+    const gravityStrength = 0.01; // 较弱的引力强度，保持图谱居中即可
+    for (const state of nodeStates) {
+      // 引力方向指向原点 (0,0,0)
+      const distanceToCenter = Math.sqrt(
+        state.node.x3d * state.node.x3d +
+        state.node.y3d * state.node.y3d +
+        state.node.z3d * state.node.z3d
+      );
+      
+      if (distanceToCenter > 1.0) {
+        const gravityForce = {
+          x: -state.node.x3d * gravityStrength,
+          y: -state.node.y3d * gravityStrength * 1.5, // Y轴（高度）引力可以稍微大一点，压扁一点避免太高
+          z: -state.node.z3d * gravityStrength
+        };
+        this.addForce(forces, state.node.id, gravityForce);
+      }
+    }
+
     return forces;
   }
 
@@ -221,8 +241,11 @@ export class ForceSimulator {
       return { x: 0, y: 0, z: 0 };
     }
 
+    // 强行增加最小斥力，防止节点距离过近时重叠
+    const effectiveDistance = Math.max(distance, 5.0);
+
     // 计算力的大小：F = k / distance²
-    const forceMagnitude = this.config.repulsionStrength / (distance * distance);
+    const forceMagnitude = this.config.repulsionStrength / (effectiveDistance * effectiveDistance);
 
     // 归一化方向向量
     const dirX = dx / distance;
@@ -272,7 +295,7 @@ export class ForceSimulator {
     const displacement = distance - springLength;
 
     // 弹簧强度系数（可调整）
-    const springStrength = 0.1;
+    const springStrength = 0.5; // 从 0.1 增加到 0.5，增强相连节点的吸引力，防止被过大的斥力撕裂
 
     // 计算力的大小：F = k * displacement
     const forceMagnitude = springStrength * displacement;
@@ -302,6 +325,9 @@ export class ForceSimulator {
     nodeStates: NodeState[],
     forces: Map<string, Vector3D>
   ): void {
+    // 设定最大速度限制，防止由于力过大导致节点飞出屏幕或发生剧烈震荡
+    const MAX_VELOCITY = 50.0;
+
     for (const state of nodeStates) {
       const force = forces.get(state.node.id) || { x: 0, y: 0, z: 0 };
 
@@ -321,6 +347,20 @@ export class ForceSimulator {
       state.velocity.x *= this.config.damping;
       state.velocity.y *= this.config.damping;
       state.velocity.z *= this.config.damping;
+
+      // 限制最大速度
+      const speed = Math.sqrt(
+        state.velocity.x * state.velocity.x +
+        state.velocity.y * state.velocity.y +
+        state.velocity.z * state.velocity.z
+      );
+      
+      if (speed > MAX_VELOCITY) {
+        const scale = MAX_VELOCITY / speed;
+        state.velocity.x *= scale;
+        state.velocity.y *= scale;
+        state.velocity.z *= scale;
+      }
 
       // 更新位置: p = p + v
       state.node.x3d += state.velocity.x;
@@ -367,7 +407,7 @@ export class ForceSimulator {
     }
 
     // 弹簧势能: PE_spring = 0.5 * k * (distance - restLength)²
-    const springStrength = 0.1;
+    const springStrength = 0.5; // 从 0.1 增加到 0.5 以确保连接更加紧密有弹性
     for (const edge of edges) {
       const sourceState = nodeStates.find(s => s.node.id === edge.source);
       const targetState = nodeStates.find(s => s.node.id === edge.target);
@@ -394,8 +434,9 @@ export class ForceSimulator {
    * @returns 是否已收敛
    */
   public hasConverged(energyHistory: number[]): boolean {
-    // 需要至少10次迭代才能判断收敛
-    if (energyHistory.length < 10) {
+    // 强制至少运行总迭代次数的 80%，以确保图谱有充分时间展开
+    const minIterations = this.config.iterations * 0.8;
+    if (energyHistory.length < minIterations) {
       return false;
     }
 

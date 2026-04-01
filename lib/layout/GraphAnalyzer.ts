@@ -84,19 +84,19 @@ export class GraphAnalyzer {
    * 需求 6.5: 如果节点数>30且密度<0.1，推荐网格布局
    */
   recommendStrategy(metrics: GraphMetrics): LayoutStrategy {
-    // 优先级1: 层级布局 - 适用于DAG
-    if (metrics.isDAG) {
-      return LayoutStrategy.HIERARCHICAL;
-    }
-    
-    // 优先级2: 径向布局 - 适用于有明显中心节点的图谱
+    // 优先级1: 径向布局 - 适用于有明显中心节点的图谱
     if (metrics.hasCentralNode) {
       return LayoutStrategy.RADIAL;
     }
     
-    // 优先级3: 网格布局 - 适用于稀疏大图
+    // 优先级2: 网格布局 - 适用于稀疏大图
     if (metrics.nodeCount > 30 && metrics.density < 0.1) {
       return LayoutStrategy.GRID;
+    }
+
+    // 优先级3: 层级布局 - 适用于复杂的有向无环图，但需确保不是单链（单链使用力导向更好）
+    if (metrics.isDAG && metrics.maxDegree > 2 && metrics.nodeCount > 5) {
+      return LayoutStrategy.HIERARCHICAL;
     }
     
     // 优先级4: 球形布局 - 适用于完全连接图
@@ -104,12 +104,7 @@ export class GraphAnalyzer {
       return LayoutStrategy.SPHERICAL;
     }
     
-    // 优先级5: 力导向布局 - 适用于密集图谱
-    if (metrics.density > 0.2) {
-      return LayoutStrategy.FORCE_DIRECTED;
-    }
-    
-    // 默认: 力导向布局 - 通用策略
+    // 默认: 力导向布局 - 通用策略，使节点更均匀分散，也是大多数图谱的最佳视觉效果
     return LayoutStrategy.FORCE_DIRECTED;
   }
   
