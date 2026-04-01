@@ -14,6 +14,7 @@ export interface WorkflowNode {
   description?: string
   x: number
   y: number
+  z?: number
   imageUrl?: string
   videoUrl?: string
 }
@@ -89,11 +90,14 @@ export function detectNodeChanges(
         if (wNode.videoUrl !== dbNode.videoUrl) {
           updates.videoUrl = wNode.videoUrl
         }
-        if (wNode.x !== dbNode.x) {
+        if (Math.abs(wNode.x - (dbNode.x || 0)) > 0.001) {
           updates.x = wNode.x
         }
-        if (wNode.y !== dbNode.y) {
+        if (Math.abs(wNode.y - (dbNode.y || 0)) > 0.001) {
           updates.y = wNode.y
+        }
+        if (wNode.z !== undefined && Math.abs(wNode.z - (dbNode.z || 0)) > 0.001) {
+          updates.z = wNode.z
         }
         
         // If any property changed, add to update list
