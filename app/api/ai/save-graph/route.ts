@@ -276,8 +276,8 @@ async function handleSaveGraph(request: NextRequest) {
       const allNodesForLayout: Node2D[] = mergeResult.nodesToCreate.map((n: NodeToCreate) => ({
         id: n.tempId,
         label: n.name,
-        x2d: Math.random() * 100, // LayoutEngine needs some initial 2D coords
-        y2d: Math.random() * 100
+        x2d: Math.random() * 600 - 300, // 初始位置分散，避免力导向聚集在一点无法推开
+        y2d: Math.random() * 600 - 300
       }));
       
       // Add existing nodes to layout calculation if any
@@ -285,8 +285,8 @@ async function handleSaveGraph(request: NextRequest) {
         allNodesForLayout.push({
           id: n.id,
           label: n.name,
-          x2d: n.x || Math.random() * 100,
-          y2d: n.y || Math.random() * 100
+          x2d: n.x || Math.random() * 600 - 300,
+          y2d: n.y || Math.random() * 600 - 300
         });
       });
       
@@ -299,11 +299,18 @@ async function handleSaveGraph(request: NextRequest) {
 
       // Initialize and run LayoutEngine
       console.log(`[AI Save] Running LayoutEngine for ${allNodesForLayout.length} nodes...`);
-      const layoutEngine = new LayoutEngine();
+      const layoutEngine = new LayoutEngine({
+        iterations: 200,           // 继续增加迭代次数保证充足的模拟时间
+        springLength: 80,          // 大幅增加弹簧长度（节点自然距离），推开距离
+        repulsionStrength: 6000,   // 继续增加排斥力，让节点间有更强的分离感
+        minNodeDistance: 50,       // 增加最小间距
+        heightVariation: 80,       // 进一步增加 Z 轴的高低错落，使其立体化
+        damping: 0.85              // 保持合理的阻尼，防止震荡
+      });
       const { nodes: layoutNodes } = await layoutEngine.convert3D(
         allNodesForLayout,
         layoutEdges,
-        LayoutStrategy.FORCE_DIRECTED
+        LayoutStrategy.FORCE_DIRECTED // AI生成的图谱强制使用力导向布局，这是最通用的发散布局
       );
       
       // Map layout results back to tempIds

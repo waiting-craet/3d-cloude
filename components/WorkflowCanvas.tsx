@@ -221,8 +221,8 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         id: node.id,
         label: node.name,
         description: node.description || '',
-        x: savedPos ? savedPos.x : node.x * 50 + 300, // 优先使用保存的位置
-        y: savedPos ? savedPos.y : node.y * 50 + 300,
+        x: savedPos ? savedPos.x : (node.x || 0) * 15 + 300, // 优先使用保存的位置；否则将3D X轴映射到2D X轴，缩放15倍使排布更合理
+        y: savedPos ? savedPos.y : (node.z !== undefined && node.z !== null && node.z !== 0 ? node.z : node.y || 0) * 15 + 300, // 将3D图谱的Z轴（纵深平面）映射到2D画板的Y轴
         width: 200,
         height: 100,
         isEditing: false,
