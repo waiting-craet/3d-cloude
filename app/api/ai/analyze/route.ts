@@ -58,6 +58,33 @@ function normalizeName(name: string): string {
   return name.trim().replace(/\s+/g, ' ').replace(/[，。；：、,.!?！？]+$/g, '');
 }
 
+function normalizeEdgeLabel(label?: string): string {
+  const normalized = normalizeName(label || '');
+  return normalized || '关联';
+}
+
+function getPairKey(a: string, b: string): string {
+  const left = a.toLowerCase().trim();
+  const right = b.toLowerCase().trim();
+  return left <= right ? `${left}|${right}` : `${right}|${left}`;
+}
+
+function isWeakRelationshipLabel(label: string): boolean {
+  const weakLabels = new Set(['关联', '相关', '联系', '共现', '有关']);
+  return weakLabels.has(label);
+}
+
+function pickBetterRelationshipLabel(currentLabel: string, candidateLabel: string): string {
+  const currentWeak = isWeakRelationshipLabel(currentLabel);
+  const candidateWeak = isWeakRelationshipLabel(candidateLabel);
+  if (currentWeak !== candidateWeak) {
+    return candidateWeak ? currentLabel : candidateLabel;
+  }
+
+  // Prefer concise but meaningful labels.
+  return candidateLabel.length < currentLabel.length ? candidateLabel : currentLabel;
+}
+
 function calculateTargetNodeCount(textLength: number): number {
   if (textLength < 1200) return 28;
   if (textLength < 3000) return 40;
@@ -68,15 +95,19 @@ function calculateTargetNodeCount(textLength: number): number {
 function extractSupplementaryEntities(text: string, existingNames: Set<string>, maxAdditions: number): string[] {
   if (maxAdditions <= 0) return [];
 
-  const candidates = new Set<string>();
+  const candidateScores = new Map<string, number>();
+  const pushCandidate = (rawValue: string, score: number) => {
+    const value = normalizeName(rawValue);
+    if (value.length < 2 || value.length > 50) return;
+    const key = value.toLowerCase();
+    if (existingNames.has(key)) return;
+    candidateScores.set(value, (candidateScores.get(value) || 0) + score);
+  };
 
   // 1) 提取中文引号/书名号中的概念
   const quotedMatches = text.match(/[“"《【]([^”"》】]{2,30})[”"》】]/g) || [];
   for (const raw of quotedMatches) {
-    const value = normalizeName(raw.replace(/[“"《【”"》】]/g, ''));
-    if (value.length >= 2 && value.length <= 30) {
-      candidates.add(value);
-    }
+    pushCandidate(raw.replace(/[“"《【”"》】]/g, ''), 5);
   }
 
   // 2) 提取包含关键动词的短语左侧实体
@@ -87,37 +118,76 @@ function extractSupplementaryEntities(text: string, existingNames: Set<string>, 
     if (!trimmed) continue;
     const match = trimmed.match(leftEntityRegex);
     if (match?.[1]) {
-      candidates.add(normalizeName(match[1]));
+      pushCandidate(match[1], 4);
     }
   }
 
   // 3) 英文专有名词（首字母大写短语）
   const enProperNouns = text.match(/\b[A-Z][a-zA-Z0-9-]{2,}(?:\s+[A-Z][a-zA-Z0-9-]{2,}){0,3}\b/g) || [];
   for (const noun of enProperNouns) {
-    const normalized = normalizeName(noun);
-    if (normalized.length <= 45) {
-      candidates.add(normalized);
+    pushCandidate(noun, 3);
+  }
+
+  // 4) 中文术语后缀词抽取（提升节点可读性和专业性）
+  const suffixMatches = text.match(/[\u4e00-\u9fa5A-Za-z0-9]{2,24}(系统|模型|算法|平台|协议|框架|网络|技术|机制|方法|方案|服务|公司|大学|组织|部门|产品|项目|理论|病症|药物|材料)/g) || [];
+  for (const term of suffixMatches) {
+    pushCandidate(term, 3);
+  }
+
+  // 5) 根据全文出现频次加权，优先高频实体
+  for (const [candidate] of candidateScores) {
+    const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const hits = text.match(new RegExp(escaped, 'g'))?.length || 0;
+    if (hits > 1) {
+      candidateScores.set(candidate, (candidateScores.get(candidate) || 0) + Math.min(4, hits - 1));
     }
   }
 
   const lowValue = new Set(['内容', '情况', '问题', '方式', '方面', '结果', '系统', '数据', '信息']);
-  const additions: string[] = [];
-  for (const candidate of candidates) {
-    const key = candidate.toLowerCase();
-    if (existingNames.has(key)) continue;
-    if (lowValue.has(candidate)) continue;
-    if (candidate.length < 2 || candidate.length > 50) continue;
-    additions.push(candidate);
-    if (additions.length >= maxAdditions) break;
+  return Array.from(candidateScores.entries())
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return a[0].length - b[0].length;
+    })
+    .map(([candidate]) => candidate)
+    .filter(candidate => {
+      const key = candidate.toLowerCase();
+      if (existingNames.has(key)) return false;
+      if (lowValue.has(candidate)) return false;
+      return candidate.length >= 2 && candidate.length <= 50;
+    })
+    .slice(0, maxAdditions);
+}
+
+function dedupeRelationshipsByPair(
+  relationships: Array<{ from: string; to: string; type: string }>
+): Array<{ from: string; to: string; type: string }> {
+  const pairMap = new Map<string, { from: string; to: string; type: string }>();
+
+  for (const rel of relationships) {
+    const from = normalizeName(rel.from);
+    const to = normalizeName(rel.to);
+    const type = normalizeEdgeLabel(rel.type);
+    if (!from || !to || from.toLowerCase() === to.toLowerCase()) continue;
+
+    const pairKey = getPairKey(from, to);
+    const existing = pairMap.get(pairKey);
+    if (!existing) {
+      pairMap.set(pairKey, { from, to, type });
+      continue;
+    }
+
+    const betterType = pickBetterRelationshipLabel(existing.type, type);
+    pairMap.set(pairKey, { ...existing, type: betterType });
   }
 
-  return additions;
+  return Array.from(pairMap.values());
 }
 
 function buildCooccurrenceRelationships(
   text: string,
   entityNames: string[],
-  existingRelSet: Set<string>,
+  existingPairSet: Set<string>,
   maxNewRels: number
 ): Array<{ from: string; to: string; type: string }> {
   if (maxNewRels <= 0 || entityNames.length < 2) return [];
@@ -133,9 +203,9 @@ function buildCooccurrenceRelationships(
       for (let j = i + 1; j < mentions.length; j++) {
         const a = mentions[i];
         const b = mentions[j];
-        const relKey = `${a.toLowerCase()}|${b.toLowerCase()}|共现`;
-        if (existingRelSet.has(relKey)) continue;
-        existingRelSet.add(relKey);
+        const pairKey = getPairKey(a, b);
+        if (existingPairSet.has(pairKey)) continue;
+        existingPairSet.add(pairKey);
         result.push({ from: a, to: b, type: '共现' });
         if (result.length >= maxNewRels) return result;
       }
@@ -300,33 +370,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 对关系进行去重后，补充句内共现关系以提升连通度
-    const relationshipSet = new Set<string>();
-    const normalizedRelationships = aiResult.relationships.filter(rel => {
-      const from = normalizeName(rel.from);
-      const to = normalizeName(rel.to);
-      const type = normalizeName(rel.type || '关联');
-      if (!from || !to || from.toLowerCase() === to.toLowerCase()) return false;
-      const key = `${from.toLowerCase()}|${to.toLowerCase()}|${type.toLowerCase()}`;
-      if (relationshipSet.has(key)) return false;
-      relationshipSet.add(key);
-      rel.from = from;
-      rel.to = to;
-      rel.type = type;
-      return true;
-    });
-    aiResult.relationships = normalizedRelationships;
+    // 对关系进行去重：同一对节点只保留一条边和一个标签
+    aiResult.relationships = dedupeRelationshipsByPair(aiResult.relationships);
 
     const maxRelationshipCount = Math.max(120, Math.floor(aiResult.entities.length * 2.4));
     const missingRelationships = Math.max(0, Math.min(120, maxRelationshipCount - aiResult.relationships.length));
     if (missingRelationships > 0) {
+      const pairSet = new Set<string>(
+        aiResult.relationships.map(rel => getPairKey(rel.from, rel.to))
+      );
       const cooccurrenceRels = buildCooccurrenceRelationships(
         body.documentText,
         aiResult.entities.map(entity => entity.name),
-        relationshipSet,
+        pairSet,
         missingRelationships
       );
-      aiResult.relationships.push(...cooccurrenceRels);
+      aiResult.relationships = dedupeRelationshipsByPair([...aiResult.relationships, ...cooccurrenceRels]);
     }
 
     // Step 2: Create preview nodes with temporary IDs
@@ -361,9 +420,17 @@ export async function POST(request: NextRequest) {
       id: uuidv4(),
       fromNodeId: nodeNameToTempId.get(rel.from.toLowerCase().trim()) || '',
       toNodeId: nodeNameToTempId.get(rel.to.toLowerCase().trim()) || '',
-      label: rel.type,
+      label: normalizeEdgeLabel(rel.type),
     }))
-      .filter(edge => edge.fromNodeId && edge.toNodeId && edge.fromNodeId !== edge.toNodeId);
+      .filter(edge => edge.fromNodeId && edge.toNodeId && edge.fromNodeId !== edge.toNodeId)
+      .filter((edge, index, edges) => {
+        const pairKey = getPairKey(edge.fromNodeId, edge.toNodeId);
+        const firstIndex = edges.findIndex(e => getPairKey(e.fromNodeId, e.toNodeId) === pairKey);
+        if (firstIndex === index) return true;
+        const firstEdge = edges[firstIndex];
+        firstEdge.label = pickBetterRelationshipLabel(firstEdge.label, edge.label);
+        return false;
+      });
 
     // Step 4: Perform duplicate detection if graphId is provided
     let duplicateNodes = 0;

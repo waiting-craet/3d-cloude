@@ -29,6 +29,51 @@ function buildSeededPosition(index: number, total: number, radiusBase = 220): { 
   };
 }
 
+function normalizeEdgeLabel(label?: string): string {
+  const normalized = (label || '').trim();
+  return normalized.length > 0 ? normalized : '关联';
+}
+
+function getEdgePairKey(fromNodeId: string, toNodeId: string): string {
+  return fromNodeId <= toNodeId
+    ? `${fromNodeId}|${toNodeId}`
+    : `${toNodeId}|${fromNodeId}`;
+}
+
+function isWeakRelationshipLabel(label: string): boolean {
+  return new Set(['关联', '相关', '联系', '共现', '有关']).has(label);
+}
+
+function pickBetterRelationshipLabel(currentLabel: string, candidateLabel: string): string {
+  const currentWeak = isWeakRelationshipLabel(currentLabel);
+  const candidateWeak = isWeakRelationshipLabel(candidateLabel);
+  if (currentWeak !== candidateWeak) {
+    return candidateWeak ? currentLabel : candidateLabel;
+  }
+  return candidateLabel.length < currentLabel.length ? candidateLabel : currentLabel;
+}
+
+function dedupeProcessedEdgesByPair(edges: Array<{ fromNodeId: string; toNodeId: string; label: string; properties: Record<string, any> }>) {
+  const pairMap = new Map<string, { fromNodeId: string; toNodeId: string; label: string; properties: Record<string, any> }>();
+
+  for (const edge of edges) {
+    if (!edge.fromNodeId || !edge.toNodeId || edge.fromNodeId === edge.toNodeId) continue;
+
+    const pairKey = getEdgePairKey(edge.fromNodeId, edge.toNodeId);
+    const normalizedLabel = normalizeEdgeLabel(edge.label);
+    const existing = pairMap.get(pairKey);
+    if (!existing) {
+      pairMap.set(pairKey, { ...edge, label: normalizedLabel });
+      continue;
+    }
+
+    existing.label = pickBetterRelationshipLabel(existing.label, normalizedLabel);
+    existing.properties = { ...existing.properties, ...edge.properties };
+  }
+
+  return Array.from(pairMap.values());
+}
+
 /**
  * Request body interface
  */
@@ -413,10 +458,11 @@ async function handleSaveGraph(request: NextRequest) {
         mergeResult.nodeIdMapping,
         redundantEdgeIndices
       );
+      const uniqueProcessedEdges = dedupeProcessedEdgesByPair(processedEdges);
 
       // Step 6: Create edges
       const createdEdges = await Promise.all(
-        processedEdges.map(async (edgeData) => {
+        uniqueProcessedEdges.map(async (edgeData) => {
           return await tx.edge.create({
             data: {
               fromNodeId: edgeData.fromNodeId,

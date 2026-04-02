@@ -2494,6 +2494,7 @@ function EditingSection({
           ) : (
             selectedEdge ? (
               <EdgeEditor
+                key={selectedEdge.id}
                 edge={selectedEdge}
                 nodes={nodes}
                 onEdgeEdit={onEdgeEdit}
@@ -2908,6 +2909,12 @@ function EdgeEditor({
 }) {
   const [editedEdge, setEditedEdge] = useState(edge)
   const [hasChanges, setHasChanges] = useState(false)
+
+  // Keep local form state synchronized when user switches to another edge.
+  useEffect(() => {
+    setEditedEdge(edge)
+    setHasChanges(false)
+  }, [edge.id])
 
   const handleFieldChange = (field: keyof PreviewEdge, value: any) => {
     setEditedEdge(prev => ({ ...prev, [field]: value }))
