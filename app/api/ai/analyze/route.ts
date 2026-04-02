@@ -228,6 +228,19 @@ function sanitizeText(text: string): string {
     .replace(/on\w+=/gi, '');
 }
 
+function pickPreferredDescription(aiDescription?: string, textDerivedDescription?: string): string | undefined {
+  const aiDesc = aiDescription?.trim();
+  const textDesc = textDerivedDescription?.trim();
+
+  // Prefer richer AI description, fall back to text-derived description.
+  if (aiDesc && textDesc) {
+    if (aiDesc.length >= textDesc.length * 0.8) return aiDesc;
+    return textDesc;
+  }
+
+  return aiDesc || textDesc || undefined;
+}
+
 // 文本解析函数，提取节点详情映射表
 function extractNodeDetails(text: string): Map<string, string> {
   const nodeDetailMap = new Map<string, string>();
@@ -401,8 +414,11 @@ export async function POST(request: NextRequest) {
         name: normalizedEntityName,
       };
 
-      // 仅当“节点–详情”映射表中该节点的详情字段非空时，才写入详情字段
-      let detail = nodeDetailMap.get(nodeNameLower);
+      // 优先保留高质量AI描述，同时结合文本解析出的详情作为补充兜底
+      const detail = pickPreferredDescription(
+        entity.description,
+        nodeDetailMap.get(nodeNameLower)
+      );
 
       if (detail) {
         // XSS 过滤及最大长度截断（建议 ≤ 8 KB）
