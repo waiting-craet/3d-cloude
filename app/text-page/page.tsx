@@ -160,6 +160,14 @@ export default function TextPage() {
   }, [selectedProject])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 互斥模式：已有文本输入时不允许直接上传文件
+    if (inputText.trim()) {
+      alert('已输入文本内容，请先清空文本再上传文件')
+      // 重置 input value，避免同一文件无法再次触发 onChange
+      e.currentTarget.value = ''
+      return
+    }
+
     const file = e.target.files?.[0]
     if (file) {
       console.log('File upload started:', {
@@ -670,8 +678,14 @@ export default function TextPage() {
             fontSize: '20px',
             boxShadow: `0 4px 12px rgba(90, 154, 143, 0.3)`
           }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="6" cy="7" r="2.1" fill="white" fillOpacity="0.95" />
+              <circle cx="17.5" cy="6.5" r="2.1" fill="white" fillOpacity="0.95" />
+              <circle cx="12" cy="17.5" r="2.3" fill="white" />
+              <path d="M8 7.7l7.2-0.9M7.2 8.7l3.8 6.5M16.4 8.2l-3.2 7" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
           </div>
-          知识图谱生成器
+          知识图谱生成
         </div>
       </nav>
 
@@ -697,7 +711,7 @@ export default function TextPage() {
             letterSpacing: '-1px',
             textShadow: '0 2px 20px rgba(90, 154, 143, 0.1)'
           }}>
-            AI知识图谱生成器
+            AI知识图谱生成
           </h1>
           <p className={styles.mobileSubtitle} style={{
             color: inkWashTokens.colors.neutral.gray600,
@@ -716,7 +730,7 @@ export default function TextPage() {
           {/* 左栏：控制和配置 */}
           <div className={styles.leftColumn}>
           {/* 项目和图谱选择区域 - 水墨风格 */}
-          <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard}`} style={{
+          <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard} ${styles.columnCard}`} style={{
             background: inkWashTokens.colors.neutral.white,
             borderRadius: inkWashTokens.borderRadius.lg,
             padding: '36px',
@@ -958,7 +972,7 @@ export default function TextPage() {
           </div>
 
           {/* 自定义提示词模块 - 水墨风格 */}
-          <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard}`} style={{
+          <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard} ${styles.columnCard}`} style={{
             background: inkWashTokens.colors.neutral.white,
             borderRadius: inkWashTokens.borderRadius.lg,
             padding: '36px',
@@ -1316,7 +1330,7 @@ export default function TextPage() {
           {/* 右栏：内容输入 */}
           <div className={styles.rightColumn}>
             {/* 智能内容解析区域 */}
-            <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard}`} style={{
+            <div className={`${styles.mobileCard} ${styles.tabletCard} ${styles.desktopCard} ${styles.columnCard}`} style={{
               background: inkWashTokens.colors.neutral.white,
               borderRadius: inkWashTokens.borderRadius.lg,
               padding: '36px',
@@ -1352,13 +1366,16 @@ export default function TextPage() {
                   background: '#f8faf9',
                   border: `2px dashed ${inkWashTokens.colors.neutral.gray300}`,
                   borderRadius: inkWashTokens.borderRadius.lg,
-                  cursor: 'pointer',
+                  cursor: inputText.trim() ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
                   minHeight: '200px',
+                  opacity: inputText.trim() ? 0.6 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(90, 154, 143, 0.05)'
-                  e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                  if (!inputText.trim()) {
+                    e.currentTarget.style.background = 'rgba(90, 154, 143, 0.05)'
+                    e.currentTarget.style.borderColor = inkWashTokens.colors.primary.main
+                  }
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = '#f8faf9'
@@ -1388,12 +1405,15 @@ export default function TextPage() {
                     fontSize: '13px',
                     fontWeight: '400',
                   }}>
-                    支持格式：.txt, .md, AI 将自动阅读文档内容进行提取
+                    {inputText.trim()
+                      ? '已输入文本：请先清空文本后再上传文件'
+                      : '支持格式：.txt, .md, AI 将自动阅读文档内容进行提取'}
                   </div>
                   <input
                     type="file"
                     accept=".txt,.md,.markdown,.text"
                     onChange={handleFileUpload}
+                    disabled={!!inputText.trim()}
                     style={{ display: 'none' }}
                   />
                 </label>
@@ -1569,6 +1589,16 @@ export default function TextPage() {
                   }
                 }}
               />
+
+              {!uploadedFile && (
+                <div style={{
+                  marginTop: '8px',
+                  color: inkWashTokens.colors.neutral.gray600,
+                  fontSize: '12px',
+                }}>
+                  上传文件与输入文本二选一
+                </div>
+              )}
 
               <div style={{
                 marginTop: '8px',

@@ -3,6 +3,7 @@
   display: grid;
   grid-template-columns: 400px 1fr;
   gap: 24px;
+  align-items: stretch;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 30px 100px 30px;
@@ -13,6 +14,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  height: 100%;
+  min-height: 0;
 }
 
 /* 右栏 */
@@ -20,6 +23,28 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 桌面双栏等高卡片 */
+.columnCard {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.leftColumn > .columnCard {
+  flex: 0 0 auto;
+}
+
+.leftColumn > .columnCard:last-child {
+  flex: 1 1 auto;
+}
+
+.rightColumn > .columnCard {
+  flex: 1;
+  height: 100%;
 }
 
 /* 卡片基础样式 */
@@ -111,6 +136,7 @@
   .card {
     padding: 28px;
   }
+
 }
 
 /* Mobile devices (320px - 767px) */
@@ -166,4 +192,5 @@
   .card {
     padding: 24px;
   }
+
 }

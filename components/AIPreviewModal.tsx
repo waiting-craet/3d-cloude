@@ -16,14 +16,17 @@ import { NavigationService, EnhancedNavigationResult, NavigationErrorType, Error
 import { removeEmojis } from '@/lib/emoji-filter' // Import emoji filter utility
 
 const modalTheme = {
-  overlay: 'linear-gradient(140deg, rgba(48, 68, 62, 0.68), rgba(140, 174, 176, 0.42))',
-  panelBg: 'linear-gradient(150deg, #1f2f2b 0%, #273a35 55%, #324b45 100%)',
-  border: 'rgba(189, 214, 207, 0.26)',
-  textStrong: '#e9f3f0',
-  textPrimary: '#d2e5df',
-  textSecondary: 'rgba(210, 229, 223, 0.78)',
-  tianqing: '#8caeb0',
-  daiGreen: '#5d766c',
+  overlay: 'linear-gradient(140deg, rgba(225, 238, 233, 0.82), rgba(205, 227, 219, 0.72))',
+  panelBg: 'linear-gradient(150deg, #f9fdfb 0%, #f2faf6 52%, #ecf6f1 100%)',
+  border: 'rgba(143, 176, 163, 0.32)',
+  textStrong: '#23453e',
+  textPrimary: '#2f5b52',
+  textSecondary: 'rgba(56, 90, 82, 0.78)',
+  tianqing: '#8fb8ad',
+  daiGreen: '#6f9f90',
+  surface: 'rgba(255, 255, 255, 0.9)',
+  surfaceSoft: 'rgba(234, 245, 239, 0.8)',
+  surfaceActive: 'rgba(184, 215, 202, 0.42)',
 }
 
 // Add CSS animations for loading states (Task 2.3)
@@ -665,7 +668,7 @@ export default function AIPreviewModal({
           display: 'flex',
           flexDirection: 'column',
           border: `1px solid ${modalTheme.border}`,
-          boxShadow: '0 24px 64px rgba(20, 34, 30, 0.48)',
+          boxShadow: '0 20px 56px rgba(92, 128, 116, 0.2)',
           overflow: 'hidden',
           position: 'relative',
         }}
@@ -1203,7 +1206,7 @@ export default function AIPreviewModal({
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'rgba(32, 49, 44, 0.66)',
+              background: 'rgba(225, 238, 233, 0.7)',
               backdropFilter: 'blur(4px)',
               display: 'flex',
               alignItems: 'center',
@@ -1214,13 +1217,13 @@ export default function AIPreviewModal({
           >
             <div
               style={{
-                background: 'linear-gradient(150deg, #29403a 0%, #22352f 100%)',
+                background: 'linear-gradient(150deg, #ffffff 0%, #f3faf6 100%)',
                 borderRadius: '16px',
                 padding: '32px',
                 maxWidth: '400px',
                 width: '90%',
                 border: `1px solid ${modalTheme.border}`,
-                boxShadow: '0 20px 60px rgba(22, 36, 32, 0.5)',
+                boxShadow: '0 16px 42px rgba(92, 128, 116, 0.22)',
               }}
             >
               {/* Icon */}
@@ -1229,7 +1232,7 @@ export default function AIPreviewModal({
                   width: '64px',
                   height: '64px',
                   borderRadius: '50%',
-                  background: 'rgba(140, 174, 176, 0.12)',
+                  background: 'rgba(184, 215, 202, 0.35)',
                   border: `2px solid ${modalTheme.border}`,
                   display: 'flex',
                   alignItems: 'center',
@@ -1274,7 +1277,7 @@ export default function AIPreviewModal({
                   style={{
                     flex: 1,
                     padding: '12px 24px',
-                    background: 'rgba(140, 174, 176, 0.12)',
+                    background: 'rgba(255, 255, 255, 0.92)',
                     border: `1px solid ${modalTheme.border}`,
                     borderRadius: '10px',
                     color: modalTheme.textPrimary,
@@ -1284,10 +1287,10 @@ export default function AIPreviewModal({
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(140, 174, 176, 0.2)'
+                    e.currentTarget.style.background = 'rgba(237, 248, 243, 0.95)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(140, 174, 176, 0.12)'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.92)'
                   }}
                 >
                   继续编辑
@@ -1305,15 +1308,15 @@ export default function AIPreviewModal({
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    boxShadow: '0 4px 12px rgba(93, 118, 108, 0.45)',
+                    boxShadow: '0 4px 12px rgba(111, 159, 144, 0.35)',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(93, 118, 108, 0.58)'
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(111, 159, 144, 0.5)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(93, 118, 108, 0.45)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(111, 159, 144, 0.35)'
                   }}
                 >
                   确定放弃
@@ -2221,10 +2224,10 @@ function EditingSection({
             onClick={() => setActiveEditor('nodes')}
             style={{
               padding: '12px 20px',
-              background: activeEditor === 'nodes' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-              border: `1px solid ${activeEditor === 'nodes' ? 'rgba(99, 102, 241, 0.5)' : 'rgba(255, 255, 255, 0.1)'}`,
+              background: activeEditor === 'nodes' ? 'rgba(143, 184, 173, 0.38)' : modalTheme.surface,
+              border: `1px solid ${activeEditor === 'nodes' ? 'rgba(111, 159, 144, 0.68)' : modalTheme.border}`,
               borderRadius: '8px',
-              color: activeEditor === 'nodes' ? 'rgba(99, 102, 241, 1)' : 'rgba(255, 255, 255, 0.7)',
+              color: activeEditor === 'nodes' ? modalTheme.textStrong : modalTheme.textSecondary,
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer',
@@ -2237,10 +2240,10 @@ function EditingSection({
             onClick={() => setActiveEditor('edges')}
             style={{
               padding: '12px 20px',
-              background: activeEditor === 'edges' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-              border: `1px solid ${activeEditor === 'edges' ? 'rgba(99, 102, 241, 0.5)' : 'rgba(255, 255, 255, 0.1)'}`,
+              background: activeEditor === 'edges' ? 'rgba(143, 184, 173, 0.38)' : modalTheme.surface,
+              border: `1px solid ${activeEditor === 'edges' ? 'rgba(111, 159, 144, 0.68)' : modalTheme.border}`,
               borderRadius: '8px',
-              color: activeEditor === 'edges' ? 'rgba(99, 102, 241, 1)' : 'rgba(255, 255, 255, 0.7)',
+              color: activeEditor === 'edges' ? modalTheme.textStrong : modalTheme.textSecondary,
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer',
@@ -2263,21 +2266,21 @@ function EditingSection({
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: '100%',
-              padding: '12px 16px 12px 40px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '12px 16px 12px 44px',
+              background: modalTheme.surface,
+              border: `1px solid ${modalTheme.border}`,
               borderRadius: '8px',
-              color: 'white',
+              color: modalTheme.textStrong,
               fontSize: '14px',
               outline: 'none'
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)'
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+              e.currentTarget.style.borderColor = modalTheme.daiGreen
+              e.currentTarget.style.background = 'white'
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+              e.currentTarget.style.borderColor = modalTheme.border
+              e.currentTarget.style.background = modalTheme.surface
             }}
           />
           <div style={{
@@ -2285,10 +2288,18 @@ function EditingSection({
             left: '12px',
             top: '50%',
             transform: 'translateY(-50%)',
-            fontSize: '16px',
-            color: 'rgba(255, 255, 255, 0.5)'
+            width: '18px',
+            height: '18px',
+            color: modalTheme.textSecondary,
+            pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            搜索
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M16 16L20.5 20.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
           </div>
         </div>
 
@@ -2299,28 +2310,28 @@ function EditingSection({
             onChange={(e) => setFilterType(e.target.value as any)}
             style={{
               padding: '12px 16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: modalTheme.surface,
+              border: `1px solid ${modalTheme.border}`,
               borderRadius: '8px',
-              color: 'white',
+              color: modalTheme.textStrong,
               fontSize: '14px',
               outline: 'none',
               cursor: 'pointer'
             }}
           >
-            <option value="all" style={{ background: '#1e1e2e', color: 'white' }}>所有节点</option>
-            <option value="duplicate" style={{ background: '#1e1e2e', color: 'white' }}>重复节点</option>
-            <option value="normal" style={{ background: '#1e1e2e', color: 'white' }}>普通节点</option>
+            <option value="all" style={{ background: '#ffffff', color: '#2f5b52' }}>所有节点</option>
+            <option value="duplicate" style={{ background: '#ffffff', color: '#2f5b52' }}>重复节点</option>
+            <option value="normal" style={{ background: '#ffffff', color: '#2f5b52' }}>普通节点</option>
           </select>
         )}
 
         {/* Results Count */}
         <div style={{
           padding: '12px 16px',
-          background: 'rgba(255, 255, 255, 0.05)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: modalTheme.surface,
+          border: `1px solid ${modalTheme.border}`,
           borderRadius: '8px',
-          color: 'rgba(255, 255, 255, 0.7)',
+          color: modalTheme.textSecondary,
           fontSize: '14px',
           whiteSpace: 'nowrap'
         }}>
@@ -2335,19 +2346,19 @@ function EditingSection({
           width: '400px', 
           display: 'flex', 
           flexDirection: 'column',
-          background: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: modalTheme.surfaceSoft,
+          border: `1px solid ${modalTheme.border}`,
           borderRadius: '12px',
           overflow: 'hidden'
         }}>
           {/* List Header */}
           <div style={{
             padding: '16px 20px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'rgba(255, 255, 255, 0.03)'
+            borderBottom: `1px solid ${modalTheme.border}`,
+            background: 'rgba(255, 255, 255, 0.75)'
           }}>
             <div style={{ 
-              color: 'white', 
+              color: modalTheme.textStrong, 
               fontSize: '16px', 
               fontWeight: '600' 
             }}>
@@ -2463,7 +2474,7 @@ function EditingSection({
                 flexDirection: 'column',
                 alignItems: 'center', 
                 justifyContent: 'center',
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: modalTheme.textSecondary,
                 fontSize: '14px',
                 gap: '16px',
                 padding: '40px'
@@ -2472,8 +2483,8 @@ function EditingSection({
                   width: '64px',
                   height: '64px',
                   borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '2px dashed rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  border: `2px dashed ${modalTheme.border}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -2507,7 +2518,7 @@ function EditingSection({
                 flexDirection: 'column',
                 alignItems: 'center', 
                 justifyContent: 'center',
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: modalTheme.textSecondary,
                 fontSize: '14px',
                 gap: '16px',
                 padding: '40px'
@@ -2516,8 +2527,8 @@ function EditingSection({
                   width: '64px',
                   height: '64px',
                   borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '2px dashed rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  border: `2px dashed ${modalTheme.border}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -2561,23 +2572,23 @@ function NodeList({
           style={{
             padding: '12px 16px',
             background: selectedNodeId === node.id 
-              ? 'rgba(99, 102, 241, 0.2)' 
-              : 'rgba(255, 255, 255, 0.03)',
+              ? modalTheme.surfaceActive
+              : 'rgba(255, 255, 255, 0.7)',
             border: `1px solid ${selectedNodeId === node.id 
-              ? 'rgba(99, 102, 241, 0.5)' 
-              : 'rgba(255, 255, 255, 0.08)'}`,
+              ? 'rgba(111, 159, 144, 0.68)' 
+              : modalTheme.border}`,
             borderRadius: '8px',
             cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
             if (selectedNodeId !== node.id) {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.92)'
             }
           }}
           onMouseLeave={(e) => {
             if (selectedNodeId !== node.id) {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.7)'
             }
           }}
         >
@@ -2592,7 +2603,7 @@ function NodeList({
               }} />
             )}
             <div style={{ 
-              color: 'white', 
+              color: modalTheme.textStrong, 
               fontSize: '14px', 
               fontWeight: '600',
               overflow: 'hidden',
@@ -2603,7 +2614,7 @@ function NodeList({
             </div>
           </div>
           <div style={{ 
-            color: 'rgba(255, 255, 255, 0.6)', 
+            color: modalTheme.textSecondary, 
             fontSize: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -2646,28 +2657,28 @@ function EdgeList({
           style={{
             padding: '12px 16px',
             background: selectedEdgeId === edge.id 
-              ? 'rgba(99, 102, 241, 0.2)' 
-              : 'rgba(255, 255, 255, 0.03)',
+              ? modalTheme.surfaceActive
+              : 'rgba(255, 255, 255, 0.7)',
             border: `1px solid ${selectedEdgeId === edge.id 
-              ? 'rgba(99, 102, 241, 0.5)' 
-              : 'rgba(255, 255, 255, 0.08)'}`,
+              ? 'rgba(111, 159, 144, 0.68)' 
+              : modalTheme.border}`,
             borderRadius: '8px',
             cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
             if (selectedEdgeId !== edge.id) {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.92)'
             }
           }}
           onMouseLeave={(e) => {
             if (selectedEdgeId !== edge.id) {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.7)'
             }
           }}
         >
           <div style={{ 
-            color: 'white', 
+            color: modalTheme.textStrong, 
             fontSize: '14px', 
             fontWeight: '600',
             marginBottom: '4px',
@@ -2678,7 +2689,7 @@ function EdgeList({
             {edge.label}
           </div>
           <div style={{ 
-            color: 'rgba(255, 255, 255, 0.6)', 
+            color: modalTheme.textSecondary, 
             fontSize: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -2742,29 +2753,30 @@ function NodeEditor({
       {/* Header with node identifier (Task 2.3) */}
       <div style={{
         padding: '16px 20px',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        background: 'rgba(255, 255, 255, 0.03)',
+        borderBottom: `1px solid ${modalTheme.border}`,
+        background: 'rgba(255, 255, 255, 0.75)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>
+          <div style={{ color: modalTheme.textStrong, fontSize: '16px', fontWeight: '600' }}>
             编辑节点
           </div>
-          <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px' }}>
+          <div style={{ color: modalTheme.textSecondary, fontSize: '12px' }}>
             {node.name}
           </div>
         </div>
         <button
           onClick={onClose}
+          aria-label="关闭"
           style={{
             width: '32px',
             height: '32px',
             borderRadius: '6px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: 'rgba(255, 255, 255, 0.7)',
+            background: 'rgba(255, 255, 255, 0.92)',
+            border: `1px solid ${modalTheme.border}`,
+            color: modalTheme.textSecondary,
             fontSize: '16px',
             cursor: 'pointer',
             display: 'flex',
@@ -2772,7 +2784,7 @@ function NodeEditor({
             justifyContent: 'center'
           }}
         >
-          关闭
+          ×
         </button>
       </div>
 
@@ -2784,7 +2796,7 @@ function NodeEditor({
           <div>
             <label style={{ 
               display: 'block', 
-              color: 'rgba(255, 255, 255, 0.8)', 
+              color: modalTheme.textPrimary, 
               fontSize: '14px', 
               fontWeight: '600', 
               marginBottom: '8px' 
@@ -2800,10 +2812,10 @@ function NodeEditor({
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.96)',
+                border: `1px solid ${modalTheme.border}`,
                 borderRadius: '8px',
-                color: 'white',
+                color: modalTheme.textStrong,
                 fontSize: '14px',
                 outline: 'none',
                 opacity: isLoading ? 0.5 : 1,
@@ -2816,7 +2828,7 @@ function NodeEditor({
           <div>
             <label style={{ 
               display: 'block', 
-              color: 'rgba(255, 255, 255, 0.8)', 
+              color: modalTheme.textPrimary, 
               fontSize: '14px', 
               fontWeight: '600', 
               marginBottom: '8px' 
@@ -2831,10 +2843,10 @@ function NodeEditor({
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.96)',
+                border: `1px solid ${modalTheme.border}`,
                 borderRadius: '8px',
-                color: 'white',
+                color: modalTheme.textStrong,
                 fontSize: '14px',
                 outline: 'none',
                 opacity: isLoading ? 0.5 : 1,
@@ -2935,24 +2947,25 @@ function EdgeEditor({
       {/* Header */}
       <div style={{
         padding: '16px 20px',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        background: 'rgba(255, 255, 255, 0.03)',
+        borderBottom: `1px solid ${modalTheme.border}`,
+        background: 'rgba(255, 255, 255, 0.75)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>
+        <div style={{ color: modalTheme.textStrong, fontSize: '16px', fontWeight: '600' }}>
           编辑边
         </div>
         <button
           onClick={onClose}
+          aria-label="关闭"
           style={{
             width: '32px',
             height: '32px',
             borderRadius: '6px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: 'rgba(255, 255, 255, 0.7)',
+            background: 'rgba(255, 255, 255, 0.92)',
+            border: `1px solid ${modalTheme.border}`,
+            color: modalTheme.textSecondary,
             fontSize: '16px',
             cursor: 'pointer',
             display: 'flex',
@@ -2960,7 +2973,7 @@ function EdgeEditor({
             justifyContent: 'center'
           }}
         >
-          关闭
+          ×
         </button>
       </div>
 
@@ -2970,12 +2983,12 @@ function EdgeEditor({
           {/* Connection Info */}
           <div style={{
             padding: '16px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: 'rgba(255, 255, 255, 0.8)',
+            border: `1px solid ${modalTheme.border}`,
             borderRadius: '8px'
           }}>
             <div style={{ 
-              color: 'rgba(255, 255, 255, 0.8)', 
+              color: modalTheme.textPrimary, 
               fontSize: '14px', 
               fontWeight: '600', 
               marginBottom: '8px' 
@@ -2983,14 +2996,14 @@ function EdgeEditor({
               连接关系
             </div>
             <div style={{ 
-              color: 'white', 
+              color: modalTheme.textStrong, 
               fontSize: '14px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
               <span>{getNodeName(edge.fromNodeId)}</span>
-              <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>→</span>
+              <span style={{ color: modalTheme.textSecondary }}>→</span>
               <span>{getNodeName(edge.toNodeId)}</span>
             </div>
           </div>
@@ -2999,7 +3012,7 @@ function EdgeEditor({
           <div>
             <label style={{ 
               display: 'block', 
-              color: 'rgba(255, 255, 255, 0.8)', 
+              color: modalTheme.textPrimary, 
               fontSize: '14px', 
               fontWeight: '600', 
               marginBottom: '8px' 
@@ -3014,10 +3027,10 @@ function EdgeEditor({
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.96)',
+                border: `1px solid ${modalTheme.border}`,
                 borderRadius: '8px',
-                color: 'white',
+                color: modalTheme.textStrong,
                 fontSize: '14px',
                 outline: 'none'
               }}
