@@ -25,6 +25,8 @@ services:
       DATABASE_URL: "postgresql://kguser:KGraph2026!@db:5432/knowledgegraph"
       COOKIE_SECURE: "false"
       NODE_ENV: production
+      AI_API_KEY: "${AI_API_KEY}"
+      AI_API_ENDPOINT: "${AI_API_ENDPOINT}"
     volumes:
       - ./uploads:/app/public/uploads
     depends_on:

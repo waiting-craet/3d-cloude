@@ -33,7 +33,7 @@ This document specifies the requirements for an AI-powered document analysis fea
 3. WHEN the AI_Model_API processes a document, THE System SHALL extract edges with relationship types and labels
 4. WHEN the AI analysis is in progress, THE System SHALL display a loading state to the user
 5. IF the AI_Model_API returns an error, THEN THE System SHALL display a descriptive error message to the user
-6. THE System SHALL use the API key "sk-ace40498292242fbbb272d2cb7d8fee7" for authentication with the AI_Model_API
+6. THE System SHALL use the API key configured via secure environment variables (e.g., AI_API_KEY) for authentication with the AI_Model_API
 
 ### Requirement 2: Graph Visualization Options
 

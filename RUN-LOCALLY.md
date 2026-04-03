@@ -39,7 +39,7 @@ DATABASE_URL="file:./dev.db"
 DATABASE_URL="postgresql://neondb_owner:npg_N5Dm4sGEpRjM@ep-rapid-cell-ahte4osq-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
 # AI API（可选）
-AI_API_KEY="sk-ace40498292242fbbb272d2cb7d8fee7"
+AI_API_KEY="sk-your-api-key-here"
 AI_API_ENDPOINT="https://api.deepseek.com/v1/chat/completions"
 ```
 

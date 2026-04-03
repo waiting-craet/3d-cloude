@@ -298,8 +298,8 @@ app/text-page/page.tsx        ✅ Integration complete
 ### Required Environment Variables
 ```env
 # AI Model API
-AI_API_KEY=sk-ace40498292242fbbb272d2cb7d8fee7
-AI_API_ENDPOINT=https://api.openai.com/v1/chat/completions
+AI_API_KEY=sk-your-api-key-here
+AI_API_ENDPOINT=https://api.deepseek.com/v1/chat/completions
 
 # Database
 DATABASE_URL=postgresql://neondb_owner:npg_N5Dm4sGEpRjM@ep-rapid-cell-ahte4osq-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require

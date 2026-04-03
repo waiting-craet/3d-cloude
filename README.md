@@ -25,7 +25,21 @@
 npm install
 ```
 
-### 2. 初始化数据库
+### 2. 配置环境变量（DeepSeek + 数据库）
+
+创建本地 `.env` 文件（不要提交真实密钥）：
+
+```bash
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+AI_API_KEY=sk-your-api-key-here
+AI_API_ENDPOINT=https://api.deepseek.com/v1/chat/completions
+```
+
+> Docker Compose 已支持自动读取上述变量并注入 `app` 服务：
+> - `AI_API_KEY=${AI_API_KEY}`
+> - `AI_API_ENDPOINT=${AI_API_ENDPOINT}`
+
+### 3. 初始化数据库
 
 ```bash
 # 推送数据库结构
@@ -35,7 +49,7 @@ npm run db:push
 npm run db:seed
 ```
 
-### 3. 启动开发服务器
+### 4. 启动开发服务器
 
 ```bash
 npm run dev
@@ -179,6 +193,8 @@ npm run db:seed
 
 ```
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+AI_API_KEY=sk-your-api-key-here
+AI_API_ENDPOINT=https://api.deepseek.com/v1/chat/completions
 ```
 
 ### 3. 构建设置

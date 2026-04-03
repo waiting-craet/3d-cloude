@@ -12,8 +12,8 @@ POST http://localhost:3000/api/ai/analyze 500 (Internal Server Error)
 ### 环境变量配置
 `.env`文件内容：
 ```env
-AI_API_KEY="sk-ace40498292242fbbb272d2cb7d8fee7"
-AI_API_ENDPOINT="https://api.openai.com/v1/chat/completions"
+AI_API_KEY="sk-your-api-key-here"
+AI_API_ENDPOINT="https://api.deepseek.com/v1/chat/completions"
 ```
 
 ### 错误堆栈

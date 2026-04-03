@@ -157,7 +157,7 @@ interface AIIntegrationService {
 
 // Implementation
 class AIIntegrationServiceImpl implements AIIntegrationService {
-  private apiKey: string = 'sk-ace40498292242fbbb272d2cb7d8fee7';
+  private apiKey: string = process.env.AI_API_KEY || 'sk-your-api-key-here';
   private apiEndpoint: string;  // To be determined based on AI API docs
   
   async analyzeDocument(text: string) {
