@@ -173,6 +173,9 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
     }
   }, [])
 
+  // 跟踪上次加载的 store 数据引用，防止更新 settings 时重置本地画布状态（幽灵现象）
+  const lastLoadedDataRef = useRef<{ nodes: any, edges: any, graphId: string } | null>(null)
+
   // 加载当前图谱的数据
   useEffect(() => {
     if (!currentGraph) {
@@ -180,7 +183,18 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
       return
     }
 
+    // 检查是否已经加载过这批确切的数据。
+    // 如果仅仅是 currentGraph.settings 被 savePositions 更新了，不应该重置本地的 nodes 和 connections 状态，否则会导致卡片幽灵复位
+    if (
+      lastLoadedDataRef.current?.nodes === storeNodes &&
+      lastLoadedDataRef.current?.edges === storeEdges &&
+      lastLoadedDataRef.current?.graphId === currentGraph.id
+    ) {
+      return
+    }
+
     console.log('🔄 2D视图: 加载图谱数据:', currentGraph.name)
+    lastLoadedDataRef.current = { nodes: storeNodes, edges: storeEdges, graphId: currentGraph.id }
     console.log('📊 currentGraph.settings:', currentGraph.settings)
 
     // 检查是否有保存的位置数据

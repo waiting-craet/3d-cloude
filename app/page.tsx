@@ -21,6 +21,7 @@ interface Project {
   name: string
   description?: string
   graphCount: number
+  coverUrl?: string
   createdAt: string
   updatedAt: string
   userId: string
@@ -29,6 +30,7 @@ interface Project {
     name: string
     nodeCount: number
     edgeCount: number
+    coverUrl?: string
   }>
 }
 
@@ -39,6 +41,7 @@ interface Graph {
   description?: string
   nodeCount: number
   edgeCount: number
+  coverUrl?: string
   createdAt: string
   updatedAt: string
 }
@@ -532,6 +535,7 @@ export default function LandingPage() {
                           description: graph.description || null,
                           nodeCount: graph.nodeCount,
                           edgeCount: graph.edgeCount,
+                          coverUrl: graph.coverUrl,
                           createdAt: new Date(graph.createdAt),
                           updatedAt: new Date(graph.updatedAt),
                           projectId: selectedProject?.id || '',

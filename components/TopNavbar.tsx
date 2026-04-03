@@ -6,6 +6,7 @@ import { useGraphStore } from '@/lib/store'
 import { useUserStore } from '@/lib/userStore'
 import { getThemeConfig } from '@/lib/theme'
 import CreateProjectModal from './CreateProjectModal'
+import CoverUploadModal from './CoverUploadModal'
 import DeleteButton from './DeleteButton'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 
@@ -37,6 +38,7 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isCoverModalOpen, setIsCoverModalOpen] = useState(false)
   const [showProjectMenu, setShowProjectMenu] = useState(false)
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null)
   
@@ -1195,6 +1197,41 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
             </button>
           )}
 
+          {/* 管理员专属：添加封面按钮 */}
+          {isLoggedIn && (
+            <button
+              onClick={() => setIsCoverModalOpen(true)}
+              style={{
+                padding: '10px 18px',
+                background: '#8b5cf6',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)'
+                e.currentTarget.style.background = '#9333ea'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.background = '#8b5cf6'
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)'
+              }}
+            >
+              <span style={{ fontSize: '16px' }}>🖼️</span>
+              添加封面
+            </button>
+          )}
+
           {/* 管理员专属：新建图谱按钮 */}
           {isLoggedIn && (
             <button
@@ -1239,6 +1276,13 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateProject}
         existingProjects={projects}
+      />
+
+      {/* 添加封面弹窗 */}
+      <CoverUploadModal
+        isOpen={isCoverModalOpen}
+        onClose={() => setIsCoverModalOpen(false)}
+        projects={projects}
       />
 
       {/* 删除确认对话框 */}

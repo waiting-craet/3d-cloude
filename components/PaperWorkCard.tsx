@@ -8,6 +8,7 @@ interface Project {
   name: string
   description?: string
   graphCount: number
+  coverUrl?: string
   createdAt: string
   updatedAt: string
   userId: string
@@ -48,21 +49,29 @@ const PaperWorkCard = React.memo(function PaperWorkCard({
       tabIndex={0}
       aria-label={`查看项目: ${project.name}`}
     >
-      {/* Icon Placeholder */}
-      <div className={styles.iconContainer}>
-        <svg 
-          className={styles.icon}
-          width="64" 
-          height="64" 
-          viewBox="0 0 64 64" 
-          fill="none"
-          aria-hidden="true"
-        >
-          {/* Stacked layers icon */}
-          <rect x="8" y="24" width="48" height="8" rx="2" fill="#E0E0E0" />
-          <rect x="8" y="16" width="48" height="8" rx="2" fill="#CCCCCC" />
-          <rect x="8" y="32" width="48" height="8" rx="2" fill="#F0F0F0" />
-        </svg>
+      {/* Icon Placeholder or Cover */}
+      <div className={styles.iconContainer} style={project.coverUrl ? { padding: 0 } : {}}>
+        {project.coverUrl ? (
+          <img 
+            src={project.coverUrl} 
+            alt={project.name} 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <svg 
+            className={styles.icon}
+            width="64" 
+            height="64" 
+            viewBox="0 0 64 64" 
+            fill="none"
+            aria-hidden="true"
+          >
+            {/* Stacked layers icon */}
+            <rect x="8" y="24" width="48" height="8" rx="2" fill="#E0E0E0" />
+            <rect x="8" y="16" width="48" height="8" rx="2" fill="#CCCCCC" />
+            <rect x="8" y="32" width="48" height="8" rx="2" fill="#F0F0F0" />
+          </svg>
+        )}
       </div>
 
       {/* Content */}

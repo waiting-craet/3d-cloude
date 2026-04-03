@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
         nodeCount: true,
         edgeCount: true,
         userId: true,
+        coverUrl: true,
         createdAt: true,
         updatedAt: true,
         _count: {
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest) {
       nodeCount: project.nodeCount,
       edgeCount: project.edgeCount,
       userId: project.userId,
+      coverUrl: project.coverUrl,
       graphCount: project._count.graphs,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,

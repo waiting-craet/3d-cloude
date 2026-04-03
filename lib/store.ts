@@ -99,6 +99,7 @@ export interface KnowledgeGraph {
   projectId: string
   nodeCount: number
   edgeCount: number
+  coverUrl?: string
   createdAt: string
   settings?: any  // 图谱设置（包括保存的位置数据）
 }
@@ -106,6 +107,7 @@ export interface KnowledgeGraph {
 export interface Project {
   id: string
   name: string
+  coverUrl?: string
   graphs: KnowledgeGraph[]
 }
 

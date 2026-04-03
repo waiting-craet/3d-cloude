@@ -12,6 +12,7 @@ export interface Project {
   nodeCount: number
   edgeCount: number
   graphCount: number  // 新增图谱数量字段
+  coverUrl?: string   // 新增封面图片URL
   createdAt: Date
   updatedAt: Date
 }
@@ -38,17 +39,26 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
       className={styles.projectCard}
       onClick={handleClick}
     >
-      {/* 项目图标区域 */}
-      <div className={styles.iconContainer}>
+      {/* 项目图标/封面区域 */}
+      <div className={styles.iconContainer} style={project.coverUrl ? { padding: 0, overflow: 'hidden' } : {}}>
         {!imageError ? (
-          <Image
-            src="/项目1.png"
-            alt="项目图标"
-            width={72}
-            height={72}
-            className={styles.projectIcon}
-            onError={handleImageError}
-          />
+          project.coverUrl ? (
+            <img
+              src={project.coverUrl}
+              alt={project.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={handleImageError}
+            />
+          ) : (
+            <Image
+              src="/项目1.png"
+              alt="项目图标"
+              width={72}
+              height={72}
+              className={styles.projectIcon}
+              onError={handleImageError}
+            />
+          )
         ) : (
           <div className={styles.placeholderIcon}>
             📊

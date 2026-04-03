@@ -198,7 +198,7 @@ export async function PATCH(
     }
     
     const body = await request.json()
-    const { name, description } = body
+    const { name, description, coverUrl } = body
 
     // 验证项目是否存在
     const existingProject = await prisma.project.findUnique({
@@ -219,6 +219,9 @@ export async function PATCH(
     }
     if (description !== undefined) {
       updateData.description = description
+    }
+    if (coverUrl !== undefined) {
+      updateData.coverUrl = coverUrl
     }
 
     // 更新项目

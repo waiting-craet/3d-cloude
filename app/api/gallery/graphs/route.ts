@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     const graphCards = graphs.map((graph) => {
       let graphType = '3d'
       let isTemplate = false
-      let thumbnail = ''
+      let thumbnail = graph.coverUrl || ''
 
       // 从 settings 中解析图谱类型和模板标记
       if (graph.settings) {
@@ -89,14 +89,17 @@ export async function GET(request: NextRequest) {
           const settings = JSON.parse(graph.settings)
           graphType = settings.graphType || '3d'
           isTemplate = settings.isTemplate || false
-          thumbnail = settings.thumbnail || ''
+          // 如果 settings 中有 thumbnail 且图谱本身没有 coverUrl，则使用 settings 的
+          if (!thumbnail && settings.thumbnail) {
+            thumbnail = settings.thumbnail
+          }
         } catch (e) {
           // 如果 JSON 解析失败，使用默认值
         }
       }
 
       // 如果没有缩略图，尝试从节点的图片获取
-      if (!thumbnail && graph.node.length > 0) {
+      if (!thumbnail && graph.node && graph.node.length > 0) {
         thumbnail = graph.node[0].imageUrl || graph.node[0].coverUrl || ''
       }
 

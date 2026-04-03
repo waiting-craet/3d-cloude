@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         name: true,
         description: true,
         userId: true,
+        coverUrl: true,
         createdAt: true,
         updatedAt: true,
         graphs: {
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             projectId: true,
+            coverUrl: true,
             createdAt: true,
             updatedAt: true,
             _count: {
@@ -75,12 +77,14 @@ export async function GET(request: NextRequest) {
       name: project.name,
       description: project.description,
       userId: project.userId,
+      coverUrl: project.coverUrl,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
       graphs: project.graphs.map(graph => ({
         id: graph.id,
         name: graph.name,
         projectId: graph.projectId,
+        coverUrl: graph.coverUrl,
         createdAt: graph.createdAt,
         updatedAt: graph.updatedAt,
         nodeCount: graph._count.nodes,

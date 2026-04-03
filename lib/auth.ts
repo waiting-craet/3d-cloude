@@ -26,11 +26,27 @@ export async function getCurrentUserId(
     // 注意：这里假设使用cookie存储用户ID，实际实现可能需要验证JWT token
     const userId = request.cookies.get('userId')?.value;
     
-    if (!userId && options?.required) {
-      throw new Error('用户未登录');
+    if (!userId) {
+      if (options?.required) {
+        throw new Error('用户未登录');
+      }
+      return null;
     }
     
-    return userId || null;
+    // 验证用户是否真的存在于数据库中（处理数据库被重置但cookie还在的情况）
+    const userExists = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    });
+    
+    if (!userExists) {
+      if (options?.required) {
+        throw new Error('用户状态已失效，请重新登录');
+      }
+      return null;
+    }
+    
+    return userId;
   } catch (error) {
     if (options?.required) {
       throw error;

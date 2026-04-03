@@ -88,7 +88,7 @@ export async function PATCH(
     }
     
     const body = await request.json()
-    const { name, description, isPublic, settings } = body
+    const { name, description, isPublic, settings, coverUrl } = body
     
     // 验证图谱存在
     const existingGraph = await prisma.graph.findUnique({
@@ -110,6 +110,7 @@ export async function PATCH(
         ...(description !== undefined && { description: description?.trim() || null }),
         ...(isPublic !== undefined && { isPublic }),
         ...(settings !== undefined && { settings }),
+        ...(coverUrl !== undefined && { coverUrl }),
       },
       include: {
         project: {

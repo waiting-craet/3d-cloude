@@ -11,6 +11,7 @@ export interface Graph {
   description: string | null
   nodeCount: number      // 节点数量（非负整数）
   edgeCount: number      // 边数量（非负整数）
+  coverUrl?: string      // 新增封面图片URL
   createdAt: Date
   updatedAt: Date
   projectId: string
@@ -56,17 +57,26 @@ export default function GraphCard({ graph, onClick }: GraphCardProps) {
       className={styles.projectCard}
       onClick={handleClick}
     >
-      {/* 图谱图标区域 */}
-      <div className={styles.iconContainer}>
+      {/* 图谱图标/封面区域 */}
+      <div className={styles.iconContainer} style={graph.coverUrl ? { padding: 0, overflow: 'hidden' } : {}}>
         {!imageError ? (
-          <Image
-            src="/知识图谱-图谱管理.png"
-            alt="图谱图标"
-            width={48}
-            height={48}
-            className={styles.projectIcon}
-            onError={handleImageError}
-          />
+          graph.coverUrl ? (
+            <img
+              src={graph.coverUrl}
+              alt={graph.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={handleImageError}
+            />
+          ) : (
+            <Image
+              src="/知识图谱-图谱管理.png"
+              alt="图谱图标"
+              width={48}
+              height={48}
+              className={styles.projectIcon}
+              onError={handleImageError}
+            />
+          )
         ) : (
           <div className={styles.placeholderIcon}>
             🗺️

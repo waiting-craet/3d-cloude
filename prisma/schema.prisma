@@ -41,6 +41,7 @@ model Graph {
   isPublic    Boolean  @default(false)
   nodeCount   Int      @default(0)
   edgeCount   Int      @default(0)
+  coverUrl    String?
   projectId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
@@ -105,6 +106,7 @@ model Project {
   settings    Json?
   nodeCount   Int      @default(0)
   edgeCount   Int      @default(0)
+  coverUrl    String?
   userId      String   // 新增：项目所有者ID
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
