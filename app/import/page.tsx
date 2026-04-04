@@ -118,18 +118,37 @@ const DownloadIcon = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      filter: 'opacity(0.8)',
+      opacity: 0.95,
       transition: 'all 0.2s'
     }}>
-      <img 
-        src={IconPaths.download} 
-        alt="download icon"
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain'
-        }}
-      />
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="download icon"
+      >
+        <path
+          d="M12 4V14"
+          stroke="#F5F4F2"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M8.5 10.5L12 14.2L15.5 10.5"
+          stroke="#F5F4F2"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M5 18.5H19"
+          stroke="#F5F4F2"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
     </div>
   )
 }

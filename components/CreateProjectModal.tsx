@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import styles from './CreateProjectModal.module.css'
 
 interface Project {
   id: string
@@ -12,13 +13,15 @@ interface CreateProjectModalProps {
   onClose: () => void
   onCreate: (projectName: string, graphName: string, isNewProject: boolean) => Promise<void>
   existingProjects: Project[]
+  variant?: 'default' | 'creation'
 }
 
 export default function CreateProjectModal({ 
   isOpen, 
   onClose, 
   onCreate,
-  existingProjects 
+  existingProjects,
+  variant = 'default',
 }: CreateProjectModalProps) {
   const [isNewProject, setIsNewProject] = useState(true)
   const [projectName, setProjectName] = useState('')
@@ -33,7 +36,28 @@ export default function CreateProjectModal({
     }
   }, [existingProjects, selectedProjectId])
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isCreating) {
+        onClose()
+      }
+    }
+
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeydown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeydown)
+    }
+  }, [isOpen, isCreating, onClose])
+
   if (!isOpen) return null
+
+  const isCreationVariant = variant === 'creation'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,99 +112,31 @@ export default function CreateProjectModal({
   return (
     <div
       onClick={handleBackdropClick}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.7)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000,
-        animation: 'fadeIn 0.2s ease-out',
-      }}
+      className={`${styles.backdrop} ${isCreationVariant ? styles.themeCreation : styles.themeDefault}`}
     >
-      <div
-        style={{
-          background: 'rgba(30, 30, 30, 0.98)',
-          borderRadius: '16px',
-          padding: '40px',
-          width: '90%',
-          maxWidth: '480px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          animation: 'slideUp 0.3s ease-out',
-        }}
-      >
+      <div className={styles.dialog}>
         {/* 标题 */}
-        <div style={{ marginBottom: '30px', textAlign: 'center' }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: '24px',
-            fontWeight: '700',
-            color: '#ffffff',
-            marginBottom: '8px',
-          }}>
-            新建知识图谱
-          </h2>
-          <p style={{
-            margin: 0,
-            fontSize: '14px',
-            color: 'rgba(255, 255, 255, 0.6)',
-          }}>
-            创建新项目或在现有项目中添加图谱
-          </p>
+        <div className={styles.header}>
+          <h2 className={styles.title}>新建知识图谱</h2>
+          <p className={styles.subtitle}>创建新项目或在现有项目中添加图谱</p>
         </div>
 
         {/* 表单 */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className={styles.form}>
           {/* 项目类型选择 */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
+          <div className={styles.section}>
+            <div className={styles.segment}>
               <button
                 type="button"
                 onClick={() => setIsNewProject(true)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  background: isNewProject 
-                    ? 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)' 
-                    : 'rgba(255, 255, 255, 0.08)',
-                  border: isNewProject 
-                    ? 'none' 
-                    : '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s',
-                }}
+                className={`${styles.segmentButton} ${isNewProject ? styles.segmentButtonActive : ''}`}
               >
                 新建项目
               </button>
               <button
                 type="button"
                 onClick={() => setIsNewProject(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  background: !isNewProject 
-                    ? 'linear-gradient(135deg, #4A9EFF 0%, #3A8EEF 100%)' 
-                    : 'rgba(255, 255, 255, 0.08)',
-                  border: !isNewProject 
-                    ? 'none' 
-                    : '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s',
-                }}
+                className={`${styles.segmentButton} ${!isNewProject ? styles.segmentButtonActive : ''}`}
               >
                 选择现有项目
               </button>
@@ -189,16 +145,8 @@ export default function CreateProjectModal({
 
           {/* 项目名称输入或选择 */}
           {isNewProject ? (
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: 'rgba(255, 255, 255, 0.9)',
-              }}>
-                项目名称
-              </label>
+            <div className={styles.section}>
+              <label className={styles.label}>项目名称</label>
               <input
                 type="text"
                 value={projectName}
@@ -208,39 +156,12 @@ export default function CreateProjectModal({
                 }}
                 placeholder="请输入项目名称"
                 autoFocus
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(74, 158, 255, 0.5)'
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-                }}
+                className={styles.input}
               />
             </div>
           ) : (
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: 'rgba(255, 255, 255, 0.9)',
-              }}>
-                选择项目
-              </label>
+            <div className={styles.section}>
+              <label className={styles.label}>选择项目</label>
               {existingProjects.length > 0 ? (
                 <select
                   value={selectedProjectId}
@@ -248,39 +169,20 @@ export default function CreateProjectModal({
                     setSelectedProjectId(e.target.value)
                     setError('')
                   }}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box',
-                    cursor: 'pointer',
-                  }}
+                  className={styles.input}
                 >
                   {existingProjects.map((project) => (
                     <option 
                       key={project.id} 
                       value={project.id}
-                      style={{ background: '#1a1a1a' }}
+                      className={styles.option}
                     >
                       {project.name}
                     </option>
                   ))}
                 </select>
               ) : (
-                <div style={{
-                  padding: '12px 16px',
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: '8px',
-                  color: '#ef4444',
-                  fontSize: '14px',
-                }}>
+                <div className={styles.errorBox}>
                   暂无项目，请先创建新项目
                 </div>
               )}
@@ -288,16 +190,8 @@ export default function CreateProjectModal({
           )}
 
           {/* 知识图谱名称输入 */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: 'rgba(255, 255, 255, 0.9)',
-            }}>
-              知识图谱名称
-            </label>
+          <div className={styles.section}>
+            <label className={styles.label}>知识图谱名称</label>
             <input
               type="text"
               value={graphName}
@@ -306,161 +200,40 @@ export default function CreateProjectModal({
                 setError('')
               }}
               placeholder="请输入知识图谱名称"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '14px',
-                outline: 'none',
-                transition: 'all 0.2s',
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(74, 158, 255, 0.5)'
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-              }}
+              className={styles.input}
             />
           </div>
 
           {/* 错误提示 */}
           {error && (
-            <div style={{
-              marginBottom: '20px',
-              padding: '12px 16px',
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '8px',
-              color: '#ef4444',
-              fontSize: '14px',
-              textAlign: 'center',
-            }}>
+            <div className={styles.errorBox}>
               {error}
             </div>
           )}
 
           {/* 按钮组 */}
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div className={styles.actions}>
             <button
               type="button"
               onClick={onClose}
               disabled={isCreating}
-              style={{
-                flex: 1,
-                padding: '12px',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: '8px',
-                color: 'white',
-                cursor: isCreating ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                transition: 'all 0.2s',
-                opacity: isCreating ? 0.5 : 1,
-              }}
-              onMouseOver={(e) => {
-                if (!isCreating) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isCreating) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-                }
-              }}
+              className={`${styles.button} ${styles.cancelButton}`}
             >
               取消
             </button>
             <button
               type="submit"
               disabled={isCreating}
-              style={{
-                flex: 1,
-                padding: '12px',
-                background: isCreating 
-                  ? 'rgba(16, 185, 129, 0.5)' 
-                  : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                cursor: isCreating ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                transition: 'all 0.2s',
-                boxShadow: isCreating 
-                  ? 'none' 
-                  : '0 2px 8px rgba(16, 185, 129, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
-              onMouseOver={(e) => {
-                if (!isCreating) {
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)'
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isCreating) {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)'
-                }
-              }}
+              className={`${styles.button} ${styles.primaryButton}`}
             >
               {isCreating && (
-                <span style={{
-                  display: 'inline-block',
-                  width: '14px',
-                  height: '14px',
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                  borderTopColor: 'white',
-                  borderRadius: '50%',
-                  animation: 'spin 0.6s linear infinite',
-                }} />
+                <span className={styles.spinner} />
               )}
               {isCreating ? '创建中...' : '创建'}
             </button>
           </div>
         </form>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   )
 }

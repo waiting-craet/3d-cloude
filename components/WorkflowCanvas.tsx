@@ -48,6 +48,61 @@ export interface WorkflowCanvasRef {
   conversionSuccess: boolean
 }
 
+function CopyIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="4" y="4" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.8" opacity="0.7" />
+    </svg>
+  )
+}
+
+function TrashIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 7h16M10 11v6M14 11v6M9 4h6l1 2H8l1-2Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 7l.7 11.1A2 2 0 0 0 9.7 20h4.6a2 2 0 0 0 1.99-1.89L17 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ImageIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="9" cy="10" r="1.6" fill="currentColor" />
+      <path d="M5.5 17.5 11 12.5l2.8 2.8 2.2-2.3 2.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function VideoIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3.5" y="5" width="13" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M16.5 10 21 7.5v9L16.5 14" fill="currentColor" />
+    </svg>
+  )
+}
+
+function CheckCircleIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 12.5l2.6 2.6L16.3 9.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ErrorCircleIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 8v5.2M12 16h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null)
   // NEW: Ref map to track node DOM elements
@@ -1433,7 +1488,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                   }}
                   title="复制"
                 >
-                  📋
+                  <CopyIcon size={18} />
                 </button>
                 <button
                   onMouseDown={(e) => e.stopPropagation()}
@@ -1467,7 +1522,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                   }}
                   title="删除"
                 >
-                  🗑️
+                  <TrashIcon size={18} />
                 </button>
               </div>
             )}
@@ -1640,7 +1695,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                             e.currentTarget.style.transform = 'scale(1)'
                           }}
                         >
-                          🗑️
+                          <TrashIcon />
                         </button>
                       </div>
                     )}
@@ -1680,7 +1735,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                         e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)'
                       }}
                       >
-                        <span style={{ fontSize: '16px' }}>🖼️</span>
+                        <ImageIcon />
                         {uploadingMedia === node.id ? '上传中...' : '上传图片'}
                         <input
                           type="file"
@@ -1726,7 +1781,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                         e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)'
                       }}
                       >
-                        <span style={{ fontSize: '16px' }}>🎬</span>
+                        <VideoIcon />
                         {uploadingMedia === node.id ? '上传中...' : '上传视频'}
                         <input
                           type="file"
@@ -2212,7 +2267,7 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
                     e.currentTarget.style.color = '#ef4444'
                   }}
                 >
-                  <span style={{ fontSize: '16px' }}>🗑️</span>
+                  <TrashIcon />
                   删除连线
                 </button>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -2289,7 +2344,10 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
             boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
             zIndex: 10001,
           }}>
-            ✅ 编辑模式已激活 - editingConnection: {editingConnection}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircleIcon size={16} />
+              编辑模式已激活 - editingConnection: {editingConnection}
+            </span>
           </div>
         </>
       )}
@@ -2347,9 +2405,12 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
           gap: '16px',
         }}>
           <div style={{
-            fontSize: '48px',
+            color: '#10b981',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}>
-            ✅
+            <CheckCircleIcon size={48} />
           </div>
           <div style={{
             fontSize: '18px',
@@ -2378,7 +2439,10 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
           zIndex: 10001,
           maxWidth: '500px',
         }}>
-          ❌ {conversionError}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <ErrorCircleIcon size={16} />
+            {conversionError}
+          </span>
         </div>
       )}
 
@@ -2401,7 +2465,10 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
           zIndex: 10001,
           maxWidth: '400px',
         }}>
-          {savingStatus.includes('失败') ? '❌' : '✅'} {savingStatus}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            {savingStatus.includes('失败') ? <ErrorCircleIcon size={16} /> : <CheckCircleIcon size={16} />}
+            {savingStatus}
+          </span>
         </div>
       )}
 

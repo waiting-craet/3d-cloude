@@ -95,7 +95,7 @@ export default function DeleteConfirmDialog({
             您即将删除 <strong className={styles.dialogHighlight}>{count}</strong> 个{itemName}。
           </p>
           <p className={styles.dialogWarning}>
-            ⚠️ {warningText}<strong>不可撤销</strong>。
+            {warningText}<strong>不可撤销</strong>。
           </p>
         </div>
 

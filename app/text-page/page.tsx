@@ -768,10 +768,7 @@ export default function TextPage() {
                 }}>
                   选择项目
                 </label>
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                }}>
+                <div className={styles.selectorRow}>
                   <select
                     value={selectedProject}
                     onChange={(e) => {
@@ -779,8 +776,8 @@ export default function TextPage() {
                       setSelectedGraph('')
                     }}
                     disabled={isLoadingProjects}
+                    className={styles.selectorField}
                     style={{
-                      flex: 1,
                       padding: '14px 18px',
                       background: inkWashTokens.colors.neutral.white,
                       border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
@@ -821,7 +818,7 @@ export default function TextPage() {
                   </select>
                   <button
                     onClick={() => setShowNewProjectModal(true)}
-                    className={styles.mobileButton}
+                    className={`${styles.mobileButton} ${styles.selectorActionButton}`}
                     style={{
                       padding: '14px 24px',
                       background: inkWashTokens.colors.primary.main,
@@ -833,7 +830,8 @@ export default function TextPage() {
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
                       whiteSpace: 'nowrap',
-                      boxShadow: '0 4px 12px rgba(90, 154, 143, 0.3)'
+                      boxShadow: '0 4px 12px rgba(90, 154, 143, 0.3)',
+                      width: 'auto',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)'
@@ -861,16 +859,13 @@ export default function TextPage() {
                 }}>
                   选择图谱
                 </label>
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                }}>
+                <div className={styles.selectorRow}>
                   <select
                     value={selectedGraph}
                     onChange={(e) => setSelectedGraph(e.target.value)}
                     disabled={!selectedProject || isLoadingGraphs}
+                    className={styles.selectorField}
                     style={{
-                      flex: 1,
                       padding: '14px 18px',
                       background: (selectedProject && !isLoadingGraphs) ? inkWashTokens.colors.neutral.white : inkWashTokens.colors.neutral.gray100,
                       border: `1px solid ${inkWashTokens.colors.neutral.gray200}`,
@@ -916,7 +911,7 @@ export default function TextPage() {
                   <button
                     onClick={() => setShowNewGraphModal(true)}
                     disabled={!selectedProject}
-                    className={styles.mobileButton}
+                    className={`${styles.mobileButton} ${styles.selectorActionButton}`}
                     style={{
                       padding: '14px 24px',
                       background: selectedProject ? inkWashTokens.colors.primary.main : inkWashTokens.colors.neutral.gray300,
@@ -929,7 +924,8 @@ export default function TextPage() {
                       transition: 'all 0.3s ease',
                       whiteSpace: 'nowrap',
                       opacity: selectedProject ? 1 : 0.5,
-                      boxShadow: selectedProject ? '0 4px 12px rgba(90, 154, 143, 0.3)' : 'none'
+                      boxShadow: selectedProject ? '0 4px 12px rgba(90, 154, 143, 0.3)' : 'none',
+                      width: 'auto',
                     }}
                     onMouseEnter={(e) => {
                       if (selectedProject) {
@@ -1626,7 +1622,38 @@ export default function TextPage() {
                   gap: '8px',
                   marginBottom: '16px',
                 }}>
-                  <span style={{ fontSize: '16px' }}>📄</span>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '16px',
+                      height: '16px',
+                      color: '#5a6c62',
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M7 3.5h7.5L19.5 8v12a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5Z"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M14.5 3.5V8H19.5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8.5 12h7M8.5 15h7"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
                   <div style={{
                     fontSize: '15px',
                     color: '#2c3e35',

@@ -154,8 +154,11 @@ export default function CoverUploadModal({ isOpen, onClose, projects }: CoverUpl
             }}
             onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
             onMouseOut={(e) => e.currentTarget.style.opacity = '0.5'}
+            aria-label="关闭"
           >
-            ✕
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </button>
         )}
 
@@ -173,7 +176,12 @@ export default function CoverUploadModal({ isOpen, onClose, projects }: CoverUpl
             padding: '40px 0',
             color: '#10b981',
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" fill="rgba(16,185,129,0.12)" />
+                <path d="M7.5 12.5l3 3 6-6.5" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             <div style={{ fontSize: '18px', fontWeight: '600' }}>封面上传成功！</div>
           </div>
         ) : (
@@ -264,7 +272,12 @@ export default function CoverUploadModal({ isOpen, onClose, projects }: CoverUpl
               color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
               lineHeight: '1.5',
             }}>
-              <span style={{ fontWeight: 'bold', color: '#4a9eff' }}>💡 提示：</span>
+              <span style={{ fontWeight: 'bold', color: '#4a9eff', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M9 18h6M10 21h4M8 10a4 4 0 1 1 8 0c0 1.6-.8 2.8-1.9 3.7-.7.6-1.1 1.4-1.1 2.3H11c0-.9-.4-1.7-1.1-2.3C8.8 12.8 8 11.6 8 10Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                提示：
+              </span>
               为了获得最佳的卡片显示效果，推荐上传尺寸比例为 <strong>16:9</strong> 或 <strong>1:1</strong> 的高质量图片。图片大小不超过 5MB。
             </div>
 
@@ -278,8 +291,16 @@ export default function CoverUploadModal({ isOpen, onClose, projects }: CoverUpl
                 background: 'rgba(239, 68, 68, 0.1)',
                 padding: '10px',
                 borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
               }}>
-                ❌ {uploadError}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M12 7.5v5.5M12 16.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+                <span>{uploadError}</span>
               </div>
             )}
 
@@ -328,12 +349,26 @@ export default function CoverUploadModal({ isOpen, onClose, projects }: CoverUpl
               >
                 {isUploading ? (
                   <>
-                    <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                      style={{ animation: 'spin 1s linear infinite' }}
+                    >
+                      <path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M20 4v4h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                     上传中...
                   </>
                 ) : (
                   <>
-                    <span style={{ fontSize: '20px' }}>🖼️</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+                      <circle cx="9" cy="10" r="1.6" fill="currentColor" />
+                      <path d="M5.5 17.5 11 12.5l2.8 2.8 2.2-2.3 2.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                     选择封面图片上传
                   </>
                 )}

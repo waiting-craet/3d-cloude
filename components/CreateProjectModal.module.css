@@ -1,0 +1,255 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 200ms ease-out;
+}
+
+.dialog {
+  width: min(92vw, 520px);
+  padding: 32px;
+  border-radius: 16px;
+  border: 1px solid var(--modal-border);
+  background: var(--modal-bg);
+  box-shadow: var(--modal-shadow);
+  animation: slideIn 240ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 6px 0;
+  font-size: 24px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  margin-bottom: 18px;
+}
+
+.segment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.segmentButton {
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--text-normal);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.segmentButton:hover {
+  transform: translateY(-1px);
+}
+
+.segmentButtonActive {
+  background: var(--accent-bg);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: var(--accent-shadow);
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--text-normal);
+  font-size: 14px;
+  outline: none;
+  transition: all 200ms ease;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.input:focus {
+  border-color: var(--control-focus);
+  box-shadow: 0 0 0 3px var(--control-focus-ring);
+}
+
+.option {
+  background: var(--option-bg);
+  color: var(--text-normal);
+}
+
+.errorBox {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--error-border);
+  background: var(--error-bg);
+  color: var(--error-text);
+  font-size: 14px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.button {
+  height: 42px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancelButton {
+  border: 1.5px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--text-normal);
+}
+
+.cancelButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--control-focus);
+}
+
+.primaryButton {
+  border: none;
+  background: var(--accent-bg);
+  color: #ffffff;
+  box-shadow: var(--accent-shadow);
+}
+
+.primaryButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--accent-shadow-hover);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.themeDefault {
+  --modal-overlay: rgba(0, 0, 0, 0.72);
+  --modal-bg: rgba(30, 30, 30, 0.98);
+  --modal-border: rgba(255, 255, 255, 0.1);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --text-strong: #ffffff;
+  --text-normal: rgba(255, 255, 255, 0.94);
+  --text-muted: rgba(255, 255, 255, 0.62);
+  --text-placeholder: rgba(255, 255, 255, 0.45);
+  --control-bg: rgba(255, 255, 255, 0.08);
+  --control-border: rgba(255, 255, 255, 0.15);
+  --control-focus: rgba(74, 158, 255, 0.65);
+  --control-focus-ring: rgba(74, 158, 255, 0.2);
+  --accent-bg: linear-gradient(135deg, #4a9eff 0%, #3a8eef 100%);
+  --accent-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+  --accent-shadow-hover: 0 4px 14px rgba(74, 158, 255, 0.4);
+  --error-bg: rgba(239, 68, 68, 0.16);
+  --error-border: rgba(239, 68, 68, 0.3);
+  --error-text: #f87171;
+  --option-bg: #1f1f1f;
+}
+
+.themeCreation {
+  --modal-overlay: rgba(40, 56, 49, 0.42);
+  --modal-bg: rgba(255, 255, 255, 0.94);
+  --modal-border: rgba(139, 166, 154, 0.3);
+  --modal-shadow: 0 16px 44px rgba(90, 122, 110, 0.22);
+  --text-strong: #3d5a50;
+  --text-normal: #4d6a5f;
+  --text-muted: #6b8578;
+  --text-placeholder: #95aca2;
+  --control-bg: rgba(255, 255, 255, 0.92);
+  --control-border: rgba(139, 166, 154, 0.35);
+  --control-focus: #7fa99b;
+  --control-focus-ring: rgba(127, 169, 155, 0.18);
+  --accent-bg: linear-gradient(135deg, #7fa99b 0%, #5a7a6e 100%);
+  --accent-shadow: 0 2px 8px rgba(90, 122, 110, 0.25);
+  --accent-shadow-hover: 0 5px 14px rgba(90, 122, 110, 0.3);
+  --error-bg: rgba(239, 68, 68, 0.08);
+  --error-border: rgba(239, 68, 68, 0.28);
+  --error-text: #dc2626;
+  --option-bg: #ffffff;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

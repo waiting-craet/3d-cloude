@@ -14,6 +14,34 @@ interface TopNavbarProps {
   mode?: 'full' | 'readonly'
 }
 
+function SaveIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 4.5A1.5 1.5 0 0 1 5.5 3h10.88a1.5 1.5 0 0 1 1.06.44l3.12 3.12A1.5 1.5 0 0 1 21 7.62V19.5a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 4 19.5v-15Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M8 3v5.2c0 .44.36.8.8.8h5.4c.44 0 .8-.36.8-.8V3" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M8 16.5h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function BoltIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M13.5 2.5 5.8 13.2a.7.7 0 0 0 .57 1.1h4.35L9.95 21a.7.7 0 0 0 1.24.53l7-10.3a.7.7 0 0 0-.58-1.1h-4.1l1.12-6.73a.7.7 0 0 0-1.13-.9Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+function ImageIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3.5" y="4" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="9" cy="10" r="1.6" fill="currentColor" />
+      <path d="M5.5 17.5 11 12.5l2.8 2.8 2.2-2.3 2.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
   const router = useRouter()
   
@@ -1144,7 +1172,7 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
                 </>
               ) : (
                 <>
-                  <span style={{ fontSize: '16px' }}>💾</span>
+                  <SaveIcon />
                   <span>保存位置</span>
                   {hasUnsavedChanges && (
                     <span style={{
@@ -1192,7 +1220,7 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
               }}
               title="快速创建二维图谱"
             >
-              <span style={{ fontSize: '16px' }}>⚡</span>
+              <BoltIcon />
               快速创建
             </button>
           )}
@@ -1227,45 +1255,11 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)'
               }}
             >
-              <span style={{ fontSize: '16px' }}>🖼️</span>
+              <ImageIcon />
               添加封面
             </button>
           )}
 
-          {/* 管理员专属：新建图谱按钮 */}
-          {isLoggedIn && (
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              style={{
-                padding: '10px 18px',
-                background: '#00bfa5',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: '600',
-                transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(0, 191, 165, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)'
-                e.currentTarget.style.background = '#00d4b8'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.4)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.background = '#00bfa5'
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 191, 165, 0.3)'
-              }}
-            >
-              <span style={{ fontSize: '16px' }}>+</span>
-              新建图谱
-            </button>
-          )}
         </div>
         )}
       </nav>

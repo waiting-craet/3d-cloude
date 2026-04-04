@@ -5,6 +5,14 @@ import { useGraphStore } from '@/lib/store'
 import { getThemeConfig } from '@/lib/theme'
 import WorkflowCanvas, { type WorkflowCanvasRef } from '@/components/WorkflowCanvas'
 
+function BackIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 5L8 12L15 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function WorkflowPage() {
   const canvasRef = useRef<WorkflowCanvasRef>(null)
   const { theme } = useGraphStore()
@@ -43,7 +51,7 @@ export default function WorkflowPage() {
             if (canvasRef.current) {
               try {
                 await canvasRef.current.savePositions()
-                console.log('✅ 返回前已保存位置')
+                console.log('[workflow] 返回前已保存位置')
               } catch (error) {
                 console.error('保存位置失败:', error)
                 // 即使保存失败也允许返回
@@ -73,7 +81,8 @@ export default function WorkflowPage() {
             e.currentTarget.style.borderColor = themeConfig.buttonBorder
           }}
         >
-          ← 返回
+          <BackIcon />
+          返回
         </button>
         
         <div style={{

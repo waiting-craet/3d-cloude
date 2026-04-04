@@ -515,7 +515,7 @@ export default function NewCreationWorkflowPage() {
       <aside className={styles.sideNavigation}>
         {/* 标题区域 */}
         <div className={styles.titleSection}>
-          <h1 className={styles.titleText}>3DGraph</h1>
+          <h1 className={styles.titleText}>智构红图</h1>
         </div>
 
         {/* 按钮容器 */}
@@ -878,6 +878,7 @@ export default function NewCreationWorkflowPage() {
         onClose={handleCloseModal}
         onCreate={handleCreateProject}
         existingProjects={existingProjects}
+        variant="creation"
       />
 
       {/* 批量删除确认对话框 */}

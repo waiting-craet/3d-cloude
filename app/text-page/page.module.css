@@ -56,6 +56,24 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
+.selectorRow {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.selectorField {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.selectorActionButton {
+  flex: 0 0 auto;
+}
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -174,6 +192,14 @@
   
   /* Ensure buttons are full width on mobile */
   .mobileButton {
+    width: 100% !important;
+  }
+
+  .selectorRow {
+    flex-direction: column;
+  }
+
+  .selectorActionButton {
     width: 100% !important;
   }
   
