@@ -8,6 +8,26 @@ import TopNavbar from '@/components/TopNavbar'
 import NodeDetailPanel from '@/components/NodeDetailPanel'
 import FloatingAddButton from '@/components/FloatingAddButton'
 
+function LoadingHourglassIcon() {
+  return (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 3.5h10v3.1c0 1.2-.48 2.35-1.35 3.2L13.6 12l2.05 2.2c.87.85 1.35 2 1.35 3.2v3.1H7v-3.1c0-1.2.48-2.35 1.35-3.2L10.4 12 8.35 9.8A4.5 4.5 0 0 1 7 6.6V3.5Z" stroke="#4A9EFF" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M9 5.5h6M9 18.5h6" stroke="#4A9EFF" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M9.2 16.2h5.6L12 13.4l-2.8 2.8Z" fill="rgba(74,158,255,0.25)" />
+      <path d="M9.2 7.8h5.6L12 10.6 9.2 7.8Z" fill="rgba(74,158,255,0.25)" />
+    </svg>
+  )
+}
+
+function WarningCircleIcon() {
+  return (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="#f59e0b" strokeWidth="1.8" />
+      <path d="M12 7.4v5.8M12 16.6h.01" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 // 根据来源确定导航模式
 function determineNavigationMode(referrer: string | undefined): 'full' | 'readonly' {
   // 如果没有referrer，默认使用完整模式（可能是刷新页面或直接访问）
@@ -112,7 +132,9 @@ export default function GraphPage() {
           marginTop: '60px',
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
+            <div style={{ marginBottom: '20px' }} aria-label="loading icon">
+              <LoadingHourglassIcon />
+            </div>
             <div style={{ fontSize: '18px', color: '#666' }}>加载图谱中...</div>
           </div>
         </div>
@@ -133,7 +155,9 @@ export default function GraphPage() {
           marginTop: '60px',
         }}>
           <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
+            <div style={{ marginBottom: '20px' }} aria-label="warning icon">
+              <WarningCircleIcon />
+            </div>
             <div style={{ fontSize: '18px', color: '#666', marginBottom: '20px' }}>{error}</div>
             <button
               onClick={() => window.history.back()}

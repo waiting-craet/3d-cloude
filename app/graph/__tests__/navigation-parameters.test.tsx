@@ -96,7 +96,7 @@ describe('GraphPage Navigation Parameters', () => {
       render(<GraphPage />)
 
       expect(screen.getByText('加载图谱中...')).toBeInTheDocument()
-      expect(screen.getByText('⏳')).toBeInTheDocument()
+      expect(screen.getByLabelText('loading icon')).toBeInTheDocument()
     })
 
     it('should skip loading if current graph matches graphId', async () => {
@@ -173,7 +173,7 @@ describe('GraphPage Navigation Parameters', () => {
 
       await waitFor(() => {
         expect(screen.getByText(errorMessage)).toBeInTheDocument()
-        expect(screen.getByText('⚠️')).toBeInTheDocument()
+        expect(screen.getByLabelText('warning icon')).toBeInTheDocument()
         expect(screen.getByText('返回项目列表')).toBeInTheDocument()
       })
     })

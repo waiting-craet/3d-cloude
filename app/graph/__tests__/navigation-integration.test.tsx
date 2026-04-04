@@ -160,7 +160,7 @@ describe('GraphPage Navigation Integration', () => {
 
       // Should show error message
       expect(screen.getByText('请从项目列表选择一个图谱')).toBeInTheDocument()
-      expect(screen.getByText('⚠️')).toBeInTheDocument()
+      expect(screen.getByLabelText('warning icon')).toBeInTheDocument()
       expect(screen.getByText('返回项目列表')).toBeInTheDocument()
 
       // Should not attempt to load graph
@@ -184,7 +184,7 @@ describe('GraphPage Navigation Integration', () => {
       // Should show error message
       await waitFor(() => {
         expect(screen.getByText(errorMessage)).toBeInTheDocument()
-        expect(screen.getByText('⚠️')).toBeInTheDocument()
+        expect(screen.getByLabelText('warning icon')).toBeInTheDocument()
         expect(screen.getByText('返回项目列表')).toBeInTheDocument()
       })
     })
