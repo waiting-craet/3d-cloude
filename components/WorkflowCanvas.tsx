@@ -1303,30 +1303,22 @@ const WorkflowCanvas = forwardRef<WorkflowCanvasRef>((props, ref) => {
         width: '100%',
         height: '100%',
         position: 'relative',
+        zIndex: 1,
       }}>
-        {/* 点状网格背景 */}
-        <svg style={{
-          position: 'absolute',
-          top: '-2000px',
-          left: '-2000px',
-          width: '8000px',
-          height: '8000px',
-          pointerEvents: 'none',
-        }}>
-          <defs>
-            <pattern
-              id="dot-pattern"
-              x="0"
-              y="0"
-              width="24"
-              height="24"
-              patternUnits="userSpaceOnUse"
-            >
-              <circle cx="1" cy="1" r="1.5" fill="#9ca3af" opacity="0.8" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#dot-pattern)" />
-        </svg>
+        {/* 跟随画布平移/缩放的背景层（代码生成） */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '-5000px',
+            top: '-5000px',
+            width: '10000px',
+            height: '10000px',
+            pointerEvents: 'none',
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(156, 163, 175, 0.8) 1.3px, transparent 1.3px)',
+            backgroundSize: '24px 24px',
+            zIndex: 0,
+          }}
+        />
 
         {/* SVG 连接线 */}
         <svg style={{
