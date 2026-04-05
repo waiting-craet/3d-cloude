@@ -79,7 +79,23 @@ export default function GraphCard({ graph, onClick }: GraphCardProps) {
           )
         ) : (
           <div className={styles.placeholderIcon}>
-            🗺️
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 6L8 4L16 6L21 4V18L16 20L8 18L3 20V6Z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <path d="M8 4V18" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M16 6V20" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
           </div>
         )}
       </div>

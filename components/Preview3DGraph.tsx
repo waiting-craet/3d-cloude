@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera, Text, Stars, Environment } from '@react-three/drei'
 import { Suspense, useRef, useState, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
+import UIIcon from './UIIcon'
 
 interface Node3D {
   id: string
@@ -574,10 +575,10 @@ export default function Preview3DGraph({ nodes, edges, onNodeClick }: Preview3DG
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {[
-            { value: 'force', label: '力导向', icon: '🌐', desc: '复杂关联' },
-            { value: 'radial', label: '径向', icon: '⭐', desc: '中心辐射' },
-            { value: 'hierarchical', label: '层级', icon: '🌳', desc: '树状结构' },
-            { value: 'grid', label: '网格', icon: '📊', desc: '规整排列' },
+            { value: 'force', label: '力导向', icon: 'globe', desc: '复杂关联' },
+            { value: 'radial', label: '径向', icon: 'star', desc: '中心辐射' },
+            { value: 'hierarchical', label: '层级', icon: 'tree', desc: '树状结构' },
+            { value: 'grid', label: '网格', icon: 'chart', desc: '规整排列' },
           ].map((layout) => (
             <button
               key={layout.value}
@@ -612,7 +613,9 @@ export default function Preview3DGraph({ nodes, edges, onNodeClick }: Preview3DG
                 }
               }}
             >
-              <span style={{ fontSize: '16px' }}>{layout.icon}</span>
+              <span style={{ display: 'inline-flex' }}>
+                <UIIcon name={layout.icon as 'globe' | 'star' | 'tree' | 'chart'} size={16} />
+              </span>
               <div style={{ flex: 1 }}>
                 <div>{layout.label}</div>
                 <div style={{ 
@@ -722,10 +725,10 @@ export default function Preview3DGraph({ nodes, edges, onNodeClick }: Preview3DG
               </button>
             </div>
             <div style={{ color: 'rgba(255, 255, 255, 0.8)', lineHeight: '1.6' }}>
-              🖱️ 左键拖动：旋转视角<br />
-              🖱️ 右键拖动：平移视角<br />
-              🖱️ 滚轮：缩放视角<br />
-              🖱️ 点击节点：聚焦节点
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><UIIcon name="mouse" size={12} />左键拖动：旋转视角</span><br />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><UIIcon name="hand" size={12} />右键拖动：平移视角</span><br />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><UIIcon name="search" size={12} />滚轮：缩放视角</span><br />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><UIIcon name="click" size={12} />点击节点：聚焦节点</span>
             </div>
           </div>
         ) : (
@@ -750,7 +753,10 @@ export default function Preview3DGraph({ nodes, edges, onNodeClick }: Preview3DG
               e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'
             }}
           >
-            💡 显示控制说明
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <UIIcon name="spark" size={12} />
+              显示控制说明
+            </span>
           </button>
         )}
       </div>

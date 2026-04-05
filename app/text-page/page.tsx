@@ -6,6 +6,7 @@ import AIPreviewModal, { PreviewData } from '@/components/AIPreviewModal'
 import { MergeDecision } from '@/lib/services/merge-resolution'
 import { inkWashTokens } from '@/lib/design-tokens'
 import { removeEmojisFromAllStrings } from '@/lib/emoji-filter'
+import UIIcon from '@/components/UIIcon'
 import styles from './page.module.css'
 
 interface Project {
@@ -1192,7 +1193,7 @@ export default function TextPage() {
                   fontSize: '14px',
                 }}>
                   {isAnalyzing ? (
-                    '⏳'
+                    <UIIcon name="hourglass" size={16} color="#ffffff" />
                   ) : (
                     <Image
                       src="/images/闪电.png"

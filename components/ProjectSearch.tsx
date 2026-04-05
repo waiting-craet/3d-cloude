@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import styles from './ProjectSearch.module.css'
+import UIIcon from './UIIcon'
 
 export interface SearchResult {
   type: 'project' | 'graph'
@@ -96,7 +97,7 @@ export default function ProjectSearch({ onSearchResults, onClear }: ProjectSearc
           {isSearching ? (
             <div className={styles.searchSpinner}></div>
           ) : (
-            <span>🔍</span>
+            <UIIcon name="search" size={16} />
           )}
         </div>
         <input

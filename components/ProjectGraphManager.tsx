@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import DeleteButton from './DeleteButton'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 import LoadingSpinner from './LoadingSpinner'
+import UIIcon from './UIIcon'
 
 /**
  * 项目-图谱管理组件
@@ -469,7 +470,10 @@ export default function ProjectGraphManager() {
                   位置: ({node.x.toFixed(1)}, {node.y.toFixed(1)}, {node.z.toFixed(1)})
                 </div>
                 {node.imageUrl && (
-                  <div className="text-xs text-blue-500 mt-1">📷 有图片</div>
+                  <div className="text-xs text-blue-500 mt-1" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <UIIcon name="camera" size={12} />
+                    有图片
+                  </div>
                 )}
               </div>
             ))}

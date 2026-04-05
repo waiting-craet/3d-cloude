@@ -2,10 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import UIIcon from '../UIIcon'
 
 interface HelpMenuProps {
   theme?: 'light' | 'dark'
 }
+
+type HelpMenuIcon = 'rocket' | 'book' | 'help' | 'message'
 
 export default function HelpMenu({ theme = 'dark' }: HelpMenuProps) {
   const [showMenu, setShowMenu] = useState(false)
@@ -58,10 +61,10 @@ export default function HelpMenu({ theme = 'dark' }: HelpMenuProps) {
     }
   }, [showMenu])
 
-  const menuItems = [
+  const menuItems: Array<{ label: string; icon: HelpMenuIcon; action: () => void }> = [
     {
       label: '快速入门',
-      icon: '🚀',
+      icon: 'rocket',
       action: () => {
         alert('快速入门教程')
         setShowMenu(false)
@@ -69,7 +72,7 @@ export default function HelpMenu({ theme = 'dark' }: HelpMenuProps) {
     },
     {
       label: '文档',
-      icon: '📖',
+      icon: 'book',
       action: () => {
         window.open('/docs', '_blank')
         setShowMenu(false)
@@ -77,7 +80,7 @@ export default function HelpMenu({ theme = 'dark' }: HelpMenuProps) {
     },
     {
       label: '常见问题',
-      icon: '❓',
+      icon: 'help',
       action: () => {
         window.open('/faq', '_blank')
         setShowMenu(false)
@@ -85,7 +88,7 @@ export default function HelpMenu({ theme = 'dark' }: HelpMenuProps) {
     },
     {
       label: '联系支持',
-      icon: '💬',
+      icon: 'message',
       action: () => {
         window.open('mailto:support@example.com')
         setShowMenu(false)
@@ -120,7 +123,7 @@ export default function HelpMenu({ theme = 'dark' }: HelpMenuProps) {
           e.currentTarget.style.background = 'transparent'
         }}
       >
-        ❓
+        <UIIcon name="help" size={18} />
       </button>
 
       {/* 帮助菜单 */}
@@ -163,7 +166,7 @@ export default function HelpMenu({ theme = 'dark' }: HelpMenuProps) {
                 e.currentTarget.style.background = 'transparent'
               }}
             >
-              <span style={{ fontSize: '16px' }}>{item.icon}</span>
+              <span style={{ display: 'inline-flex' }}><UIIcon name={item.icon} size={16} /></span>
               <span
                 style={{
                   color: themeConfig.menuText,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import UIIcon from '@/components/UIIcon'
 
 export default function ClearCachePage() {
   const [cleared, setCleared] = useState(false)
@@ -53,7 +54,7 @@ export default function ClearCachePage() {
       }}>
         {cleared ? (
           <>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
+            <div style={{ marginBottom: '20px', color: '#22c55e' }}><UIIcon name="spark" size={64} /></div>
             <h1 style={{ fontSize: '32px', marginBottom: '16px' }}>缓存已清理</h1>
             <p style={{ 
               color: 'rgba(255, 255, 255, 0.7)', 
@@ -84,7 +85,7 @@ export default function ClearCachePage() {
           </>
         ) : (
           <>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔄</div>
+            <div style={{ marginBottom: '20px', color: '#4A9EFF' }}><UIIcon name="spinner" size={64} /></div>
             <h1 style={{ fontSize: '32px', marginBottom: '16px' }}>正在清理缓存...</h1>
             <p style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
               请稍候

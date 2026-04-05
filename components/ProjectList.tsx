@@ -7,6 +7,7 @@ import GraphList from './GraphList'
 import ProjectSearch, { SearchResult } from './ProjectSearch'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorMessage from '@/components/ErrorMessage'
+import UIIcon from '@/components/UIIcon'
 import styles from './ProjectList.module.css'
 
 // API响应类型
@@ -316,7 +317,7 @@ export default function ProjectList({
       {displayProjects.length === 0 && (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>
-            {isSearching ? '🔍' : '📊'}
+            {isSearching ? <UIIcon name="search" size={48} /> : <UIIcon name="chart" size={48} />}
           </div>
           <h3 className={styles.emptyTitle}>
             {isSearching ? '未找到相关项目' : '暂无项目'}

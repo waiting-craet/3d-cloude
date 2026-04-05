@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { applyLayout, LayoutType, GraphAnalysis } from '@/lib/graph-layouts'
+import UIIcon from './UIIcon'
 
 interface Node {
   id: string
@@ -180,13 +181,13 @@ export default function Interactive2DGraph({
     return names[layout]
   }
 
-  const getLayoutIcon = (layout: LayoutType): string => {
-    const icons: Record<LayoutType, string> = {
-      radial: '🎯',
-      hierarchical: '🌳',
-      force: '🌐',
-      grid: '📊',
-      timeline: '⏱️'
+  const getLayoutIcon = (layout: LayoutType): 'target' | 'tree' | 'globe' | 'chart' | 'timer' => {
+    const icons: Record<LayoutType, 'target' | 'tree' | 'globe' | 'chart' | 'timer'> = {
+      radial: 'target',
+      hierarchical: 'tree',
+      force: 'globe',
+      grid: 'chart',
+      timeline: 'timer'
     }
     return icons[layout]
   }
@@ -562,7 +563,7 @@ export default function Interactive2DGraph({
           }}
           title="重置视图"
         >
-          🔄
+          <UIIcon name="spinner" size={18} />
         </button>
         <div style={{
           padding: '8px 10px',
@@ -595,12 +596,15 @@ export default function Interactive2DGraph({
         maxWidth: '180px',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
       }}>
-        <div style={{ marginBottom: '6px', fontWeight: '700', color: 'white', fontSize: '11px' }}>💡 操作提示</div>
+        <div style={{ marginBottom: '6px', fontWeight: '700', color: 'white', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <UIIcon name="spark" size={11} />
+          操作提示
+        </div>
         <div style={{ lineHeight: '1.8' }}>
-          <div>🖱️ 拖拽节点移动</div>
-          <div>✋ 拖拽空白平移</div>
-          <div>🔍 滚轮缩放</div>
-          <div>👆 点击查看详情</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><UIIcon name="mouse" size={10} />拖拽节点移动</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><UIIcon name="hand" size={10} />拖拽空白平移</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><UIIcon name="search" size={10} />滚轮缩放</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><UIIcon name="click" size={10} />点击查看详情</div>
         </div>
       </div>
 
@@ -627,7 +631,10 @@ export default function Interactive2DGraph({
           fontWeight: '700',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
         }}>
-          📊 节点: {nodes.length} | 边: {edges.length}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <UIIcon name="chart" size={11} />
+            节点: {nodes.length} | 边: {edges.length}
+          </span>
         </div>
 
         {/* 布局选择器 */}
@@ -649,7 +656,7 @@ export default function Interactive2DGraph({
             alignItems: 'center',
             gap: '6px',
           }}>
-            <span>🎨</span>
+            <span style={{ display: 'inline-flex' }}><UIIcon name="palette" size={11} /></span>
             <span>布局方式</span>
           </div>
           
@@ -669,7 +676,7 @@ export default function Interactive2DGraph({
               alignItems: 'center',
               gap: '6px',
             }}>
-              <span>{getLayoutIcon(currentLayout)}</span>
+              <span style={{ display: 'inline-flex' }}><UIIcon name={getLayoutIcon(currentLayout)} size={11} /></span>
               <span>{getLayoutName(currentLayout)}</span>
             </div>
           </div>
@@ -736,7 +743,7 @@ export default function Interactive2DGraph({
                   }
                 }}
               >
-                <span>{getLayoutIcon(layout)}</span>
+                <span style={{ display: 'inline-flex' }}><UIIcon name={getLayoutIcon(layout)} size={10} /></span>
                 <span>{getLayoutName(layout)}</span>
                 {graphAnalysis?.recommendedLayout === layout && (
                   <span style={{

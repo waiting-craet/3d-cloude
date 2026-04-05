@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import GraphCard, { Graph } from './GraphCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorMessage from '@/components/ErrorMessage'
+import UIIcon from '@/components/UIIcon'
 import styles from './ProjectList.module.css' // 复用ProjectList的样式
 
 // API响应类型
@@ -135,7 +136,7 @@ export default function GraphList({
           <h2 className={styles.title}>{projectName} - 图谱列表</h2>
         </div>
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🗺️</div>
+          <div className={styles.emptyIcon}><UIIcon name="map" size={48} /></div>
           <h3 className={styles.emptyTitle}>暂无图谱</h3>
           <p className={styles.emptyDescription}>
             该项目还没有创建任何图谱，点击"开始创作"来创建你的第一个图谱吧！

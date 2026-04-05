@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useNotifications } from '@/lib/hooks/useNotifications'
+import UIIcon from '../UIIcon'
 
 interface NotificationBellProps {
   theme?: 'light' | 'dark'
@@ -95,7 +96,7 @@ export default function NotificationBell({ theme = 'dark' }: NotificationBellPro
           e.currentTarget.style.background = 'transparent'
         }}
       >
-        🔔
+        <UIIcon name="bell" size={18} />
         {unreadCount > 0 && (
           <span
             style={{
@@ -216,9 +217,9 @@ export default function NotificationBell({ theme = 'dark' }: NotificationBellPro
                     }}
                   >
                     <span style={{ fontSize: '16px', marginTop: '2px' }}>
-                      {notification.type === 'like' && '👍'}
-                      {notification.type === 'comment' && '💬'}
-                      {notification.type === 'follow' && '👤'}
+                      {notification.type === 'like' && <UIIcon name="thumbUp" size={16} />}
+                      {notification.type === 'comment' && <UIIcon name="comment" size={16} />}
+                      {notification.type === 'follow' && <UIIcon name="user" size={16} />}
                       {notification.type === 'mention' && '@'}
                     </span>
                     <div style={{ flex: 1 }}>
@@ -264,7 +265,9 @@ export default function NotificationBell({ theme = 'dark' }: NotificationBellPro
                 color: themeConfig.panelSubtext,
               }}
             >
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>🔔</div>
+              <div style={{ marginBottom: '12px', color: themeConfig.panelText }}>
+                <UIIcon name="bell" size={32} />
+              </div>
               <div>暂无通知</div>
             </div>
           )}

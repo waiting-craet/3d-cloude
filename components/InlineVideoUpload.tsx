@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
+import UIIcon from './UIIcon'
 
 interface InlineVideoUploadProps {
   nodeId: string
@@ -237,7 +238,9 @@ export function InlineVideoUpload({
             }
           }}
         >
-          <span style={{ fontSize: '48px', marginBottom: '12px' }}>🎬</span>
+          <span style={{ marginBottom: '12px', color: '#6b7280' }}>
+            <UIIcon name="video" size={48} />
+          </span>
           <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
             {uploading ? '上传中...' : '点击上传视频'}
           </span>

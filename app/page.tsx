@@ -449,7 +449,24 @@ export default function LandingPage() {
                     role="img"
                     aria-label="图表图标"
                   >
-                    📊
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M4 20H20"
+                        stroke="#8BA69A"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <rect x="6" y="11" width="3" height="7" rx="1" fill="#8BA69A" />
+                      <rect x="11" y="8" width="3" height="10" rx="1" fill="#6B8E85" />
+                      <rect x="16" y="5" width="3" height="13" rx="1" fill="#3D5A50" />
+                    </svg>
                   </div>
                   <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#333333' }}>
                     {searchQuery.trim() ? '未找到匹配的项目' : '暂无项目'}
@@ -512,7 +529,23 @@ export default function LandingPage() {
                     role="img"
                     aria-label="图谱图标"
                   >
-                    🗺️
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M3 6L8 4L16 6L21 4V18L16 20L8 18L3 20V6Z"
+                        stroke="#6B8E85"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                      <path d="M8 4V18" stroke="#8BA69A" strokeWidth="1.4" />
+                      <path d="M16 6V20" stroke="#8BA69A" strokeWidth="1.4" />
+                    </svg>
                   </div>
                   <h3 style={{ fontSize: '20px', marginBottom: '8px', color: '#333333' }}>
                     {searchQuery.trim() ? '未找到匹配的图谱' : '该项目还没有创建任何图谱'}

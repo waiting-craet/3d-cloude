@@ -1,6 +1,7 @@
 'use client'
 
 import BannerImageUpload from '@/components/BannerImageUpload'
+import UIIcon from '@/components/UIIcon'
 
 export default function BannerAdminPage() {
   return (
@@ -58,7 +59,10 @@ export default function BannerAdminPage() {
               color: '#1a1a1a',
             }}
           >
-            📋 使用说明
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <UIIcon name="book" size={16} />
+              使用说明
+            </span>
           </h3>
           <ul
             style={{
@@ -94,7 +98,10 @@ export default function BannerAdminPage() {
               color: '#1a1a1a',
             }}
           >
-            💡 提示
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <UIIcon name="spark" size={16} />
+              提示
+            </span>
           </h3>
           <p
             style={{

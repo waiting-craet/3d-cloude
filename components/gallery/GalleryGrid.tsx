@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useGalleryGraphs } from '@/lib/hooks/useGalleryGraphs'
 import type { FilterType } from '@/lib/types/homepage-gallery'
 import GraphCard from './GraphCard'
+import UIIcon from '../UIIcon'
 
 interface GalleryGridProps {
   filters?: FilterType[]
@@ -84,7 +85,7 @@ function GalleryGridContent({
               animation: 'spin 1s linear infinite',
             }}
           >
-            ⏳
+            <UIIcon name="hourglass" size={48} />
           </div>
           <div
             style={{
@@ -116,7 +117,7 @@ function GalleryGridContent({
             gap: '20px',
           }}
         >
-          <div style={{ fontSize: '48px' }}>❌</div>
+          <div style={{ color: themeConfig.text }}><UIIcon name="error" size={48} /></div>
           <div
             style={{
               color: themeConfig.text,
@@ -173,7 +174,7 @@ function GalleryGridContent({
             gap: '20px',
           }}
         >
-          <div style={{ fontSize: '64px' }}>📭</div>
+          <div style={{ color: themeConfig.text }}><UIIcon name="empty" size={64} /></div>
           <div
             style={{
               color: themeConfig.text,

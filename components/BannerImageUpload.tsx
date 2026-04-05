@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import UIIcon from './UIIcon'
 
 interface BannerImageUploadProps {
   onUploadSuccess?: () => void
@@ -77,7 +78,10 @@ export default function BannerImageUpload({ onUploadSuccess }: BannerImageUpload
     >
       <div style={{ marginBottom: '16px' }}>
         <h3 style={{ margin: '0 0 8px 0', color: '#1a1a1a', fontSize: '16px', fontWeight: '600' }}>
-          📸 上传横幅图片
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <UIIcon name="camera" size={16} />
+            上传横幅图片
+          </span>
         </h3>
         <p style={{ margin: 0, color: 'rgba(0, 0, 0, 0.6)', fontSize: '14px' }}>
           推荐尺寸: 1920 x 320 像素，文件大小 &lt; 5MB

@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import styles from './ProjectCard.module.css'
+import UIIcon from './UIIcon'
 
 // 项目数据类型
 export interface Project {
@@ -61,7 +62,7 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
           )
         ) : (
           <div className={styles.placeholderIcon}>
-            📊
+            <UIIcon name="chart" size={48} />
           </div>
         )}
       </div>
@@ -73,7 +74,7 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
         </h3>
         <div className={styles.stats}>
           <span className={styles.statItem}>
-            <span className={styles.statIcon}>🗺️</span>
+            <span className={styles.statIcon}><UIIcon name="map" size={16} /></span>
             包含 {project.graphCount} 个图谱
           </span>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { GraphCard as GraphCardType } from '@/lib/types/homepage-gallery'
+import UIIcon from '../UIIcon'
 
 interface GraphCardProps {
   graph: GraphCardType
@@ -96,7 +97,7 @@ export default function GraphCard({
               fontSize: '48px',
             }}
           >
-            {graph.type === '3d' ? '🎯' : '📊'}
+            {graph.type === '3d' ? <UIIcon name="target" size={48} /> : <UIIcon name="chart" size={48} />}
           </div>
         )}
 
@@ -118,7 +119,9 @@ export default function GraphCard({
             gap: '6px',
           }}
         >
-          <span>{graph.type === '3d' ? '🎯' : '📊'}</span>
+          <span style={{ display: 'inline-flex' }}>
+            {graph.type === '3d' ? <UIIcon name="target" size={14} /> : <UIIcon name="chart" size={14} />}
+          </span>
           <span>{graph.type === '3d' ? '3D' : '2D'}</span>
         </div>
 
@@ -140,7 +143,7 @@ export default function GraphCard({
               gap: '6px',
             }}
           >
-            <span>⭐</span>
+            <span style={{ display: 'inline-flex' }}><UIIcon name="star" size={14} /></span>
             <span>模板</span>
           </div>
         )}
@@ -283,7 +286,7 @@ export default function GraphCard({
               whiteSpace: 'nowrap',
             }}
           >
-            <span>👍</span>
+            <span style={{ display: 'inline-flex' }}><UIIcon name="thumbUp" size={12} /></span>
             <span>{graph.likes}</span>
           </div>
         </div>
@@ -301,13 +304,13 @@ export default function GraphCard({
           }}
         >
           <div>
-            <span>📍 {graph.nodeCount} 节点</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><UIIcon name="pin" size={12} />{graph.nodeCount} 节点</span>
           </div>
           <div>
-            <span>🔗 {graph.edgeCount} 关系</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><UIIcon name="link" size={12} />{graph.edgeCount} 关系</span>
           </div>
           <div>
-            <span>👁️ {graph.views} 浏览</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><UIIcon name="eye" size={12} />{graph.views} 浏览</span>
           </div>
         </div>
 

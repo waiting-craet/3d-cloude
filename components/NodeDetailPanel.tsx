@@ -10,6 +10,7 @@ import { ColorPicker } from './ColorPicker'
 import { ShapeSelector } from './ShapeSelector'
 import { SizeSelector } from './SizeSelector'
 import MediaPreviewModal from './MediaPreviewModal'
+import UIIcon from './UIIcon'
 
 export default function NodeDetailPanel() {
   const { selectedNode, setSelectedNode, deleteNode, fetchGraph, updateNodeLocal, updateNode, theme, navigationMode } = useGraphStore()
@@ -585,7 +586,9 @@ export default function NodeDetailPanel() {
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap'
         }}>
-          <span style={{ fontSize: '24px', flexShrink: 0 }}>{isEditMode ? '✏️' : '📋'}</span>
+          <span style={{ color: 'white', display: 'inline-flex', flexShrink: 0 }}>
+            <UIIcon name={isEditMode ? 'edit' : 'book'} size={22} />
+          </span>
           <span title={selectedNode.name} style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {selectedNode.name}
           </span>
@@ -663,7 +666,10 @@ export default function NodeDetailPanel() {
                     transition: 'all 0.2s',
                   }}
                 >
-                  🎨 节点颜色
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <UIIcon name="palette" size={14} />
+                    节点颜色
+                  </span>
                 </button>
                 <button
                   onClick={(e) => {
@@ -683,7 +689,10 @@ export default function NodeDetailPanel() {
                     transition: 'all 0.2s',
                   }}
                 >
-                  ✏️ 文字颜色
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <UIIcon name="edit" size={14} />
+                    文字颜色
+                  </span>
                 </button>
               </div>
             </div>
@@ -847,7 +856,7 @@ export default function NodeDetailPanel() {
                         gap: '4px',
                         backdropFilter: 'blur(4px)',
                       }}>
-                        <span style={{ fontSize: '14px' }}>🔍</span>
+                        <UIIcon name="search" size={14} />
                         点击预览
                       </div>
                     </div>
@@ -915,7 +924,7 @@ export default function NodeDetailPanel() {
                         fontSize: '24px',
                         backdropFilter: 'blur(4px)',
                       }}>
-                        ▶
+                        <UIIcon name="arrowRight" size={18} />
                       </div>
                       <div style={{
                         position: 'absolute',
@@ -931,7 +940,7 @@ export default function NodeDetailPanel() {
                         gap: '4px',
                         backdropFilter: 'blur(4px)',
                       }}>
-                        <span style={{ fontSize: '14px' }}>🔍</span>
+                        <UIIcon name="search" size={14} />
                         点击预览
                       </div>
                     </div>
@@ -1016,7 +1025,7 @@ export default function NodeDetailPanel() {
                 opacity: isSaving ? 0.5 : 1,
               }}
             >
-              <span style={{ fontSize: '16px' }}>↺</span>
+              <UIIcon name="spinner" size={16} />
               重置
             </button>
           ) : (
@@ -1043,7 +1052,7 @@ export default function NodeDetailPanel() {
                   opacity: isSaving ? 0.5 : 1,
                 }}
               >
-                <span style={{ fontSize: '16px' }}>✏️</span>
+                <UIIcon name="edit" size={16} />
                 编辑
               </button>
               <button
@@ -1068,7 +1077,7 @@ export default function NodeDetailPanel() {
                   opacity: isSaving ? 0.5 : 1,
                 }}
               >
-                <span style={{ fontSize: '16px' }}>🗑️</span>
+                <UIIcon name="trash" size={16} />
                 删除
               </button>
             </>

@@ -6,6 +6,7 @@ import SearchBar from './gallery/SearchBar'
 import NotificationBell from './gallery/NotificationBell'
 import UserMenu from './gallery/UserMenu'
 import HelpMenu from './gallery/HelpMenu'
+import UIIcon from './UIIcon'
 
 interface GalleryTopNavbarProps {
   currentTheme?: 'light' | 'dark'
@@ -134,7 +135,7 @@ export default function GalleryTopNavbar({
             gap: '8px',
           }}
         >
-          <span>📊</span>
+          <span style={{ display: 'inline-flex' }}><UIIcon name="chart" size={20} /></span>
           {!isMobile && <span>知识图谱</span>}
         </div>
 
@@ -177,7 +178,10 @@ export default function GalleryTopNavbar({
                   e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)'
                 }}
               >
-                ✨ 开始创作
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <UIIcon name="spark" size={14} />
+                  开始创作
+                </span>
               </button>
 
               {/* 社区按钮 */}
@@ -202,7 +206,10 @@ export default function GalleryTopNavbar({
                   e.currentTarget.style.background = 'transparent'
                 }}
               >
-                👥 社区
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <UIIcon name="user" size={14} />
+                  社区
+                </span>
               </button>
             </div>
 
@@ -283,7 +290,10 @@ export default function GalleryTopNavbar({
               width: '100%',
             }}
           >
-            ✨ 开始创作
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <UIIcon name="spark" size={14} />
+              开始创作
+            </span>
           </button>
           <button
             onClick={handleCommunityClick}
@@ -299,7 +309,10 @@ export default function GalleryTopNavbar({
               width: '100%',
             }}
           >
-            👥 社区
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <UIIcon name="user" size={14} />
+              社区
+            </span>
           </button>
           {isLoggedIn && (
             <NotificationBell theme={currentTheme} />

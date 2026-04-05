@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import LoginModal from '../LoginModal'
 import RegisterModal from '../RegisterModal'
+import UIIcon from '../UIIcon'
 
 interface UserMenuProps {
   isLoggedIn: boolean
@@ -151,7 +152,7 @@ export default function UserMenu({
           e.currentTarget.style.background = 'transparent'
         }}
       >
-        👤
+        <UIIcon name="user" size={18} />
       </button>
 
       {/* 用户菜单 */}
@@ -222,7 +223,7 @@ export default function UserMenu({
               e.currentTarget.style.background = 'transparent'
             }}
           >
-            <span style={{ fontSize: '16px' }}>📚</span>
+            <span style={{ display: 'inline-flex' }}><UIIcon name="book" size={16} /></span>
             <span
               style={{
                 color: themeConfig.menuText,
@@ -255,7 +256,7 @@ export default function UserMenu({
               e.currentTarget.style.background = 'transparent'
             }}
           >
-            <span style={{ fontSize: '16px' }}>⚙️</span>
+            <span style={{ display: 'inline-flex' }}><UIIcon name="settings" size={16} /></span>
             <span
               style={{
                 color: themeConfig.menuText,
@@ -285,7 +286,7 @@ export default function UserMenu({
               e.currentTarget.style.background = 'transparent'
             }}
           >
-            <span style={{ fontSize: '16px' }}>🚪</span>
+            <span style={{ display: 'inline-flex' }}><UIIcon name="logout" size={16} /></span>
             <span
               style={{
                 color: '#ef4444',

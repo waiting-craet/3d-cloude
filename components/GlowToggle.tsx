@@ -1,5 +1,7 @@
 'use client'
 
+import UIIcon from './UIIcon'
+
 interface GlowToggleProps {
   value: boolean
   onChange: (isGlowing: boolean) => void
@@ -55,7 +57,9 @@ export function GlowToggle({ value, onChange, disabled = false }: GlowToggleProp
           alignItems: 'center',
           gap: '10px',
         }}>
-          <span style={{ fontSize: '20px' }}>✨</span>
+          <span style={{ display: 'inline-flex', color: value ? '#f59e0b' : '#6b7280' }}>
+            <UIIcon name="spark" size={20} />
+          </span>
           <span style={{
             fontSize: '14px',
             fontWeight: '600',
@@ -102,7 +106,7 @@ export function GlowToggle({ value, onChange, disabled = false }: GlowToggleProp
           alignItems: 'center',
           gap: '6px',
         }}>
-          <span>💡</span>
+          <span style={{ display: 'inline-flex' }}><UIIcon name="spark" size={12} /></span>
           <span>节点将发出明亮的光芒</span>
         </div>
       )}

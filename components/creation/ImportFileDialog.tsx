@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import styles from './styles.module.css';
+import UIIcon from '../UIIcon';
 
 interface ImportFileDialogProps {
   isOpen: boolean;
@@ -116,7 +117,9 @@ export default function ImportFileDialog({
               }
             }}
           >
-            <div className={styles.dropZoneIcon}>📁</div>
+            <div className={styles.dropZoneIcon}>
+              <UIIcon name="folder" size={42} />
+            </div>
             <p className={styles.dropZoneText}>拖文件至此或点击此区域</p>
             <input
               ref={fileInputRef}

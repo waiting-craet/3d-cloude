@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import UIIcon from '../UIIcon'
 
 interface ThemeToggleProps {
   currentTheme?: 'light' | 'dark'
@@ -70,7 +71,7 @@ export default function ThemeToggle({
         e.currentTarget.style.borderColor = themeConfig.buttonBorder
       }}
     >
-      {theme === 'dark' ? '☀️' : '🌙'}
+      {theme === 'dark' ? <UIIcon name="sun" size={18} /> : <UIIcon name="moon" size={18} />}
     </button>
   )
 }

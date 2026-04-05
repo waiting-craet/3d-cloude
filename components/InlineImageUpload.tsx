@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import UIIcon from './UIIcon'
 
 interface InlineImageUploadProps {
   nodeId: string
@@ -154,7 +155,7 @@ export function InlineImageUpload({
                 e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'
               }}
             >
-              <span style={{ fontSize: '14px' }}>🔍</span>
+              <UIIcon name="search" size={14} />
               点击预览
             </div>
           )}
@@ -215,7 +216,9 @@ export function InlineImageUpload({
             }
           }}
         >
-          <span style={{ fontSize: '48px', marginBottom: '12px' }}>📷</span>
+          <span style={{ marginBottom: '12px', color: '#6b7280' }}>
+            <UIIcon name="camera" size={48} />
+          </span>
           <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
             {uploading ? '上传中...' : '点击上传图片'}
           </span>

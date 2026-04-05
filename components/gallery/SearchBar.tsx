@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useGallerySearch } from '@/lib/hooks/useGallerySearch'
 import { SearchSuggestion } from '@/lib/types/homepage-gallery'
+import UIIcon from '../UIIcon'
 
 interface SearchBarProps {
   onSearch: (query: string) => void
@@ -124,7 +125,7 @@ export default function SearchBar({
             color: themeConfig.inputPlaceholder,
           }}
         >
-          🔍
+          <UIIcon name="search" size={16} />
         </span>
       </div>
 
@@ -179,7 +180,7 @@ export default function SearchBar({
                     e.currentTarget.style.background = 'transparent'
                   }}
                 >
-                  <span style={{ fontSize: '16px' }}>{suggestion.icon}</span>
+                  <span style={{ display: 'inline-flex' }}><UIIcon name="search" size={16} /></span>
                   <div style={{ flex: 1 }}>
                     <div
                       style={{

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FilterType } from '@/lib/types/homepage-gallery'
+import UIIcon from '../UIIcon'
 
 interface FilterBarProps {
   activeFilters?: FilterType[]
@@ -53,10 +54,10 @@ function FilterBarContent({
     }
   }, [searchParams, mounted])
 
-  const filterOptions: Array<{ value: FilterType; label: string; icon: string }> = [
-    { value: '3d', label: '3D 图谱', icon: '🎯' },
-    { value: '2d', label: '2D 图谱', icon: '📊' },
-    { value: 'template', label: '热门模板', icon: '⭐' },
+  const filterOptions: Array<{ value: FilterType; label: string; icon: 'target' | 'chart' | 'star' }> = [
+    { value: '3d', label: '3D 图谱', icon: 'target' },
+    { value: '2d', label: '2D 图谱', icon: 'chart' },
+    { value: 'template', label: '热门模板', icon: 'star' },
   ]
 
   const handleFilterToggle = (filter: FilterType) => {
@@ -167,7 +168,7 @@ function FilterBarContent({
               }
             }}
           >
-            <span>{option.icon}</span>
+            <span style={{ display: 'inline-flex' }}><UIIcon name={option.icon} size={14} /></span>
             <span>{option.label}</span>
           </button>
         ))}

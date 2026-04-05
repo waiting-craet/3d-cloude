@@ -9,6 +9,7 @@ import CreateProjectModal from './CreateProjectModal'
 import CoverUploadModal from './CoverUploadModal'
 import DeleteButton from './DeleteButton'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
+import UIIcon from './UIIcon'
 
 interface TopNavbarProps {
   mode?: 'full' | 'readonly'
@@ -855,8 +856,12 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
                             fontSize: '15px', 
                             fontWeight: '600',
                             marginBottom: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
                           }}>
-                            📁 {project.name}
+                            <UIIcon name="folder" size={15} />
+                            {project.name}
                           </div>
                           <div style={{ 
                             color: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)', 
@@ -962,7 +967,9 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
                   color: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
                   fontSize: '14px',
                 }}>
-                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>📂</div>
+                  <div style={{ marginBottom: '12px', color: themeConfig.panelText }}>
+                    <UIIcon name="folderOpen" size={32} />
+                  </div>
                   <div>暂无项目</div>
                   <div style={{ fontSize: '12px', marginTop: '8px' }}>
                     请先创建项目和知识图谱
@@ -1098,7 +1105,9 @@ export default function TopNavbar({ mode = 'full' }: TopNavbarProps = {}) {
                   color: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
                   fontSize: '14px',
                 }}>
-                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>🔍</div>
+                  <div style={{ marginBottom: '12px', color: themeConfig.panelText }}>
+                    <UIIcon name="search" size={32} />
+                  </div>
                   <div>未找到匹配的节点</div>
                   <div style={{ fontSize: '12px', marginTop: '8px' }}>
                     尝试使用其他关键词搜索

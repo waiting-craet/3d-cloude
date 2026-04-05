@@ -261,7 +261,42 @@ const PaperHeroSection = React.memo(function PaperHeroSection({
                     aria-selected={index === selectedIndex}
                   >
                     <div className={styles.suggestionIcon}>
-                      {suggestion.type === 'project' ? '📁' : '📊'}
+                      {suggestion.type === 'project' ? (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M3 7C3 5.89543 3.89543 5 5 5H9L11 7H19C20.1046 7 21 7.89543 21 9V17C21 18.1046 20.1046 19 19 19H5C3.89543 19 3 18.1046 3 17V7Z"
+                            stroke="#6B8E85"
+                            strokeWidth="1.8"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M4 20H20"
+                            stroke="#8BA69A"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                          <rect x="6" y="11" width="3" height="7" rx="1" fill="#8BA69A" />
+                          <rect x="11" y="8" width="3" height="10" rx="1" fill="#6B8E85" />
+                          <rect x="16" y="5" width="3" height="13" rx="1" fill="#3D5A50" />
+                        </svg>
+                      )}
                     </div>
                     <div className={styles.suggestionContent}>
                       <div className={styles.suggestionTitle}>
