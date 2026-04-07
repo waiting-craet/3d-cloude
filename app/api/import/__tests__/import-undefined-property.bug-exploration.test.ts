@@ -47,8 +47,8 @@ jest.mock('@/lib/services/duplicate-detection', () => ({
 }))
 
 jest.mock('@/lib/db-helpers', () => ({
-  retryOperation: jest.fn((fn) => fn()),
-  getDescriptiveErrorMessage: jest.fn((error) => String(error))
+  retryOperation: jest.fn((fn: () => unknown) => fn()),
+  getDescriptiveErrorMessage: jest.fn((error: unknown) => String(error))
 }))
 
 // Import after mocks
@@ -81,7 +81,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
     const mockGraphId = 'graph-456'
 
     // Mock graph lookup
-    ;(prisma.graph.findUnique as jest.Mock).mockResolvedValue({
+    ;(prisma.graph.findUnique as jest.Mock<any>).mockResolvedValue({
       id: mockGraphId,
       projectId: mockProjectId,
       project: { id: mockProjectId }
@@ -99,7 +99,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
       metadata: { type: '3D' as const }
     }
 
-    ;(importAndValidateGraphData as jest.Mock).mockResolvedValue({
+    ;(importAndValidateGraphData as jest.Mock<any>).mockResolvedValue({
       success: true,
       data: mockValidatedData,
       validatedData: mockValidatedData,
@@ -108,10 +108,10 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
     })
 
     // Mock layout generation
-    ;(generateLayout as jest.Mock).mockReturnValue(mockValidatedData.nodes)
+    ;(generateLayout as jest.Mock<any>).mockReturnValue(mockValidatedData.nodes)
 
     // Mock duplicate detection
-    ;(detectAndFilterDuplicates as jest.Mock).mockResolvedValue({
+    ;(detectAndFilterDuplicates as jest.Mock<any>).mockResolvedValue({
       filtered: {
         nodes: mockValidatedData.nodes,
         edges: mockValidatedData.edges,
@@ -127,19 +127,19 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
     })
 
     // Mock node creation
-    ;(prisma.$transaction as jest.Mock).mockResolvedValueOnce([
+    ;(prisma.$transaction as jest.Mock<any>).mockResolvedValueOnce([
       { id: 'db-n1', name: 'Node 1' },
       { id: 'db-n2', name: 'Node 2' }
     ])
 
     // Mock edge creation
-    ;(prisma.$transaction as jest.Mock).mockResolvedValueOnce([
+    ;(prisma.$transaction as jest.Mock<any>).mockResolvedValueOnce([
       { id: 'db-e1', label: 'connects' }
     ])
 
     // Mock graph and project updates
-    ;(prisma.graph.update as jest.Mock).mockResolvedValue({})
-    ;(prisma.project.update as jest.Mock).mockResolvedValue({})
+    ;(prisma.graph.update as jest.Mock<any>).mockResolvedValue({})
+    ;(prisma.project.update as jest.Mock<any>).mockResolvedValue({})
 
     // Create request
     const formData = new FormData()
@@ -178,7 +178,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
     const mockProjectId = 'project-123'
     const mockGraphId = 'graph-456'
 
-    ;(prisma.graph.findUnique as jest.Mock).mockResolvedValue({
+    ;(prisma.graph.findUnique as jest.Mock<any>).mockResolvedValue({
       id: mockGraphId,
       projectId: mockProjectId,
       project: { id: mockProjectId }
@@ -197,7 +197,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
       metadata: { type: '3D' as const }
     }
 
-    ;(importAndValidateGraphData as jest.Mock).mockResolvedValue({
+    ;(importAndValidateGraphData as jest.Mock<any>).mockResolvedValue({
       success: true,
       data: mockValidatedData,
       validatedData: mockValidatedData,
@@ -205,9 +205,9 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
       warnings: []
     })
 
-    ;(generateLayout as jest.Mock).mockReturnValue(mockValidatedData.nodes)
+    ;(generateLayout as jest.Mock<any>).mockReturnValue(mockValidatedData.nodes)
 
-    ;(detectAndFilterDuplicates as jest.Mock).mockResolvedValue({
+    ;(detectAndFilterDuplicates as jest.Mock<any>).mockResolvedValue({
       filtered: {
         nodes: mockValidatedData.nodes,
         edges: mockValidatedData.edges,
@@ -222,18 +222,18 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
       }
     })
 
-    ;(prisma.$transaction as jest.Mock).mockResolvedValueOnce([
+    ;(prisma.$transaction as jest.Mock<any>).mockResolvedValueOnce([
       { id: 'db-n1', name: 'Node 1' },
       { id: 'db-n2', name: 'Node 2' }
     ])
 
     // Only 1 edge created (2 skipped due to missing nodes)
-    ;(prisma.$transaction as jest.Mock).mockResolvedValueOnce([
+    ;(prisma.$transaction as jest.Mock<any>).mockResolvedValueOnce([
       { id: 'db-e1', label: 'valid' }
     ])
 
-    ;(prisma.graph.update as jest.Mock).mockResolvedValue({})
-    ;(prisma.project.update as jest.Mock).mockResolvedValue({})
+    ;(prisma.graph.update as jest.Mock<any>).mockResolvedValue({})
+    ;(prisma.project.update as jest.Mock<any>).mockResolvedValue({})
 
     const formData = new FormData()
     formData.append('file', mockFile)
@@ -266,7 +266,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
     const mockProjectId = 'project-123'
     const mockGraphId = 'graph-456'
 
-    ;(prisma.graph.findUnique as jest.Mock).mockResolvedValue({
+    ;(prisma.graph.findUnique as jest.Mock<any>).mockResolvedValue({
       id: mockGraphId,
       projectId: mockProjectId,
       project: { id: mockProjectId }
@@ -280,7 +280,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
       metadata: { type: '3D' as const }
     }
 
-    ;(importAndValidateGraphData as jest.Mock).mockResolvedValue({
+    ;(importAndValidateGraphData as jest.Mock<any>).mockResolvedValue({
       success: true,
       data: mockValidatedData,
       validatedData: mockValidatedData,
@@ -288,9 +288,9 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
       warnings: []
     })
 
-    ;(generateLayout as jest.Mock).mockReturnValue(mockValidatedData.nodes)
+    ;(generateLayout as jest.Mock<any>).mockReturnValue(mockValidatedData.nodes)
 
-    ;(detectAndFilterDuplicates as jest.Mock).mockResolvedValue({
+    ;(detectAndFilterDuplicates as jest.Mock<any>).mockResolvedValue({
       filtered: {
         nodes: mockValidatedData.nodes,
         edges: [],
@@ -305,12 +305,12 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
       }
     })
 
-    ;(prisma.$transaction as jest.Mock).mockResolvedValueOnce([
+    ;(prisma.$transaction as jest.Mock<any>).mockResolvedValueOnce([
       { id: 'db-n1', name: 'Node 1' }
     ])
 
-    ;(prisma.graph.update as jest.Mock).mockResolvedValue({})
-    ;(prisma.project.update as jest.Mock).mockResolvedValue({})
+    ;(prisma.graph.update as jest.Mock<any>).mockResolvedValue({})
+    ;(prisma.project.update as jest.Mock<any>).mockResolvedValue({})
 
     const formData = new FormData()
     formData.append('file', mockFile)
@@ -343,7 +343,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
     const mockProjectId = 'project-123'
     const mockGraphId = 'graph-456'
 
-    ;(prisma.graph.findUnique as jest.Mock).mockResolvedValue({
+    ;(prisma.graph.findUnique as jest.Mock<any>).mockResolvedValue({
       id: mockGraphId,
       projectId: mockProjectId,
       project: { id: mockProjectId }
@@ -370,7 +370,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
       metadata: { type: '3D' as const }
     }
 
-    ;(importAndValidateGraphData as jest.Mock).mockResolvedValue({
+    ;(importAndValidateGraphData as jest.Mock<any>).mockResolvedValue({
       success: true,
       data: mockValidatedData,
       validatedData: mockValidatedData,
@@ -380,7 +380,7 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
 
     ;(generateLayout as jest.Mock).mockReturnValue(nodes)
 
-    ;(detectAndFilterDuplicates as jest.Mock).mockResolvedValue({
+    ;(detectAndFilterDuplicates as jest.Mock<any>).mockResolvedValue({
       filtered: {
         nodes,
         edges,
@@ -398,12 +398,12 @@ describe('Bug Exploration: Import Undefined Property Access', () => {
     const mockCreatedNodes = nodes.map((n, i) => ({ id: `db-${n.id}`, name: n.label }))
     const mockCreatedEdges = edges.map((e, i) => ({ id: `db-e${i}`, label: e.label }))
 
-    ;(prisma.$transaction as jest.Mock)
+    ;(prisma.$transaction as jest.Mock<any>)
       .mockResolvedValueOnce(mockCreatedNodes)
       .mockResolvedValueOnce(mockCreatedEdges)
 
-    ;(prisma.graph.update as jest.Mock).mockResolvedValue({})
-    ;(prisma.project.update as jest.Mock).mockResolvedValue({})
+    ;(prisma.graph.update as jest.Mock<any>).mockResolvedValue({})
+    ;(prisma.project.update as jest.Mock<any>).mockResolvedValue({})
 
     const formData = new FormData()
     formData.append('file', mockFile)

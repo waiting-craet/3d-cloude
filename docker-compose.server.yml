@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: kguser
+      POSTGRES_PASSWORD: KGraph2026!
+      POSTGRES_DB: knowledgegraph
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kguser -d knowledgegraph"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: 3d-cloude-app:latest
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://kguser:KGraph2026!@db:5432/knowledgegraph
+      - COOKIE_SECURE=false
+      - NODE_ENV=production
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_API_ENDPOINT=${AI_API_ENDPOINT}
+    volumes:
+      - ./uploads:/app/public/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
